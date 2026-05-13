@@ -23,46 +23,7 @@ A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo 
 
 ---
 
-## Objetivo do Projeto
-
-Este projeto foi criado como parte do meu portfólio full-stack, com foco em demonstrar:
-
-- Desenvolvimento de API REST com Java e Spring Boot.
-- Integração com banco de dados relacional MySQL.
-- Construção de interface web com Angular.
-- Planejamento de arquitetura separando backend, frontend e mobile.
-- Organização de regras de negócio, validações e critérios de aceite.
-- Evolução incremental do projeto por etapas.
-
----
-
-## Funcionalidades Planejadas
-
-### Categorias
-
-- Criar categoria.
-- Listar categorias na tela inicial.
-- Editar nome da categoria.
-- Excluir categoria e todo o conteúdo vinculado.
-- Bloquear criação ao atingir o limite de 5 categorias.
-- Exibir quantidade de tarefas pendentes por categoria.
-
-### Tarefas
-
-- Criar tarefas dentro de uma categoria.
-- Informar título, descrição, prazo e prioridade.
-- Definir status como **A Fazer**, **Em Progresso** ou **Concluída**.
-- Editar e excluir tarefas.
-- Ordenar tarefas por prioridade.
-- Adicionar subtarefas em formato de checklist.
-- Marcar e desmarcar subtarefas como concluídas.
-
-### Anotações
-
-- Criar anotações dentro de uma categoria.
-- Editar título e conteúdo.
-- Excluir anotações.
-- Listar anotações por ordem de criação.
+## Ponto importante do projeto e também o mais complexo...
 
 ### Sincronização Manual
 
@@ -72,6 +33,8 @@ O projeto também prevê um fluxo de sincronização manual com os botões:
 - **Atualizar**: busca a versão mais recente do servidor.
 
 Esse fluxo utilizará o campo `updated_at` para detectar possíveis conflitos entre alterações locais e dados já salvos no servidor.
+
+Também existe o tratamento para evitar conflitos de "merge" entre as versões.
 
 ---
 
@@ -205,47 +168,6 @@ Campos principais:
 
 ---
 
-## Endpoints Planejados
-
-### Categorias
-
-```http
-GET    /api/categories
-POST   /api/categories
-PUT    /api/categories/{id}
-DELETE /api/categories/{id}
-```
-
-### Tarefas
-
-```http
-GET    /api/categories/{categoryId}/tasks
-POST   /api/categories/{categoryId}/tasks
-PUT    /api/tasks/{id}
-DELETE /api/tasks/{id}
-PATCH  /api/tasks/{id}/status
-```
-
-### Subtarefas
-
-```http
-GET    /api/tasks/{taskId}/subtasks
-POST   /api/tasks/{taskId}/subtasks
-PATCH  /api/subtasks/{id}/toggle
-DELETE /api/subtasks/{id}
-```
-
-### Anotações
-
-```http
-GET    /api/categories/{categoryId}/notes
-POST   /api/categories/{categoryId}/notes
-PUT    /api/notes/{id}
-DELETE /api/notes/{id}
-```
-
----
-
 ## Testes Planejados
 
 ### Backend
@@ -319,12 +241,13 @@ http://10.0.2.2:8080
 
 ---
 
-## Status Atual
+## EXTRA
 
-O projeto está atualmente na **Etapa 2**, com foco na construção da tela inicial de categorias no Angular e integração com a API de categorias.
+Este projeto foi criado como parte do meu portfólio full-stack, com foco em demonstrar:
 
----
-
-## Licença
-
-Este projeto está sob a licença definida no repositório.
+- Desenvolvimento de API REST com Java e Spring Boot.
+- Integração com banco de dados relacional MySQL.
+- Construção de interface web com Angular.
+- Planejamento de arquitetura separando backend, frontend e mobile.
+- Organização de regras de negócio, validações e critérios de aceite.
+- Evolução incremental do projeto por etapas.
