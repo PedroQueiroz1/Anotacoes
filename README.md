@@ -243,48 +243,6 @@ DELETE /api/notes/{id}
 
 ---
 
-## Roadmap do Projeto
-
-### Etapa 0 — Setup do Projeto
-
-- Estrutura inicial do backend, frontend e Android.
-- Configuração de banco de dados.
-- Configuração de CORS.
-- Validação inicial da API e Swagger.
-
-### Etapa 1 — CRUD de Categorias no Backend
-
-- Entidade `Category`.
-- Repository, service e controller.
-- DTOs de request e response.
-- Validações e tratamento de erros.
-- Endpoints REST para categorias.
-
-### Etapa 2 — Home de Categorias no Angular
-
-Status atual do projeto.
-
-Objetivos desta etapa:
-
-- Criar serviço Angular para consumir categorias.
-- Listar categorias na home.
-- Criar nova categoria.
-- Editar nome de categoria.
-- Excluir categoria com confirmação.
-- Bloquear criação ao atingir 5 categorias.
-- Exibir estado vazio quando não houver categorias.
-
-### Próximas Etapas
-
-- CRUD de tarefas e subtarefas no backend.
-- Tela de categoria com tarefas no Angular.
-- CRUD de anotações.
-- Integração com app Android.
-- Implementação da sincronização manual.
-- Testes e polimento visual.
-
----
-
 ## Testes Planejados
 
 ### Backend
