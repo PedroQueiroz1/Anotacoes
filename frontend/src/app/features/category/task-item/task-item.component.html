@@ -1,0 +1,88 @@
+<div class="task-item" [class.task-item--done]="isDone">
+
+  <div class="task-item__main">
+
+    <!-- Prioridade + Título -->
+    <div class="task-item__header">
+      <span class="badge" [class]="priorityClass">{{ PRIORITY_LABEL[task.priority] }}</span>
+      <span class="task-item__title">{{ task.title }}</span>
+    </div>
+
+    <!-- Metadados: prazo e descrição -->
+    @if (task.dueDate) {
+      <p class="task-item__due">Prazo: {{ task.dueDate }}</p>
+    }
+    @if (task.description) {
+      <p class="task-item__desc">{{ task.description }}</p>
+    }
+
+    <!-- Linha de ações -->
+    <div class="task-item__actions">
+
+      <!-- Status rápido (CA-08) -->
+      <select class="status-select" [value]="task.status" (change)="onStatusChange($any($event.target).value)">
+        @for (s of STATUS_OPTIONS; track s) {
+          <option [value]="s">{{ STATUS_LABEL[s] }}</option>
+        }
+      </select>
+
+      <!-- Botão subtarefas -->
+      <button class="btn-text" (click)="toggleExpand()">
+        {{ isExpanded ? '▲ Checklist' : '▼ Checklist' }}
+        @if (subtasks.length > 0) {
+          <span class="subtask-count">({{ subtasks.length }})</span>
+        }
+      </button>
+
+      <div class="task-item__spacer"></div>
+
+      <button class="btn-icon" title="Editar" (click)="editRequested.emit(task)">✏️</button>
+      <button class="btn-icon btn-icon--danger" title="Excluir" (click)="deleteRequested.emit(task.id)">🗑️</button>
+    </div>
+
+  </div>
+
+  <!-- Checklist de subtarefas (CA-10) -->
+  @if (isExpanded) {
+    <div class="subtask-section">
+
+      @if (isLoadingSubtasks) {
+        <p class="subtask-loading">Carregando...</p>
+      } @else {
+        <ul class="subtask-list">
+          @for (s of subtasks; track s.id) {
+            <li class="subtask-item" [class.subtask-item--done]="s.done">
+              <label class="subtask-item__label">
+                <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
+                <span>{{ s.text }}</span>
+              </label>
+              <button class="btn-icon btn-icon--danger subtask-item__del" (click)="deleteSubtask(s.id)">✕</button>
+            </li>
+          }
+          @if (subtasks.length === 0) {
+            <li class="subtask-empty">Nenhuma subtarefa ainda.</li>
+          }
+        </ul>
+
+        <!-- Adicionar subtarefa -->
+        @if (subtasks.length < 20) {
+          <div class="subtask-add">
+            <input
+              class="subtask-input"
+              [(ngModel)]="newSubtaskText"
+              maxlength="200"
+              placeholder="Nova subtarefa..."
+              (keyup.enter)="addSubtask()"
+            />
+            <button class="btn btn--sm" (click)="addSubtask()" [disabled]="isAddingSubtask">+</button>
+          </div>
+        }
+        @if (subtaskError) {
+          <p class="subtask-error">{{ subtaskError }}</p>
+        }
+      }
+
+    </div>
+  }
+
+</div>

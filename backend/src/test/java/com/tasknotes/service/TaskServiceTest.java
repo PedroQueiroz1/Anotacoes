@@ -1,0 +1,178 @@
+package com.tasknotes.service;
+
+import com.tasknotes.dto.StatusUpdateRequest;
+import com.tasknotes.dto.TaskRequest;
+import com.tasknotes.dto.TaskResponse;
+import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.Category;
+import com.tasknotes.model.Priority;
+import com.tasknotes.model.Task;
+import com.tasknotes.model.TaskStatus;
+import com.tasknotes.repository.CategoryRepository;
+import com.tasknotes.repository.TaskRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class TaskServiceTest {
+
+    @Mock TaskRepository     taskRepository;
+    @Mock CategoryRepository categoryRepository;
+
+    @InjectMocks TaskService service;
+
+    private Category stubCategory(Long id) {
+        Category c = mock(Category.class);
+        when(c.getId()).thenReturn(id);
+        return c;
+    }
+
+    private Task stubTask(Long id, Priority priority, TaskStatus status) {
+        Task t = mock(Task.class);
+        when(t.getId()).thenReturn(id);
+        when(t.getCategory()).thenReturn(stubCategory(1L));
+        when(t.getTitle()).thenReturn("Task " + id);
+        when(t.getDescription()).thenReturn(null);
+        when(t.getDueDate()).thenReturn(null);
+        when(t.getPriority()).thenReturn(priority);
+        when(t.getStatus()).thenReturn(status);
+        when(t.getCreatedAt()).thenReturn(LocalDateTime.now());
+        when(t.getUpdatedAt()).thenReturn(LocalDateTime.now());
+        return t;
+    }
+
+    // ── findByCategory ────────────────────────────────────────────────────────
+    @Test
+    void findByCategory_returnsSortedByPriority() {
+        when(categoryRepository.existsById(1L)).thenReturn(true);
+        Task low    = stubTask(1L, Priority.LOW,    TaskStatus.TODO);
+        Task high   = stubTask(2L, Priority.HIGH,   TaskStatus.TODO);
+        Task medium = stubTask(3L, Priority.MEDIUM, TaskStatus.TODO);
+        when(taskRepository.findByCategoryId(1L)).thenReturn(List.of(low, high, medium));
+
+        List<TaskResponse> result = service.findByCategory(1L);
+
+        assertThat(result).hasSize(3);
+        assertThat(result.get(0).priority()).isEqualTo(Priority.HIGH);
+        assertThat(result.get(1).priority()).isEqualTo(Priority.MEDIUM);
+        assertThat(result.get(2).priority()).isEqualTo(Priority.LOW);
+    }
+
+    @Test
+    void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
+        when(categoryRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.findByCategory(99L))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── create ────────────────────────────────────────────────────────────────
+    @Test
+    void create_savesAndReturnsTask() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
+        Task saved = stubTask(10L, Priority.MEDIUM, TaskStatus.TODO);
+        when(taskRepository.save(any())).thenReturn(saved);
+
+        TaskResponse r = service.create(1L, new TaskRequest("Buy milk", null, null, Priority.MEDIUM));
+
+        assertThat(r.id()).isEqualTo(10L);
+        verify(taskRepository).save(any(Task.class));
+    }
+
+    @Test
+    void create_defaultsPriorityToMedium_whenNull() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
+        when(taskRepository.save(any())).thenAnswer(inv -> {
+            Task t = inv.getArgument(0);
+            Task saved = stubTask(1L, t.getPriority(), TaskStatus.TODO);
+            return saved;
+        });
+
+        TaskResponse r = service.create(1L, new TaskRequest("Task", null, null, null));
+
+        assertThat(r.priority()).isEqualTo(Priority.MEDIUM);
+    }
+
+    @Test
+    void create_throwsResourceNotFoundException_whenCategoryMissing() {
+        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.create(99L, new TaskRequest("X", null, null, Priority.LOW)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── update ────────────────────────────────────────────────────────────────
+    @Test
+    void update_savesChangedFields() {
+        Task existing = stubTask(1L, Priority.LOW, TaskStatus.TODO);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(taskRepository.save(existing)).thenReturn(existing);
+
+        service.update(1L, new TaskRequest("Updated Title", "Desc", null, Priority.HIGH));
+
+        verify(existing).setTitle("Updated Title");
+        verify(existing).setDescription("Desc");
+        verify(existing).setPriority(Priority.HIGH);
+        verify(taskRepository).save(existing);
+    }
+
+    @Test
+    void update_throwsResourceNotFoundException_whenNotFound() {
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.update(99L, new TaskRequest("X", null, null, null)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── updateStatus ──────────────────────────────────────────────────────────
+    @Test
+    void updateStatus_setsNewStatusAndSaves() {
+        Task existing = stubTask(1L, Priority.MEDIUM, TaskStatus.TODO);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(taskRepository.save(existing)).thenReturn(existing);
+
+        service.updateStatus(1L, new StatusUpdateRequest(TaskStatus.DONE));
+
+        verify(existing).setStatus(TaskStatus.DONE);
+        verify(taskRepository).save(existing);
+    }
+
+    @Test
+    void updateStatus_throwsResourceNotFoundException_whenNotFound() {
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.updateStatus(99L, new StatusUpdateRequest(TaskStatus.DONE)))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── delete ────────────────────────────────────────────────────────────────
+    @Test
+    void delete_callsDeleteById_whenExists() {
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(stubTask(1L, Priority.LOW, TaskStatus.TODO)));
+
+        service.delete(1L);
+
+        verify(taskRepository).deleteById(1L);
+    }
+
+    @Test
+    void delete_throwsResourceNotFoundException_whenNotFound() {
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.delete(99L))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(taskRepository, never()).deleteById(any());
+    }
+}

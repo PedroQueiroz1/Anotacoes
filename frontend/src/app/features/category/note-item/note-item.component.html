@@ -1,0 +1,62 @@
+<div class="note-item">
+
+  @if (!isEditing) {
+    <!-- Modo leitura -->
+    <div class="note-item__read">
+      <div class="note-item__header">
+        <span class="note-item__title">{{ note.title }}</span>
+        <div class="note-item__actions">
+          <button class="btn-icon" title="Editar" (click)="startEdit()">✏️</button>
+          <button class="btn-icon btn-icon--danger" title="Excluir" (click)="deleteRequested.emit(note.id)">🗑️</button>
+        </div>
+      </div>
+      @if (note.content) {
+        <p class="note-item__content">{{ note.content }}</p>
+      }
+    </div>
+  } @else {
+    <!-- Modo edição inline -->
+    <div class="note-item__edit">
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input class="form-input" [(ngModel)]="editTitle" maxlength="100" placeholder="Título da anotação" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Conteúdo</label>
+        <textarea class="form-input form-textarea" [(ngModel)]="editContent" maxlength="2000"
+          placeholder="Conteúdo opcional (máx. 2000 caracteres)"></textarea>
+      </div>
+      @if (editError) {
+        <p class="form-error">{{ editError }}</p>
+      }
+      <div class="form-actions">
+        <button class="btn btn--ghost btn--sm" (click)="checkUpdate()" [disabled]="isCheckingConflict">
+          {{ isCheckingConflict ? 'Verificando...' : 'Atualizar' }}
+        </button>
+        <div class="form-actions__right">
+          <button class="btn btn--ghost" (click)="cancelEdit()">Cancelar</button>
+          <button class="btn btn--primary" (click)="saveEdit()" [disabled]="!isDirty || isSaving">
+            {{ isSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
+
+@if (showConflict && serverNote) {
+  <app-conflict-dialog
+    (discard)="onDiscard()"
+    (merge)="onMerge()">
+  </app-conflict-dialog>
+}
+
+@if (showMerge && serverNote) {
+  <app-merge-view
+    [local]="localFields"
+    [serverNote]="serverNote"
+    (confirmed)="onMergeConfirmed($event)"
+    (cancelled)="onMergeCancelled()">
+  </app-merge-view>
+}

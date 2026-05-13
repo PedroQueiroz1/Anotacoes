@@ -1,0 +1,133 @@
+$primary: #4f46e5;
+$danger:  #e53e3e;
+$text:    #1a1a2e;
+$muted:   #6b7280;
+$border:  #e5e7eb;
+
+.note-item {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: box-shadow 0.15s;
+
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+}
+
+// ── Modo leitura ───────────────────────────────────────────────────────────
+.note-item__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.note-item__title {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  color: $text;
+}
+
+.note-item__actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.note-item__content {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: $muted;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+// ── Modo edição ────────────────────────────────────────────────────────────
+.note-item__edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $muted;
+}
+
+.form-input {
+  padding: 9px 12px;
+  border: 1px solid $border;
+  border-radius: 7px;
+  font-size: 14px;
+  font-family: inherit;
+  color: $text;
+  width: 100%;
+  box-sizing: border-box;
+
+  &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.12); }
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-error {
+  font-size: 13px;
+  color: $danger;
+  margin: 0 0 10px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+
+  &__right {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+.btn--sm { padding: 6px 12px; font-size: 13px; }
+
+// ── Botões ─────────────────────────────────────────────────────────────────
+.btn {
+  padding: 8px 16px;
+  border-radius: 7px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn--primary { background: $primary; color: #fff; }
+.btn--ghost   { background: #f0f0f0; color: #444; }
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 0.15s;
+
+  &:hover { background: #f0f0f0; }
+  &--danger:hover { background: #fee2e2; }
+}

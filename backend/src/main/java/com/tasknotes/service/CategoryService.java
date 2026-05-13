@@ -5,7 +5,9 @@ import com.tasknotes.dto.CategoryResponse;
 import com.tasknotes.exception.BusinessException;
 import com.tasknotes.exception.ResourceNotFoundException;
 import com.tasknotes.model.Category;
+import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
+import com.tasknotes.repository.TaskRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,9 +18,15 @@ public class CategoryService {
     private static final int MAX_CATEGORIES = 5;
 
     private final CategoryRepository repository;
+    private final TaskRepository taskRepository;
 
-    public CategoryService(CategoryRepository repository) {
+    public CategoryService(CategoryRepository repository, TaskRepository taskRepository) {
         this.repository = repository;
+        this.taskRepository = taskRepository;
+    }
+
+    public CategoryResponse findById(Long id) {
+        return toResponse(findOrThrow(id));
     }
 
     public List<CategoryResponse> findAll() {
@@ -55,12 +63,13 @@ public class CategoryService {
     }
 
     private CategoryResponse toResponse(Category c) {
+        int pending = (int) taskRepository.countByCategoryIdAndStatusNot(c.getId(), TaskStatus.DONE);
         return new CategoryResponse(
                 c.getId(),
                 c.getName(),
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
-                0  // pendingTaskCount: calculado a partir da Etapa 3
+                pending
         );
     }
 }

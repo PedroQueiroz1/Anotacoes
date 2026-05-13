@@ -1,0 +1,222 @@
+// ── Variáveis ──────────────────────────────────────────────────────────────
+$primary:   #4f46e5;
+$danger:    #e53e3e;
+$text:      #1a1a2e;
+$muted:     #6b7280;
+$border:    #e5e7eb;
+$bg-page:   #f8f9fc;
+$bg-card:   #ffffff;
+$radius:    10px;
+
+// ── Layout base ────────────────────────────────────────────────────────────
+.home {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  background: $bg-page;
+  min-height: 100vh;
+}
+
+// ── Cabeçalho ──────────────────────────────────────────────────────────────
+.home__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.home__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: $text;
+  margin: 0;
+}
+
+.limit-badge {
+  font-size: 13px;
+  color: $muted;
+  background: #f0f0f0;
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+// ── Lista de categorias ────────────────────────────────────────────────────
+.category-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-item {
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: box-shadow 0.15s;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.category-item__name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  color: $text;
+  text-decoration: none;
+
+  &:hover { color: $primary; }
+}
+
+.category-item__badge {
+  background: $primary;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 22px;
+  text-align: center;
+}
+
+.category-item__actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  .category-item:hover & { opacity: 1; }
+}
+
+// ── Botões ─────────────────────────────────────────────────────────────────
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 7px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:hover:not(:disabled) { opacity: 0.85; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn--primary {
+  background: $primary;
+  color: #fff;
+}
+
+.btn--ghost {
+  background: #f0f0f0;
+  color: #444;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+  transition: background 0.15s;
+
+  &:hover { background: #f0f0f0; }
+  &--danger:hover { background: #fee2e2; }
+}
+
+// ── Formulário inline ─────────────────────────────────────────────────────
+.inline-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &--new {
+    background: $bg-card;
+    border: 1px solid $border;
+    border-radius: $radius;
+    padding: 18px;
+  }
+}
+
+.inline-form__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: $muted;
+}
+
+.inline-form__input {
+  padding: 9px 12px;
+  border: 1px solid $border;
+  border-radius: 7px;
+  font-size: 15px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  color: $text;
+
+  &:focus { border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.15); }
+}
+
+.inline-form__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.new-form-wrapper {
+  margin-top: 16px;
+}
+
+// ── Feedback ───────────────────────────────────────────────────────────────
+.field-error {
+  font-size: 13px;
+  color: $danger;
+}
+
+.alert {
+  padding: 12px 16px;
+  border-radius: $radius;
+  margin-bottom: 20px;
+  font-size: 14px;
+
+  &--error {
+    background: #fff5f5;
+    color: $danger;
+    border: 1px solid #fed7d7;
+  }
+}
+
+.loading {
+  text-align: center;
+  color: $muted;
+  padding: 40px 0;
+}
+
+// ── Estado vazio ───────────────────────────────────────────────────────────
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.empty-state__text {
+  color: $muted;
+  font-size: 16px;
+  margin: 0;
+}

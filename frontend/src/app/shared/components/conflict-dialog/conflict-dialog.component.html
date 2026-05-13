@@ -1,0 +1,13 @@
+<div class="conflict-backdrop">
+  <div class="conflict-dialog">
+    <h3 class="conflict-dialog__title">⚠️ Conflito detectado</h3>
+    <p class="conflict-dialog__body">
+      Esta anotação foi modificada no servidor desde que você a carregou.<br>
+      Como deseja proceder?
+    </p>
+    <div class="conflict-dialog__actions">
+      <button class="btn btn--ghost" (click)="discard.emit()">Descartar local</button>
+      <button class="btn btn--primary" (click)="merge.emit()">Mesclar</button>
+    </div>
+  </div>
+</div>

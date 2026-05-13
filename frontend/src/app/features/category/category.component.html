@@ -1,0 +1,177 @@
+<div class="category-page">
+
+  <!-- ── Cabeçalho ──────────────────────────────────────────────────────────── -->
+  <header class="cat-header">
+    <a class="back-btn" routerLink="/">← Início</a>
+    <h1 class="cat-header__title">{{ category?.name ?? '...' }}</h1>
+    <button class="btn btn--primary" (click)="openCreate()">+ Nova Tarefa</button>
+  </header>
+
+  @if (errorMessage) {
+    <div class="alert alert--error">{{ errorMessage }}</div>
+  }
+
+  @if (isLoading) {
+    <div class="loading">Carregando...</div>
+  } @else {
+
+    <!-- ── Formulário de criação / edição de tarefa ────────────────────────── -->
+    @if (showForm) {
+      <div class="task-form-card">
+        <h2 class="task-form-card__title">
+          {{ formMode === 'create' ? 'Nova Tarefa' : 'Editar Tarefa' }}
+        </h2>
+
+        <div class="form-group">
+          <label class="form-label">Título *</label>
+          <input class="form-input" [(ngModel)]="form.title" maxlength="100" placeholder="Título da tarefa" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea class="form-input form-textarea" [(ngModel)]="form.description" maxlength="500"
+            placeholder="Descrição opcional (máx. 500 caracteres)"></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prazo</label>
+            <input class="form-input" type="date" [(ngModel)]="form.dueDate" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Prioridade</label>
+            <select class="form-input" [(ngModel)]="form.priority">
+              <option value="HIGH">Alta</option>
+              <option value="MEDIUM">Média</option>
+              <option value="LOW">Baixa</option>
+            </select>
+          </div>
+
+          @if (formMode === 'edit') {
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              <select class="form-input" [(ngModel)]="form.status">
+                <option value="TODO">A Fazer</option>
+                <option value="IN_PROGRESS">Em Progresso</option>
+                <option value="DONE">Concluída</option>
+              </select>
+            </div>
+          }
+        </div>
+
+        @if (formError) {
+          <p class="form-error">{{ formError }}</p>
+        }
+
+        <div class="form-actions">
+          <button class="btn btn--ghost" (click)="cancelForm()">Cancelar</button>
+          <button class="btn btn--primary" (click)="saveForm()" [disabled]="isSaving">Salvar</button>
+        </div>
+      </div>
+    }
+
+    <!-- ── Lista de tarefas ────────────────────────────────────────────────── -->
+    <section class="tasks-section">
+      @if (tasks.length === 0 && !showForm) {
+        <div class="empty-state">
+          <p>Nenhuma tarefa nesta categoria.</p>
+          <button class="btn btn--primary" (click)="openCreate()">Criar primeira tarefa</button>
+        </div>
+      } @else {
+        <ul class="task-list">
+          @for (task of tasks; track task.id) {
+            <li>
+              <app-task-item
+                [task]="task"
+                (statusChanged)="onStatusChanged($event)"
+                (editRequested)="openEdit($event)"
+                (deleteRequested)="onDeleteRequested($event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- ── Seção de anotações ──────────────────────────────────────────────── -->
+    <section class="notes-section">
+      <div class="notes-header">
+        <h2 class="notes-header__title">Anotações</h2>
+        @if (!showNoteForm) {
+          <button class="btn btn--primary btn--sm" (click)="openNoteCreate()">+ Nova Anotação</button>
+        }
+      </div>
+
+      <!-- Formulário de criação de anotação -->
+      @if (showNoteForm) {
+        <div class="task-form-card">
+          <h2 class="task-form-card__title">Nova Anotação</h2>
+
+          <div class="form-group">
+            <label class="form-label">Título *</label>
+            <input class="form-input" [(ngModel)]="noteTitle" maxlength="100" placeholder="Título da anotação" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Conteúdo</label>
+            <textarea class="form-input form-textarea form-textarea--tall" [(ngModel)]="noteContent" maxlength="2000"
+              placeholder="Conteúdo opcional (máx. 2000 caracteres)"></textarea>
+          </div>
+
+          @if (noteFormError) {
+            <p class="form-error">{{ noteFormError }}</p>
+          }
+
+          <div class="form-actions">
+            <button class="btn btn--ghost" (click)="cancelNoteForm()">Cancelar</button>
+            <button class="btn btn--primary" (click)="saveNoteForm()" [disabled]="isSavingNote">Salvar</button>
+          </div>
+        </div>
+      }
+
+      <!-- Lista de anotações -->
+      @if (notes.length === 0 && !showNoteForm) {
+        <div class="empty-state empty-state--sm">
+          <p>Nenhuma anotação nesta categoria.</p>
+        </div>
+      } @else {
+        <ul class="note-list">
+          @for (note of notes; track note.id) {
+            <li>
+              <app-note-item
+                [note]="note"
+                (noteUpdated)="onNoteUpdated($event)"
+                (deleteRequested)="onNoteDeleteRequested($event)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+  }
+
+</div>
+
+<!-- ── Confirmação de exclusão de tarefa ──────────────────────────────────── -->
+@if (deletingTaskId !== null) {
+  <app-confirm-dialog
+    message="Excluir esta tarefa? Todas as subtarefas serão removidas permanentemente."
+    confirmLabel="Excluir"
+    cancelLabel="Cancelar"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
+
+<!-- ── Confirmação de exclusão de anotação ────────────────────────────────── -->
+@if (deletingNoteId !== null) {
+  <app-confirm-dialog
+    message="Excluir esta anotação permanentemente?"
+    confirmLabel="Excluir"
+    cancelLabel="Cancelar"
+    (confirmed)="confirmNoteDelete()"
+    (cancelled)="cancelNoteDelete()"
+  />
+}

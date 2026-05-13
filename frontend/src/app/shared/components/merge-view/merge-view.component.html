@@ -1,0 +1,45 @@
+<div class="merge-backdrop">
+  <div class="merge-dialog">
+    <h3 class="merge-dialog__title">Mesclar alterações</h3>
+    <p class="merge-dialog__subtitle">Selecione qual versão usar para cada campo:</p>
+
+    <!-- Título -->
+    <div class="merge-field">
+      <span class="merge-field__label">Título</span>
+      <div class="merge-options">
+        <label class="merge-option" [class.merge-option--selected]="selectedTitle === 'local'">
+          <input type="radio" name="title" value="local" [(ngModel)]="selectedTitle" />
+          <span class="merge-option__tag">Local</span>
+          <span class="merge-option__value">{{ local.title }}</span>
+        </label>
+        <label class="merge-option" [class.merge-option--selected]="selectedTitle === 'server'">
+          <input type="radio" name="title" value="server" [(ngModel)]="selectedTitle" />
+          <span class="merge-option__tag">Servidor</span>
+          <span class="merge-option__value">{{ serverNote.title }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="merge-field">
+      <span class="merge-field__label">Conteúdo</span>
+      <div class="merge-options">
+        <label class="merge-option" [class.merge-option--selected]="selectedContent === 'local'">
+          <input type="radio" name="content" value="local" [(ngModel)]="selectedContent" />
+          <span class="merge-option__tag">Local</span>
+          <span class="merge-option__value">{{ local.content || '(vazio)' }}</span>
+        </label>
+        <label class="merge-option" [class.merge-option--selected]="selectedContent === 'server'">
+          <input type="radio" name="content" value="server" [(ngModel)]="selectedContent" />
+          <span class="merge-option__tag">Servidor</span>
+          <span class="merge-option__value">{{ serverNote.content || '(vazio)' }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="merge-dialog__actions">
+      <button class="btn btn--ghost" (click)="cancelled.emit()">Cancelar</button>
+      <button class="btn btn--primary" (click)="confirm()">Confirmar mesclagem</button>
+    </div>
+  </div>
+</div>

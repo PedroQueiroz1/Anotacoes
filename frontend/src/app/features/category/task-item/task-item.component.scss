@@ -1,0 +1,198 @@
+$primary: #4f46e5;
+$danger:  #e53e3e;
+$text:    #1a1a2e;
+$muted:   #6b7280;
+$border:  #e5e7eb;
+
+// ── Card da tarefa ─────────────────────────────────────────────────────────
+.task-item {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: box-shadow 0.15s;
+
+  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+
+  &--done {
+    opacity: 0.6;
+    .task-item__title { text-decoration: line-through; color: $muted; }
+  }
+}
+
+.task-item__main { display: flex; flex-direction: column; gap: 6px; }
+
+// ── Cabeçalho (badge + título) ─────────────────────────────────────────────
+.task-item__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.task-item__title {
+  font-size: 15px;
+  font-weight: 500;
+  color: $text;
+  flex: 1;
+}
+
+// ── Badges de prioridade ───────────────────────────────────────────────────
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+
+  &--high   { background: #fef2f2; color: #b91c1c; }
+  &--medium { background: #fffbeb; color: #92400e; }
+  &--low    { background: #f0fdf4; color: #166534; }
+}
+
+// ── Metadados ──────────────────────────────────────────────────────────────
+.task-item__due,
+.task-item__desc {
+  margin: 0;
+  font-size: 13px;
+  color: $muted;
+  line-height: 1.4;
+}
+
+// ── Linha de ações ─────────────────────────────────────────────────────────
+.task-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.task-item__spacer { flex: 1; }
+
+.status-select {
+  padding: 4px 8px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  font-size: 13px;
+  color: $text;
+  cursor: pointer;
+  background: #fafafa;
+
+  &:focus { outline: none; border-color: $primary; }
+}
+
+.btn-text {
+  background: none;
+  border: none;
+  color: $primary;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: inherit;
+
+  &:hover { text-decoration: underline; }
+}
+
+.subtask-count { font-weight: 600; }
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 0.15s;
+
+  &:hover { background: #f0f0f0; }
+  &--danger:hover { background: #fee2e2; }
+}
+
+// ── Checklist ──────────────────────────────────────────────────────────────
+.subtask-section {
+  border-top: 1px solid $border;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.subtask-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &--done span { text-decoration: line-through; color: $muted; }
+}
+
+.subtask-item__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+  font-size: 14px;
+  color: $text;
+
+  input[type="checkbox"] { cursor: pointer; width: 15px; height: 15px; }
+}
+
+.subtask-item__del {
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-size: 12px;
+
+  .subtask-item:hover & { opacity: 1; }
+}
+
+.subtask-empty { font-size: 13px; color: $muted; padding: 4px 0; }
+.subtask-loading { font-size: 13px; color: $muted; }
+
+// ── Adicionar subtarefa ────────────────────────────────────────────────────
+.subtask-add {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.subtask-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid $border;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+
+  &:focus { outline: none; border-color: $primary; }
+}
+
+.btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: $primary;
+  color: #fff;
+  font-family: inherit;
+
+  &--sm { padding: 6px 12px; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+  &:hover:not(:disabled) { opacity: 0.85; }
+}
+
+.subtask-error {
+  font-size: 12px;
+  color: $danger;
+  margin: 4px 0 0;
+}

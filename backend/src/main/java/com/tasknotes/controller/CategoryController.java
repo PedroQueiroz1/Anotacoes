@@ -28,6 +28,12 @@ public class CategoryController {
         return service.findAll();
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar categoria por ID")
+    public CategoryResponse findById(@PathVariable Long id) {
+        return service.findById(id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Criar uma nova categoria")

@@ -1,0 +1,112 @@
+<div class="home">
+
+  <header class="home__header">
+    <h1 class="home__title">TaskNotes</h1>
+    <div class="home__header-actions">
+      @if (isAtLimit) {
+        <span class="limit-badge">Limite de 5 categorias atingido</span>
+      } @else {
+        <button class="btn btn--primary" (click)="openNewForm()" [disabled]="showNewForm">
+          + Nova Categoria
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (globalError) {
+    <div class="alert alert--error">{{ globalError }}</div>
+  }
+
+  @if (isLoading) {
+    <div class="loading">Carregando...</div>
+  } @else if (categories.length === 0 && !showNewForm) {
+    <div class="empty-state">
+      <p class="empty-state__text">Nenhuma categoria ainda.</p>
+      <button class="btn btn--primary" (click)="openNewForm()">
+        Criar sua primeira categoria
+      </button>
+    </div>
+  } @else {
+    <ul class="category-list">
+      @for (cat of categories; track cat.id) {
+        <li class="category-item">
+
+          @if (editingId === cat.id) {
+            <!-- ── Formulário de edição inline ── -->
+            <div class="inline-form">
+              <input
+                class="inline-form__input"
+                [(ngModel)]="editingName"
+                maxlength="50"
+                placeholder="Nome da categoria"
+                (keyup.enter)="saveEdit()"
+                (keyup.escape)="cancelEdit()"
+                autofocus
+              />
+              @if (editingError) {
+                <span class="field-error">{{ editingError }}</span>
+              }
+              <div class="inline-form__actions">
+                <button class="btn btn--ghost" (click)="cancelEdit()">Cancelar</button>
+                <button class="btn btn--primary" (click)="saveEdit()" [disabled]="isSavingEdit">Salvar</button>
+              </div>
+            </div>
+
+          } @else {
+            <!-- ── Visualização normal ── -->
+            <a class="category-item__name" [routerLink]="['/categories', cat.id]">
+              {{ cat.name }}
+            </a>
+            @if (cat.pendingTaskCount > 0) {
+              <span class="category-item__badge" title="Tarefas pendentes">
+                {{ cat.pendingTaskCount }}
+              </span>
+            }
+            <div class="category-item__actions">
+              <button class="btn-icon" title="Editar" (click)="startEdit(cat)">✏️</button>
+              <button class="btn-icon btn-icon--danger" title="Excluir" (click)="startDelete(cat.id)">🗑️</button>
+            </div>
+          }
+
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- ── Formulário de nova categoria ── -->
+  @if (showNewForm) {
+    <div class="new-form-wrapper">
+      <div class="inline-form inline-form--new">
+        <label class="inline-form__label">Nome da categoria</label>
+        <input
+          class="inline-form__input"
+          [(ngModel)]="newName"
+          maxlength="50"
+          placeholder="Ex.: Economia, Estudos..."
+          (keyup.enter)="saveNew()"
+          (keyup.escape)="cancelNew()"
+          autofocus
+        />
+        @if (newError) {
+          <span class="field-error">{{ newError }}</span>
+        }
+        <div class="inline-form__actions">
+          <button class="btn btn--ghost" (click)="cancelNew()">Cancelar</button>
+          <button class="btn btn--primary" (click)="saveNew()" [disabled]="isSavingNew">Salvar</button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- ── Diálogo de confirmação de exclusão ── -->
+@if (deletingId !== null) {
+  <app-confirm-dialog
+    message="Tem certeza que deseja excluir esta categoria? Todas as tarefas e anotações vinculadas serão removidas permanentemente."
+    confirmLabel="Excluir"
+    cancelLabel="Cancelar"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"
+  />
+}
