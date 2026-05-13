@@ -2,7 +2,7 @@
 
 **TaskNotes** é uma aplicação de produtividade pessoal para organizar tarefas e anotações por categorias temáticas.  
 O objetivo desse projeto é somente pra eu conseguir fazer anotações dos meus estudos em casa e poder acessar elas facilmente pelo apk enquanto eu estiver na academia. </br>
-Sabe aqueles aprox. 30s a 2min de descanso entre uma série e outra na academia? Então, eu costumo ficar lendo notícias de economia e estudando um pouco de geopolítica. </br>
+Sabe aqueles aprox.30s a 2min de descanso entre uma série e outra na academia? Então, eu costumo ficar lendo notícias de economia e estudando um pouco de geopolítica. </br>
 Tem vezes que dá vontade de pesquisar algo de programação ali na hora mas fico com preguiça. </br>
 Criei esse projeto para eu poder concentrar todas minhas anotações nele e acessar diretamente pelo celular enquanto eu estiver na academia. </br>
 
