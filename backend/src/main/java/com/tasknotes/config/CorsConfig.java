@@ -12,7 +12,8 @@ public class CorsConfig implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(
                         "http://localhost:4200",   // Angular dev server
-                        "http://10.0.2.2:4200"     // Angular via emulador Android
+                        "http://10.0.2.2:4200",     // Angular via emulador Android
+                        "https://anotacoes-amber.vercel.app" // ADICIONEI AQUI PRA FUNCIONAR LOGO
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
