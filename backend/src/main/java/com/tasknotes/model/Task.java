@@ -39,6 +39,9 @@ public class Task {
     @Column(nullable = false, length = 15)
     private TaskStatus status = TaskStatus.TODO;
 
+    @Column
+    private Integer position;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -60,6 +63,8 @@ public class Task {
     public void setPriority(Priority p)  { this.priority = p; }
     public TaskStatus getStatus()        { return status; }
     public void setStatus(TaskStatus s)  { this.status = s; }
+    public Integer getPosition()          { return position; }
+    public void setPosition(Integer p)   { this.position = p; }
     public LocalDateTime getCreatedAt()  { return createdAt; }
     public LocalDateTime getUpdatedAt()  { return updatedAt; }
 }

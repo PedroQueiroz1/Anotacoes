@@ -12,10 +12,6 @@ export interface NotePayload {
 export class NoteService {
   private http = inject(HttpClient);
 
-  getById(id: number): Observable<Note> {
-    return this.http.get<Note>(`/api/notes/${id}`);
-  }
-
   getByCategory(categoryId: number): Observable<Note[]> {
     return this.http.get<Note[]>(`/api/categories/${categoryId}/notes`);
   }
@@ -30,5 +26,9 @@ export class NoteService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`/api/notes/${id}`);
+  }
+
+  reorder(categoryId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`/api/categories/${categoryId}/notes/reorder`, ids);
   }
 }

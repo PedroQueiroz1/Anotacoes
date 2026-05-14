@@ -27,6 +27,9 @@ public class Note {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column
+    private Integer position;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -42,6 +45,8 @@ public class Note {
     public void setTitle(String t)        { this.title = t; }
     public String getContent()            { return content; }
     public void setContent(String c)      { this.content = c; }
+    public Integer getPosition()           { return position; }
+    public void setPosition(Integer p)    { this.position = p; }
     public LocalDateTime getCreatedAt()   { return createdAt; }
     public LocalDateTime getUpdatedAt()   { return updatedAt; }
 }

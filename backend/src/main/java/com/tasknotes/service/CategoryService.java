@@ -9,6 +9,7 @@ import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -30,9 +31,16 @@ public class CategoryService {
     }
 
     public List<CategoryResponse> findAll() {
-        return repository.findAllByOrderByCreatedAtAsc().stream()
+        return repository.findAllOrdered().stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public void reorder(List<Long> ids) {
+        for (int i = 0; i < ids.size(); i++) {
+            repository.updatePosition(ids.get(i), i);
+        }
     }
 
     public CategoryResponse create(CategoryRequest request) {

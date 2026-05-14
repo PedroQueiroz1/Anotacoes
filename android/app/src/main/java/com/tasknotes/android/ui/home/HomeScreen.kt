@@ -2,7 +2,13 @@ package com.tasknotes.android.ui.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.animateItem
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import com.tasknotes.android.ui.common.dragContainer
+import com.tasknotes.android.ui.common.rememberDragDropState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -100,14 +106,23 @@ fun HomeScreen(
             }
 
             else -> {
+                val lazyListState = rememberLazyListState()
+                val dragState = rememberDragDropState(lazyListState, onSwap = viewModel::reorderCategories, onDragFinished = viewModel::persistCategoryOrder)
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(16.dp),
+                    state               = lazyListState,
+                    modifier            = Modifier.fillMaxSize().padding(padding).dragContainer(dragState),
+                    contentPadding      = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(categories, key = { it.id }) { category ->
+                    itemsIndexed(categories, key = { _, it -> it.id }) { index, category ->
+                        val itemModifier = if (index == dragState.draggingItemIndex) {
+                            Modifier.zIndex(1f).graphicsLayer { translationY = dragState.draggingItemOffset }
+                        } else {
+                            animateItem()
+                        }
                         CategoryCard(
                             category = category,
+                            modifier = itemModifier,
                             onClick  = { onNavigateToCategory(category.id, category.name) },
                             onEdit   = { viewModel.editingCategory.value = category },
                             onDelete = { viewModel.deletingCategory.value = category }
@@ -176,13 +191,14 @@ fun HomeScreen(
 @Composable
 private fun CategoryCard(
     category: Category,
+    modifier: Modifier = Modifier,
     onClick:  () -> Unit,
     onEdit:   () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
         onClick   = onClick,
-        modifier  = Modifier.fillMaxWidth(),
+        modifier  = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(

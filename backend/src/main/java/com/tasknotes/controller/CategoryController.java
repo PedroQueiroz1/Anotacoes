@@ -49,6 +49,13 @@ public class CategoryController {
         return service.update(id, request);
     }
 
+    @PutMapping("/reorder")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Reordenar categorias")
+    public void reorder(@RequestBody List<Long> ids) {
+        service.reorder(ids);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Excluir uma categoria e todo o seu conteúdo")

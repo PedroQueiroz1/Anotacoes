@@ -4,7 +4,13 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.animateItem
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.zIndex
+import com.tasknotes.android.ui.common.dragContainer
+import com.tasknotes.android.ui.common.rememberDragDropState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -42,8 +48,6 @@ fun CategoryScreen(
     val expandedTaskIds   by viewModel.expandedTaskIds.collectAsState()
     val subtasksByTask    by viewModel.subtasksByTask.collectAsState()
     val loadingSubtaskIds by viewModel.loadingSubtaskIds.collectAsState()
-    val conflictNote      by viewModel.conflictNote.collectAsState()
-    var showMergeDialog   by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedTab by remember { mutableStateOf(0) }
@@ -133,20 +137,18 @@ fun CategoryScreen(
                         onDeleteSubtask   = viewModel::deleteSubtask,
                         onStatusChange    = viewModel::updateTaskStatus,
                         onEdit            = { viewModel.editingTask.value = it; viewModel.showTaskForm.value = true },
-                        onDelete          = { viewModel.deletingTask.value = it }
+                        onDelete          = { viewModel.deletingTask.value = it },
+                        onReorder         = viewModel::reorderTasks,
+                        onReorderFinished = viewModel::persistTaskOrder
                     )
                 }
                 else -> {
                     NotesTab(
-                        notes            = notes,
-                        onUpdate         = { id, title, content ->
-                            viewModel.updateNote(id, title, content)
-                            viewModel.endNoteEdit(id)
-                        },
-                        onDelete         = { viewModel.deletingNote.value = it },
-                        onBeginEdit      = viewModel::startNoteEdit,
-                        onCheckConflict  = viewModel::checkNoteConflict,
-                        onCancelEdit     = viewModel::endNoteEdit
+                        notes             = notes,
+                        onUpdate          = viewModel::updateNote,
+                        onDelete          = { viewModel.deletingNote.value = it },
+                        onReorder         = viewModel::reorderNotes,
+                        onReorderFinished = viewModel::persistNoteOrder
                     )
                 }
             }
@@ -204,26 +206,6 @@ fun CategoryScreen(
         )
     }
 
-    conflictNote?.let { conflict ->
-        if (showMergeDialog) {
-            MergeNoteDialog(
-                localTitle   = conflict.localTitle,
-                localContent = conflict.localContent,
-                serverNote   = conflict.serverNote,
-                onConfirm    = { title, content ->
-                    showMergeDialog = false
-                    viewModel.resolveNoteConflict(title, content)
-                },
-                onDismiss    = { showMergeDialog = false }
-            )
-        } else {
-            ConflictDialog(
-                onDiscard = { viewModel.discardNoteConflict() },
-                onMerge   = { showMergeDialog = true },
-                onDismiss = { viewModel.discardNoteConflict() }
-            )
-        }
-    }
 }
 
 // ── Tasks tab ─────────────────────────────────────────────────────────────────
@@ -240,21 +222,32 @@ private fun TasksTab(
     onDeleteSubtask:   (Long, Long) -> Unit,
     onStatusChange:    (Long, String) -> Unit,
     onEdit:            (Task) -> Unit,
-    onDelete:          (Task) -> Unit
+    onDelete:          (Task) -> Unit,
+    onReorder:         (Int, Int) -> Unit,
+    onReorderFinished: () -> Unit
 ) {
     if (tasks.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Nenhuma tarefa ainda.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else {
+        val lazyListState = rememberLazyListState()
+        val dragState = rememberDragDropState(lazyListState, onSwap = onReorder, onDragFinished = onReorderFinished)
         LazyColumn(
+            state               = lazyListState,
             contentPadding      = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier            = Modifier.fillMaxSize()
+            modifier            = Modifier.fillMaxSize().dragContainer(dragState)
         ) {
-            items(tasks, key = { it.id }) { task ->
+            itemsIndexed(tasks, key = { _, it -> it.id }) { index, task ->
+                val itemModifier = if (index == dragState.draggingItemIndex) {
+                    Modifier.zIndex(1f).graphicsLayer { translationY = dragState.draggingItemOffset }
+                } else {
+                    animateItem()
+                }
                 TaskCard(
                     task             = task,
+                    modifier         = itemModifier,
                     isExpanded       = task.id in expandedTaskIds,
                     subtasks         = subtasksByTask[task.id],
                     loadingSubtasks  = task.id in loadingSubtaskIds,
@@ -274,6 +267,7 @@ private fun TasksTab(
 @Composable
 private fun TaskCard(
     task:            Task,
+    modifier:        Modifier = Modifier,
     isExpanded:      Boolean,
     subtasks:        List<Subtask>?,
     loadingSubtasks: Boolean,
@@ -288,7 +282,7 @@ private fun TaskCard(
     var statusMenuExpanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier  = Modifier.fillMaxWidth(),
+        modifier  = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -477,31 +471,36 @@ private fun PriorityBadge(priority: String) {
 
 @Composable
 private fun NotesTab(
-    notes:           List<Note>,
-    onUpdate:        (Long, String, String?) -> Unit,
-    onDelete:        (Note) -> Unit,
-    onBeginEdit:     (Long, String) -> Unit,
-    onCheckConflict: (Long, String, String?) -> Unit,
-    onCancelEdit:    (Long) -> Unit
+    notes:             List<Note>,
+    onUpdate:          (Long, String, String?) -> Unit,
+    onDelete:          (Note) -> Unit,
+    onReorder:         (Int, Int) -> Unit,
+    onReorderFinished: () -> Unit
 ) {
     if (notes.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text("Nenhuma anotação ainda.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else {
+        val lazyListState = rememberLazyListState()
+        val dragState = rememberDragDropState(lazyListState, onSwap = onReorder, onDragFinished = onReorderFinished)
         LazyColumn(
+            state               = lazyListState,
             contentPadding      = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier            = Modifier.fillMaxSize()
+            modifier            = Modifier.fillMaxSize().dragContainer(dragState)
         ) {
-            items(notes, key = { it.id }) { note ->
+            itemsIndexed(notes, key = { _, it -> it.id }) { index, note ->
+                val itemModifier = if (index == dragState.draggingItemIndex) {
+                    Modifier.zIndex(1f).graphicsLayer { translationY = dragState.draggingItemOffset }
+                } else {
+                    animateItem()
+                }
                 NoteCard(
-                    note            = note,
-                    onUpdate        = onUpdate,
-                    onDelete        = { onDelete(note) },
-                    onBeginEdit     = { onBeginEdit(note.id, note.updatedAt) },
-                    onCheckConflict = { title, content -> onCheckConflict(note.id, title, content) },
-                    onCancelEdit    = { onCancelEdit(note.id) }
+                    note     = note,
+                    modifier = itemModifier,
+                    onUpdate = onUpdate,
+                    onDelete = { onDelete(note) }
                 )
             }
         }
@@ -510,22 +509,17 @@ private fun NotesTab(
 
 @Composable
 private fun NoteCard(
-    note:            Note,
-    onUpdate:        (Long, String, String?) -> Unit,
-    onDelete:        () -> Unit,
-    onBeginEdit:     () -> Unit,
-    onCheckConflict: (String, String?) -> Unit,
-    onCancelEdit:    () -> Unit
+    note:     Note,
+    modifier: Modifier = Modifier,
+    onUpdate: (Long, String, String?) -> Unit,
+    onDelete: () -> Unit
 ) {
-    // Keys include updatedAt so state resets when the server note replaces a conflicting local edit
-    var isEditing   by remember(note.id, note.updatedAt) { mutableStateOf(false) }
-    var editTitle   by remember(note.id, note.updatedAt) { mutableStateOf(note.title) }
-    var editContent by remember(note.id, note.updatedAt) { mutableStateOf(note.content ?: "") }
-
-    val isDirty = editTitle != note.title || editContent != (note.content ?: "")
+    var isEditing   by remember(note.id) { mutableStateOf(false) }
+    var editTitle   by remember(note.id) { mutableStateOf(note.title) }
+    var editContent by remember(note.id) { mutableStateOf(note.content ?: "") }
 
     Card(
-        modifier  = Modifier.fillMaxWidth(),
+        modifier  = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(Modifier.padding(12.dp)) {
@@ -551,31 +545,24 @@ private fun NoteCard(
                     modifier              = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.End,
                     verticalAlignment     = Alignment.CenterVertically
                 ) {
                     TextButton(onClick = {
-                        onCheckConflict(editTitle.trim(), editContent.ifBlank { null })
-                    }) { Text("Atualizar") }
-
-                    Row {
-                        TextButton(onClick = {
-                            isEditing   = false
-                            editTitle   = note.title
-                            editContent = note.content ?: ""
-                            onCancelEdit()
-                        }) { Text("Cancelar") }
-                        Spacer(Modifier.width(4.dp))
-                        Button(
-                            onClick  = {
-                                if (editTitle.isNotBlank()) {
-                                    onUpdate(note.id, editTitle.trim(), editContent.ifBlank { null })
-                                    isEditing = false
-                                }
-                            },
-                            enabled  = isDirty && editTitle.isNotBlank()
-                        ) { Text("Salvar") }
-                    }
+                        isEditing   = false
+                        editTitle   = note.title
+                        editContent = note.content ?: ""
+                    }) { Text("Cancelar") }
+                    Spacer(Modifier.width(4.dp))
+                    Button(
+                        onClick = {
+                            if (editTitle.isNotBlank()) {
+                                onUpdate(note.id, editTitle.trim(), editContent.ifBlank { null })
+                                isEditing = false
+                            }
+                        },
+                        enabled = editTitle.isNotBlank()
+                    ) { Text("Salvar") }
                 }
             } else {
                 Row(verticalAlignment = Alignment.Top) {
@@ -595,7 +582,7 @@ private fun NoteCard(
                         }
                     }
                     IconButton(
-                        onClick  = { isEditing = true; onBeginEdit() },
+                        onClick  = { isEditing = true },
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = "Editar", modifier = Modifier.size(18.dp))

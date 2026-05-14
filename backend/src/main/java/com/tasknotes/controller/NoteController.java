@@ -18,11 +18,6 @@ public class NoteController {
         this.service = service;
     }
 
-    @GetMapping("/api/notes/{id}")
-    public NoteResponse getById(@PathVariable Long id) {
-        return service.findById(id);
-    }
-
     @GetMapping("/api/categories/{categoryId}/notes")
     public List<NoteResponse> listByCategory(@PathVariable Long categoryId) {
         return service.findByCategory(categoryId);
@@ -39,6 +34,12 @@ public class NoteController {
     public NoteResponse update(@PathVariable Long id,
                                @Valid @RequestBody NoteRequest request) {
         return service.update(id, request);
+    }
+
+    @PutMapping("/api/categories/{categoryId}/notes/reorder")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reorder(@PathVariable Long categoryId, @RequestBody List<Long> ids) {
+        service.reorder(categoryId, ids);
     }
 
     @DeleteMapping("/api/notes/{id}")

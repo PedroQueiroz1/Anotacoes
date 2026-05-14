@@ -88,5 +88,18 @@ class HomeViewModel : ViewModel() {
         }
     }
 
+    fun reorderCategories(from: Int, to: Int) {
+        if (from == to) return
+        _categories.value = _categories.value.toMutableList().also { it.add(to, it.removeAt(from)) }
+    }
+
+    fun persistCategoryOrder() {
+        viewModelScope.launch {
+            repository.reorder(_categories.value.map { it.id }).onFailure {
+                _snackbarMessage.value = "Erro ao salvar ordem das categorias."
+            }
+        }
+    }
+
     fun clearSnackbar() { _snackbarMessage.value = null }
 }

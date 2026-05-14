@@ -53,6 +53,13 @@ public class TaskController {
         return service.updateStatus(id, request);
     }
 
+    @PutMapping("/api/categories/{categoryId}/tasks/reorder")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Reordenar tarefas de uma categoria")
+    public void reorder(@PathVariable Long categoryId, @RequestBody List<Long> ids) {
+        service.reorder(categoryId, ids);
+    }
+
     @DeleteMapping("/api/tasks/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Excluir uma tarefa e suas subtarefas")

@@ -21,6 +21,9 @@ class TaskRepository {
     suspend fun updateStatus(id: Long, status: String): Result<Task> =
         runCatching { api.updateStatus(id, StatusUpdateRequest(status)) }
 
+    suspend fun reorder(categoryId: Long, ids: List<Long>): Result<Unit> =
+        runCatching { api.reorder(categoryId, ids) }
+
     suspend fun delete(id: Long): Result<Unit> =
         runCatching { api.delete(id) }
 }

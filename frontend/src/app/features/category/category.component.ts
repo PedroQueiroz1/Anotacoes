@@ -1,8 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
-import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
+import { Task, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
 import { CategoryService } from '../../core/services/category.service';
 import { TaskService, TaskPayload } from '../../core/services/task.service';
@@ -26,7 +27,7 @@ function emptyTaskForm(): TaskForm {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule],
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
@@ -143,13 +144,13 @@ export class CategoryComponent implements OnInit {
 
     if (this.formMode === 'create') {
       this.taskService.create(this.categoryId, payload).subscribe({
-        next: (task) => { this.tasks.push(task); this.sortTasks(); this.showForm = false; this.isSaving = false; },
+        next: (task) => { this.tasks.push(task); this.showForm = false; this.isSaving = false; },
         error: (err)  => { this.formError = err.error?.message ?? 'Erro ao criar tarefa.'; this.isSaving = false; },
       });
     } else {
       const editPayload = { ...payload, status: this.form.status };
       this.taskService.update(this.editingTaskId!, editPayload as any).subscribe({
-        next: (updated) => { this.replaceTask(updated); this.sortTasks(); this.showForm = false; this.isSaving = false; },
+        next: (updated) => { this.replaceTask(updated); this.showForm = false; this.isSaving = false; },
         error: (err)    => { this.formError = err.error?.message ?? 'Erro ao atualizar tarefa.'; this.isSaving = false; },
       });
     }
@@ -158,7 +159,7 @@ export class CategoryComponent implements OnInit {
   // ── Status rápido de tarefa ────────────────────────────────────────────────
   onStatusChanged(event: { id: number; status: TaskStatus }): void {
     this.taskService.updateStatus(event.id, event.status).subscribe({
-      next: (updated) => { this.replaceTask(updated); this.sortTasks(); },
+      next: (updated) => { this.replaceTask(updated); },
       error: ()       => { this.errorMessage = 'Erro ao atualizar status.'; },
     });
   }
@@ -221,17 +222,19 @@ export class CategoryComponent implements OnInit {
     });
   }
 
+  dropTasks(event: CdkDragDrop<Task[]>): void {
+    moveItemInArray(this.tasks, event.previousIndex, event.currentIndex);
+    this.taskService.reorder(this.categoryId, this.tasks.map(t => t.id)).subscribe();
+  }
+
+  dropNotes(event: CdkDragDrop<Note[]>): void {
+    moveItemInArray(this.notes, event.previousIndex, event.currentIndex);
+    this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
+  }
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   private replaceTask(updated: Task): void {
     const idx = this.tasks.findIndex(t => t.id === updated.id);
     if (idx !== -1) this.tasks[idx] = updated;
-  }
-
-  private sortTasks(): void {
-    const order: Record<Priority, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
-    this.tasks.sort((a, b) =>
-      order[a.priority] - order[b.priority] ||
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
   }
 }

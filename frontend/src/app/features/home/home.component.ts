@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { CategoryService } from '../../core/services/category.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -10,7 +11,7 @@ const MAX_CATEGORIES = 5;
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, DragDropModule],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
@@ -126,6 +127,11 @@ export class HomeComponent implements OnInit {
 
   cancelDelete(): void {
     this.deletingId = null;
+  }
+
+  drop(event: CdkDragDrop<Category[]>): void {
+    moveItemInArray(this.categories, event.previousIndex, event.currentIndex);
+    this.service.reorder(this.categories.map(c => c.id)).subscribe();
   }
 
   confirmDelete(): void {

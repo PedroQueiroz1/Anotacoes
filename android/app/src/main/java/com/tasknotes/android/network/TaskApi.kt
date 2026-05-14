@@ -19,6 +19,9 @@ interface TaskApi {
     @PATCH("api/tasks/{id}/status")
     suspend fun updateStatus(@Path("id") id: Long, @Body request: StatusUpdateRequest): Task
 
+    @PUT("api/categories/{categoryId}/tasks/reorder")
+    suspend fun reorder(@Path("categoryId") categoryId: Long, @Body ids: List<Long>)
+
     @DELETE("api/tasks/{id}")
     suspend fun delete(@Path("id") id: Long)
 }

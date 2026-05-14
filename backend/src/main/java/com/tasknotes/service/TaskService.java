@@ -9,23 +9,12 @@ import com.tasknotes.model.Task;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
 import java.util.List;
 
 @Service
 public class TaskService {
-
-    // HIGH → 0 (topo), MEDIUM → 1, LOW → 2
-    private static final Comparator<Task> BY_PRIORITY =
-            Comparator.comparingInt(t -> switch (t.getPriority()) {
-                case HIGH   -> 0;
-                case MEDIUM -> 1;
-                case LOW    -> 2;
-            });
-
-    private static final Comparator<Task> ORDER =
-            BY_PRIORITY.thenComparing(Task::getCreatedAt);
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
@@ -37,9 +26,8 @@ public class TaskService {
 
     public List<TaskResponse> findByCategory(Long categoryId) {
         validateCategory(categoryId);
-        return taskRepository.findByCategoryId(categoryId)
+        return taskRepository.findByCategoryIdOrdered(categoryId)
                 .stream()
-                .sorted(ORDER)
                 .map(this::toResponse)
                 .toList();
     }
@@ -75,6 +63,14 @@ public class TaskService {
     public void delete(Long id) {
         findOrThrow(id);
         taskRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void reorder(Long categoryId, List<Long> ids) {
+        validateCategory(categoryId);
+        for (int i = 0; i < ids.size(); i++) {
+            taskRepository.updatePosition(ids.get(i), i);
+        }
     }
 
     private Task findOrThrow(Long id) {

@@ -6,9 +6,6 @@ import retrofit2.http.*
 
 interface NoteApi {
 
-    @GET("api/notes/{id}")
-    suspend fun getById(@Path("id") id: Long): Note
-
     @GET("api/categories/{categoryId}/notes")
     suspend fun getByCategory(@Path("categoryId") categoryId: Long): List<Note>
 
@@ -17,6 +14,9 @@ interface NoteApi {
 
     @PUT("api/notes/{id}")
     suspend fun update(@Path("id") id: Long, @Body request: NoteRequest): Note
+
+    @PUT("api/categories/{categoryId}/notes/reorder")
+    suspend fun reorder(@Path("categoryId") categoryId: Long, @Body ids: List<Long>)
 
     @DELETE("api/notes/{id}")
     suspend fun delete(@Path("id") id: Long)

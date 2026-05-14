@@ -195,3 +195,45 @@ $radius:  10px;
 }
 
 .form-textarea--tall { min-height: 120px; }
+
+// ── Drag & Drop ────────────────────────────────────────────────────────────
+.task-list__item,
+.note-list__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  app-task-item,
+  app-note-item { flex: 1; min-width: 0; }
+}
+
+.drag-handle {
+  cursor: grab;
+  color: $muted;
+  font-size: 18px;
+  flex-shrink: 0;
+  user-select: none;
+  padding-top: 2px;
+
+  &:active { cursor: grabbing; }
+}
+
+.cdk-drag-preview {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: $radius;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cdk-drag-placeholder { opacity: 0; }
+
+.cdk-drag-animating { transition: transform 200ms ease; }
+
+.task-list.cdk-drop-list-dragging .task-list__item:not(.cdk-drag-dragging),
+.note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
+  transition: transform 200ms ease;
+}

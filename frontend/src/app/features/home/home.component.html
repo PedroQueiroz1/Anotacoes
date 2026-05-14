@@ -27,9 +27,10 @@
       </button>
     </div>
   } @else {
-    <ul class="category-list">
+    <ul class="category-list" cdkDropList (cdkDropListDropped)="drop($event)">
       @for (cat of categories; track cat.id) {
-        <li class="category-item">
+        <li class="category-item" cdkDrag>
+          <span class="drag-handle" cdkDragHandle title="Arrastar para reordenar">⠿</span>
 
           @if (editingId === cat.id) {
             <!-- ── Formulário de edição inline ── -->

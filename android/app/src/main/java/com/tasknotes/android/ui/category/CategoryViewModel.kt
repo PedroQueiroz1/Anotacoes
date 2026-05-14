@@ -49,13 +49,6 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
     val showNoteForm = MutableStateFlow(false)
     val deletingNote = MutableStateFlow<Note?>(null)
 
-    // ── Sincronização / conflito de anotações ─────────────────────────────────
-    private val _noteSyncState = MutableStateFlow<Map<Long, SyncStateHolder>>(emptyMap())
-    val noteSyncState: StateFlow<Map<Long, SyncStateHolder>> = _noteSyncState.asStateFlow()
-
-    private val _conflictNote = MutableStateFlow<NoteConflictState?>(null)
-    val conflictNote: StateFlow<NoteConflictState?> = _conflictNote.asStateFlow()
-
     // ── Compartilhado ─────────────────────────────────────────────────────────
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
@@ -74,7 +67,7 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             _loadError.value = null
             var hasError = false
             taskRepo.getByCategory(categoryId).fold(
-                onSuccess = { list -> _tasks.value = list.sortedWith(taskComparator) },
+                onSuccess = { list -> _tasks.value = list },
                 onFailure = { hasError = true }
             )
             noteRepo.getByCategory(categoryId).fold(
@@ -94,7 +87,7 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             taskRepo.create(categoryId, TaskRequest(title, desc?.ifBlank { null }, date?.ifBlank { null }, priority))
                 .fold(
                     onSuccess = { created ->
-                        _tasks.value = (_tasks.value + created).sortedWith(taskComparator)
+                        _tasks.value = _tasks.value + created
                         showTaskForm.value = false
                     },
                     onFailure = { _snackbarMessage.value = it.message ?: "Erro ao criar tarefa." }
@@ -114,7 +107,7 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             if (newStatus != oldTask.status) {
                 taskRepo.updateStatus(id, newStatus).onSuccess { updated = it }
             }
-            _tasks.value = _tasks.value.map { if (it.id == id) updated else it }.sortedWith(taskComparator)
+            _tasks.value = _tasks.value.map { if (it.id == id) updated else it }
             showTaskForm.value = false
             editingTask.value  = null
         }
@@ -125,7 +118,6 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
             taskRepo.updateStatus(id, status).fold(
                 onSuccess = { updated ->
                     _tasks.value = _tasks.value.map { if (it.id == id) updated else it }
-                        .sortedWith(taskComparator)
                 },
                 onFailure = { _snackbarMessage.value = "Erro ao atualizar status." }
             )
@@ -234,51 +226,31 @@ class CategoryViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun clearSnackbar() { _snackbarMessage.value = null }
-
-    // ── Sincronização / detecção de conflito ──────────────────────────────────
-    fun startNoteEdit(noteId: Long, loadedUpdatedAt: String) {
-        _noteSyncState.value = _noteSyncState.value + (noteId to SyncStateHolder(loadedUpdatedAt))
+    fun reorderTasks(from: Int, to: Int) {
+        if (from == to) return
+        _tasks.value = _tasks.value.toMutableList().also { it.add(to, it.removeAt(from)) }
     }
 
-    fun endNoteEdit(noteId: Long) {
-        _noteSyncState.value = _noteSyncState.value - noteId
-    }
-
-    fun checkNoteConflict(noteId: Long, localTitle: String, localContent: String?) {
-        val loadedAt = _noteSyncState.value[noteId]?.loadedUpdatedAt ?: return
+    fun persistTaskOrder() {
         viewModelScope.launch {
-            noteRepo.getById(noteId).fold(
-                onSuccess = { serverNote ->
-                    if (serverNote.updatedAt != loadedAt) {
-                        _conflictNote.value = NoteConflictState(noteId, serverNote, localTitle, localContent)
-                    } else {
-                        _snackbarMessage.value = "Sem conflitos. Dados atualizados."
-                    }
-                },
-                onFailure = { _snackbarMessage.value = "Erro ao verificar atualização." }
-            )
+            taskRepo.reorder(categoryId, _tasks.value.map { it.id }).onFailure {
+                _snackbarMessage.value = "Erro ao salvar ordem das tarefas."
+            }
         }
     }
 
-    fun discardNoteConflict() {
-        val state = _conflictNote.value ?: return
-        _notes.value = _notes.value.map { if (it.id == state.noteId) state.serverNote else it }
-        _noteSyncState.value = _noteSyncState.value - state.noteId
-        _conflictNote.value  = null
+    fun reorderNotes(from: Int, to: Int) {
+        if (from == to) return
+        _notes.value = _notes.value.toMutableList().also { it.add(to, it.removeAt(from)) }
     }
 
-    fun resolveNoteConflict(mergedTitle: String, mergedContent: String?) {
-        val state = _conflictNote.value ?: return
-        _conflictNote.value  = null
-        _noteSyncState.value = _noteSyncState.value - state.noteId
-        updateNote(state.noteId, mergedTitle, mergedContent)
+    fun persistNoteOrder() {
+        viewModelScope.launch {
+            noteRepo.reorder(categoryId, _notes.value.map { it.id }).onFailure {
+                _snackbarMessage.value = "Erro ao salvar ordem das anotações."
+            }
+        }
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-    private val taskComparator = Comparator<Task> { a, b ->
-        val priorityOrder = mapOf("HIGH" to 0, "MEDIUM" to 1, "LOW" to 2)
-        val p = (priorityOrder[a.priority] ?: 1) - (priorityOrder[b.priority] ?: 1)
-        if (p != 0) p else a.createdAt.compareTo(b.createdAt)
-    }
+    fun clearSnackbar() { _snackbarMessage.value = null }
 }

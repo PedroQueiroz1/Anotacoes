@@ -8,9 +8,6 @@ import com.tasknotes.android.network.NoteApi
 class NoteRepository {
     private val api = ApiClient.create<NoteApi>()
 
-    suspend fun getById(id: Long): Result<Note> =
-        runCatching { api.getById(id) }
-
     suspend fun getByCategory(categoryId: Long): Result<List<Note>> =
         runCatching { api.getByCategory(categoryId) }
 
@@ -19,6 +16,9 @@ class NoteRepository {
 
     suspend fun update(id: Long, title: String, content: String?): Result<Note> =
         runCatching { api.update(id, NoteRequest(title, content)) }
+
+    suspend fun reorder(categoryId: Long, ids: List<Long>): Result<Unit> =
+        runCatching { api.reorder(categoryId, ids) }
 
     suspend fun delete(id: Long): Result<Unit> =
         runCatching { api.delete(id) }

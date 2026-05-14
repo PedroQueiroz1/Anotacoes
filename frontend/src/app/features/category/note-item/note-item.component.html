@@ -30,33 +30,12 @@
         <p class="form-error">{{ editError }}</p>
       }
       <div class="form-actions">
-        <button class="btn btn--ghost btn--sm" (click)="checkUpdate()" [disabled]="isCheckingConflict">
-          {{ isCheckingConflict ? 'Verificando...' : 'Atualizar' }}
+        <button class="btn btn--ghost" (click)="cancelEdit()">Cancelar</button>
+        <button class="btn btn--primary" (click)="saveEdit()" [disabled]="isSaving">
+          {{ isSaving ? 'Salvando...' : 'Salvar' }}
         </button>
-        <div class="form-actions__right">
-          <button class="btn btn--ghost" (click)="cancelEdit()">Cancelar</button>
-          <button class="btn btn--primary" (click)="saveEdit()" [disabled]="!isDirty || isSaving">
-            {{ isSaving ? 'Salvando...' : 'Salvar' }}
-          </button>
-        </div>
       </div>
     </div>
   }
 
 </div>
-
-@if (showConflict && serverNote) {
-  <app-conflict-dialog
-    (discard)="onDiscard()"
-    (merge)="onMerge()">
-  </app-conflict-dialog>
-}
-
-@if (showMerge && serverNote) {
-  <app-merge-view
-    [local]="localFields"
-    [serverNote]="serverNote"
-    (confirmed)="onMergeConfirmed($event)"
-    (cancelled)="onMergeCancelled()">
-  </app-merge-view>
-}

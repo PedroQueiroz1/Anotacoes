@@ -27,4 +27,8 @@ export class CategoryService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
   }
+
+  reorder(ids: number[]): Observable<void> {
+    return this.http.put<void>(`${this.api}/reorder`, ids);
+  }
 }

@@ -17,6 +17,9 @@ class CategoryRepository {
     suspend fun update(id: Long, name: String): Result<Category> =
         runCatching { api.update(id, CategoryRequest(name.trim())) }
 
+    suspend fun reorder(ids: List<Long>): Result<Unit> =
+        runCatching { api.reorder(ids) }
+
     suspend fun delete(id: Long): Result<Unit> =
         runCatching { api.delete(id) }
 }

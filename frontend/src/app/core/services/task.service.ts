@@ -33,4 +33,8 @@ export class TaskService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`/api/tasks/${id}`);
   }
+
+  reorder(categoryId: number, ids: number[]): Observable<void> {
+    return this.http.put<void>(`/api/categories/${categoryId}/tasks/reorder`, ids);
+  }
 }

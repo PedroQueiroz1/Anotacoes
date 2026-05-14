@@ -79,9 +79,10 @@
           <button class="btn btn--primary" (click)="openCreate()">Criar primeira tarefa</button>
         </div>
       } @else {
-        <ul class="task-list">
+        <ul class="task-list" cdkDropList (cdkDropListDropped)="dropTasks($event)">
           @for (task of tasks; track task.id) {
-            <li>
+            <li class="task-list__item" cdkDrag>
+              <span class="drag-handle" cdkDragHandle title="Arrastar para reordenar">⠿</span>
               <app-task-item
                 [task]="task"
                 (statusChanged)="onStatusChanged($event)"
@@ -136,9 +137,10 @@
           <p>Nenhuma anotação nesta categoria.</p>
         </div>
       } @else {
-        <ul class="note-list">
+        <ul class="note-list" cdkDropList (cdkDropListDropped)="dropNotes($event)">
           @for (note of notes; track note.id) {
-            <li>
+            <li class="note-list__item" cdkDrag>
+              <span class="drag-handle" cdkDragHandle title="Arrastar para reordenar">⠿</span>
               <app-note-item
                 [note]="note"
                 (noteUpdated)="onNoteUpdated($event)"

@@ -9,6 +9,7 @@ import com.tasknotes.model.Note;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.NoteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,13 +26,9 @@ public class NoteService {
         this.categoryRepository = categoryRepository;
     }
 
-    public NoteResponse findById(Long id) {
-        return toResponse(findOrThrow(id));
-    }
-
     public List<NoteResponse> findByCategory(Long categoryId) {
         findCategoryOrThrow(categoryId);
-        return noteRepository.findByCategoryIdOrderByCreatedAtDesc(categoryId)
+        return noteRepository.findByCategoryIdOrdered(categoryId)
                 .stream().map(this::toResponse).toList();
     }
 
@@ -58,6 +55,14 @@ public class NoteService {
     public void delete(Long id) {
         findOrThrow(id);
         noteRepository.deleteById(id);
+    }
+
+    @Transactional
+    public void reorder(Long categoryId, List<Long> ids) {
+        findCategoryOrThrow(categoryId);
+        for (int i = 0; i < ids.size(); i++) {
+            noteRepository.updatePosition(ids.get(i), i);
+        }
     }
 
     private void validateContent(String content) {

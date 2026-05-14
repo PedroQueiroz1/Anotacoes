@@ -220,3 +220,34 @@ $radius:    10px;
   font-size: 16px;
   margin: 0;
 }
+
+// ── Drag & Drop ────────────────────────────────────────────────────────────
+.drag-handle {
+  cursor: grab;
+  color: $muted;
+  font-size: 18px;
+  flex-shrink: 0;
+  user-select: none;
+
+  &:active { cursor: grabbing; }
+}
+
+.cdk-drag-preview {
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cdk-drag-placeholder { opacity: 0; }
+
+.cdk-drag-animating { transition: transform 200ms ease; }
+
+.cdk-drop-list-dragging .category-item:not(.cdk-drag-dragging) {
+  transition: transform 200ms ease;
+}
