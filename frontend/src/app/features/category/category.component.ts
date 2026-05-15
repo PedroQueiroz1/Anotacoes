@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
@@ -31,11 +32,14 @@ function emptyTaskForm(): TaskForm {
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
-export class CategoryComponent implements OnInit {
+export class CategoryComponent implements OnInit, OnDestroy {
+  // paramMap subscription ensures data reloads when navigating between categories
   private route           = inject(ActivatedRoute);
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
   private noteService     = inject(NoteService);
+
+  private routeSub?: Subscription;
 
   readonly PRIORITY_LABEL = PRIORITY_LABEL;
   readonly STATUS_LABEL   = STATUS_LABEL;
@@ -94,8 +98,25 @@ export class CategoryComponent implements OnInit {
   deletingNoteId: number | null = null;
 
   ngOnInit(): void {
-    this.categoryId = Number(this.route.snapshot.paramMap.get('id'));
-    this.load();
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      this.categoryId = Number(params.get('id'));
+      this.resetState();
+      this.load();
+    });
+  }
+
+  ngOnDestroy(): void { this.routeSub?.unsubscribe(); }
+
+  private resetState(): void {
+    this.category = null;
+    this.tasks = [];
+    this.notes = [];
+    this.activeFilter = 'ALL';
+    this.showForm = false;
+    this.showNoteForm = false;
+    this.errorMessage = '';
+    this.deletingTaskId = null;
+    this.deletingNoteId = null;
   }
 
   load(): void {

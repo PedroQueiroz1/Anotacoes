@@ -2,10 +2,13 @@ $radius: 10px;
 
 // ── Layout ─────────────────────────────────────────────────────────────────
 .category-page {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
   padding: 28px 32px 80px;
   min-height: 100vh;
   background: var(--color-bg-page);
-  max-width: 860px;
+  box-sizing: border-box;
 }
 
 // ── Breadcrumb ─────────────────────────────────────────────────────────────

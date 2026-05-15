@@ -52,6 +52,12 @@ public class SubtaskService {
         return toResponse(subtaskRepository.save(subtask));
     }
 
+    public SubtaskResponse update(Long id, SubtaskRequest request) {
+        Subtask subtask = findOrThrow(id);
+        subtask.setText(request.text().trim());
+        return toResponse(subtaskRepository.save(subtask));
+    }
+
     public void delete(Long id) {
         findOrThrow(id);
         subtaskRepository.deleteById(id);

@@ -36,6 +36,14 @@ public class SubtaskController {
         return service.create(taskId, request);
     }
 
+    @PutMapping("/api/subtasks/{id}")
+    @Operation(summary = "Editar texto de uma subtarefa")
+    public SubtaskResponse update(
+            @PathVariable Long id,
+            @Valid @RequestBody SubtaskRequest request) {
+        return service.update(id, request);
+    }
+
     @PatchMapping("/api/subtasks/{id}/toggle")
     @Operation(summary = "Marcar/desmarcar subtarefa como concluída")
     public SubtaskResponse toggle(@PathVariable Long id) {

@@ -15,6 +15,10 @@ export class SubtaskService {
     return this.http.post<Subtask>(`/api/tasks/${taskId}/subtasks`, { text });
   }
 
+  update(id: number, text: string): Observable<Subtask> {
+    return this.http.put<Subtask>(`/api/subtasks/${id}`, { text });
+  }
+
   toggle(id: number): Observable<Subtask> {
     return this.http.patch<Subtask>(`/api/subtasks/${id}/toggle`, {});
   }

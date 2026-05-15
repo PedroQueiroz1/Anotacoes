@@ -35,7 +35,46 @@ export class TaskItemComponent implements OnInit {
   subtaskError = '';
   isAddingSubtask = false;
 
-  // ── Inline editing ────────────────────────────────────────────────────────
+  // ── Inline editing — subtarefa ─────────────────────────────────────────────
+  editingSubtaskId: number | null = null;
+  editingSubtaskText = '';
+  isSavingSubtask    = false;
+  subtaskEditError   = '';
+
+  startSubtaskEdit(subtask: Subtask, event: Event): void {
+    event.stopPropagation();
+    this.editingSubtaskId   = subtask.id;
+    this.editingSubtaskText = subtask.text;
+    this.subtaskEditError   = '';
+  }
+
+  cancelSubtaskEdit(): void {
+    this.editingSubtaskId = null;
+    this.subtaskEditError = '';
+  }
+
+  saveSubtaskEdit(): void {
+    const text = this.editingSubtaskText.trim();
+    if (!text) { this.subtaskEditError = 'O texto não pode ser vazio.'; return; }
+    if (text.length > 200) { this.subtaskEditError = 'Máximo 200 caracteres.'; return; }
+
+    this.isSavingSubtask = true;
+    this.subtaskEditError = '';
+    this.subtaskService.update(this.editingSubtaskId!, text).subscribe({
+      next: (updated) => {
+        const idx = this.subtasks.findIndex(s => s.id === updated.id);
+        if (idx !== -1) this.subtasks[idx] = updated;
+        this.editingSubtaskId = null;
+        this.isSavingSubtask  = false;
+      },
+      error: (err) => {
+        this.subtaskEditError = err.error?.message ?? 'Erro ao salvar.';
+        this.isSavingSubtask  = false;
+      },
+    });
+  }
+
+  // ── Inline editing — tarefa ────────────────────────────────────────────────
   editingField: 'title' | 'description' | null = null;
   inlineValue   = '';
   isSavingInline = false;

@@ -109,12 +109,39 @@
       } @else {
         <ul class="subtask-list">
           @for (s of subtasks; track s.id) {
-            <li class="subtask-item" [class.subtask-item--done]="s.done">
-              <label class="subtask-item__label">
-                <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
-                <span>{{ s.text }}</span>
-              </label>
-              <button class="btn-icon btn-icon--danger subtask-item__del" (click)="deleteSubtask(s.id)">✕</button>
+            <li class="subtask-item" [class.subtask-item--done]="s.done && editingSubtaskId !== s.id">
+
+              @if (editingSubtaskId === s.id) {
+                <!-- Modo edição inline da subtarefa -->
+                <div class="subtask-edit">
+                  <input
+                    class="subtask-edit__input"
+                    [(ngModel)]="editingSubtaskText"
+                    maxlength="200"
+                    (keyup.enter)="saveSubtaskEdit()"
+                    (keyup.escape)="cancelSubtaskEdit()"
+                    autofocus
+                  />
+                  <button class="subtask-edit__btn subtask-edit__btn--save" (click)="saveSubtaskEdit()" [disabled]="isSavingSubtask">✓</button>
+                  <button class="subtask-edit__btn subtask-edit__btn--cancel" (click)="cancelSubtaskEdit()">✕</button>
+                </div>
+                @if (subtaskEditError) {
+                  <p class="subtask-edit__error">{{ subtaskEditError }}</p>
+                }
+              } @else {
+                <!-- Modo normal: linha com checkbox + texto + lápis + lixeira -->
+                <div class="subtask-item__row">
+                  <label class="subtask-item__label">
+                    <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
+                    <span>{{ s.text }}</span>
+                  </label>
+                  <button class="subtask-item__pencil" title="Editar" (click)="startSubtaskEdit(s, $event)">✏</button>
+                  <button class="btn-icon btn-icon--danger subtask-item__del" (click)="deleteSubtask(s.id)">✕</button>
+                </div>
+                <!-- YouTube preview abaixo do texto -->
+                <app-youtube-preview [text]="s.text" />
+              }
+
             </li>
           }
           @if (subtasks.length === 0) {
