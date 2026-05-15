@@ -41,7 +41,7 @@ public class TaskService {
         task.setTitle(request.title().trim());
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
-        task.setPriority(request.priority() != null ? request.priority() : Priority.MEDIUM);
+        task.setPriority(request.priority() != null ? request.priority() : Priority.LOW);
         return toResponse(taskRepository.save(task));
     }
 

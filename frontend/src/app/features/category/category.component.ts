@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
-import { Task, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
+import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
 import { CategoryService } from '../../core/services/category.service';
 import { TaskService, TaskPayload } from '../../core/services/task.service';
@@ -16,11 +16,12 @@ interface TaskForm {
   title: string;
   description: string;
   dueDate: string;
+  priority: Priority;
   status: TaskStatus;
 }
 
 function emptyTaskForm(): TaskForm {
-  return { title: '', description: '', dueDate: '', status: 'TODO' };
+  return { title: '', description: '', dueDate: '', priority: 'LOW', status: 'TODO' };
 }
 
 @Component({
@@ -110,6 +111,7 @@ export class CategoryComponent implements OnInit {
       title:       task.title,
       description: task.description ?? '',
       dueDate:     task.dueDate ?? '',
+      priority:    task.priority,
       status:      task.status,
     };
     this.formError = '';

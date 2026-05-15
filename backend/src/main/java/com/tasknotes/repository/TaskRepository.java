@@ -14,7 +14,6 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query(value = "SELECT * FROM task WHERE category_id = :categoryId ORDER BY " +
                    "CASE WHEN position IS NULL THEN 1 ELSE 0 END ASC, " +
                    "position ASC, " +
-                   "CASE priority WHEN 'HIGH' THEN 0 WHEN 'MEDIUM' THEN 1 ELSE 2 END ASC, " +
                    "created_at ASC",
            nativeQuery = true)
     List<Task> findByCategoryIdOrdered(@Param("categoryId") Long categoryId);
