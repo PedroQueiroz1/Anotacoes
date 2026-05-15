@@ -5,22 +5,70 @@
     <!-- Prioridade + Título -->
     <div class="task-item__header">
       <span class="badge" [class]="priorityClass">{{ PRIORITY_LABEL[task.priority] }}</span>
-      <span class="task-item__title">{{ task.title }}</span>
+
+      @if (editingField === 'title') {
+        <div class="inline-edit inline-edit--title">
+          <input
+            class="inline-input"
+            [(ngModel)]="inlineValue"
+            maxlength="100"
+            (keyup.enter)="saveInlineEdit()"
+            (keyup.escape)="cancelInlineEdit()"
+            autofocus
+          />
+          <button class="inline-btn inline-btn--save" (click)="saveInlineEdit()" [disabled]="isSavingInline">✓</button>
+          <button class="inline-btn inline-btn--cancel" (click)="cancelInlineEdit()">✕</button>
+        </div>
+      } @else {
+        <div class="inline-edit-wrapper">
+          <span class="task-item__title">{{ task.title }}</span>
+          <button class="inline-pencil" title="Editar título" (click)="startInlineEdit('title', $event)">✏</button>
+        </div>
+      }
     </div>
+
+    @if (inlineError && editingField === 'title') {
+      <p class="inline-error">{{ inlineError }}</p>
+    }
 
     <!-- Metadados: prazo e descrição -->
     @if (task.dueDate) {
       <p class="task-item__due">Prazo: {{ task.dueDate }}</p>
     }
-    @if (task.description) {
-      <p class="task-item__desc">{{ task.description }}</p>
-      <app-youtube-preview [text]="task.description" />
+
+    @if (editingField === 'description') {
+      <div class="inline-edit inline-edit--desc">
+        <textarea
+          class="inline-textarea"
+          [(ngModel)]="inlineValue"
+          maxlength="500"
+          rows="3"
+          (keyup.escape)="cancelInlineEdit()"
+        ></textarea>
+        <div class="inline-edit__actions">
+          @if (inlineError) { <span class="inline-error">{{ inlineError }}</span> }
+          <button class="inline-btn inline-btn--save" (click)="saveInlineEdit()" [disabled]="isSavingInline">Salvar</button>
+          <button class="inline-btn inline-btn--cancel" (click)="cancelInlineEdit()">Cancelar</button>
+        </div>
+      </div>
+    } @else {
+      <div class="inline-edit-wrapper inline-edit-wrapper--desc">
+        @if (task.description) {
+          <p class="task-item__desc">{{ task.description }}</p>
+        } @else {
+          <span class="task-item__desc task-item__desc--placeholder">Sem descrição</span>
+        }
+        <button class="inline-pencil" title="Editar descrição" (click)="startInlineEdit('description', $event)">✏</button>
+      </div>
+      @if (task.description) {
+        <app-youtube-preview [text]="task.description" />
+      }
     }
 
     <!-- Linha de ações -->
     <div class="task-item__actions">
 
-      <!-- Status rápido (CA-08) -->
+      <!-- Status rápido -->
       <select class="status-select" [value]="task.status" (change)="onStatusChange($any($event.target).value)">
         @for (s of STATUS_OPTIONS; track s) {
           <option [value]="s">{{ STATUS_LABEL[s] }}</option>
@@ -37,13 +85,12 @@
 
       <div class="task-item__spacer"></div>
 
-      <button class="btn-icon" title="Editar" (click)="editRequested.emit(task)">✏️</button>
       <button class="btn-icon btn-icon--danger" title="Excluir" (click)="deleteRequested.emit(task.id)">🗑️</button>
     </div>
 
   </div>
 
-  <!-- Barra de progresso (CA-22) -->
+  <!-- Barra de progresso -->
   @if (subtasks.length > 0) {
     <div class="progress-wrapper">
       <div class="progress-bar">
@@ -53,7 +100,7 @@
     </div>
   }
 
-  <!-- Checklist de subtarefas (CA-10) -->
+  <!-- Checklist de subtarefas -->
   @if (isExpanded) {
     <div class="subtask-section">
 

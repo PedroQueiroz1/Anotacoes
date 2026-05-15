@@ -5,6 +5,10 @@ a      { text-decoration: none; }
 
 // ── Tema claro (padrão) ────────────────────────────────────────────────────
 :root {
+  --color-sidebar-bg:          #f0f0f6;
+  --color-sidebar-border:      #e0e0ea;
+  --color-sidebar-active-bg:   rgba(79, 70, 229, 0.09);
+  --color-sidebar-active-text: #4f46e5;
   --color-primary:          #4f46e5;
   --color-primary-focus:    rgba(79, 70, 229, 0.15);
   --color-danger:           #e53e3e;
@@ -29,6 +33,10 @@ a      { text-decoration: none; }
 
 // ── Tema escuro ────────────────────────────────────────────────────────────
 body.dark-theme {
+  --color-sidebar-bg:          #111827;
+  --color-sidebar-border:      #1f2937;
+  --color-sidebar-active-bg:   rgba(129, 140, 248, 0.12);
+  --color-sidebar-active-text: #818cf8;
   --color-primary:          #818cf8;
   --color-primary-focus:    rgba(129, 140, 248, 0.2);
   --color-danger:           #f87171;

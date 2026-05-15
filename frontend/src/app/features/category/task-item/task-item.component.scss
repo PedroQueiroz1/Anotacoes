@@ -52,6 +52,108 @@
   line-height: 1.4;
 }
 
+.task-item__desc--placeholder {
+  font-style: italic;
+  opacity: 0.5;
+}
+
+// ── Inline editing ─────────────────────────────────────────────────────────
+.inline-edit-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+
+  &--desc {
+    align-items: flex-start;
+    margin-top: 2px;
+  }
+}
+
+.inline-pencil {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--color-muted);
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+
+  &:hover { background: var(--color-btn-ghost); color: var(--color-primary); }
+}
+
+.task-item:hover .inline-pencil { opacity: 1; }
+
+.inline-edit {
+  flex: 1;
+  min-width: 0;
+
+  &--title { display: flex; align-items: center; gap: 4px; flex: 1; }
+  &--desc  { display: flex; flex-direction: column; gap: 6px; }
+}
+
+.inline-input {
+  flex: 1;
+  padding: 4px 8px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  min-width: 0;
+
+  &:focus { outline: none; box-shadow: 0 0 0 2px var(--color-primary-focus); }
+}
+
+.inline-textarea {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-primary);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  resize: vertical;
+  box-sizing: border-box;
+
+  &:focus { outline: none; box-shadow: 0 0 0 2px var(--color-primary-focus); }
+}
+
+.inline-edit__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.inline-btn {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  font-weight: 500;
+
+  &--save   { background: var(--color-primary); color: #fff; &:disabled { opacity: 0.5; cursor: not-allowed; } }
+  &--cancel { background: var(--color-btn-ghost); color: var(--color-btn-ghost-text); }
+}
+
+.inline-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 0;
+  flex: 1;
+}
+
 // ── Linha de ações ─────────────────────────────────────────────────────────
 .task-item__actions {
   display: flex;

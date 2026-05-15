@@ -11,8 +11,6 @@ import { NoteService, NotePayload } from '../../core/services/note.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TaskItemComponent } from './task-item/task-item.component';
 import { NoteItemComponent } from './note-item/note-item.component';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 
 interface TaskForm {
   title: string;
@@ -29,7 +27,7 @@ function emptyTaskForm(): TaskForm {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule, ThemeToggleComponent, GlobalSearchComponent],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule],
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
@@ -54,10 +52,10 @@ export class CategoryComponent implements OnInit {
   activeFilter: 'ALL' | TaskStatus = 'ALL';
 
   readonly filterOptions: { value: 'ALL' | TaskStatus; label: string }[] = [
-    { value: 'ALL',         label: 'Todos' },
-    { value: 'TODO',        label: 'A Fazer' },
-    { value: 'IN_PROGRESS', label: 'Em Progresso' },
-    { value: 'DONE',        label: 'Concluída' },
+    { value: 'ALL',         label: 'Todas' },
+    { value: 'TODO',        label: 'A fazer' },
+    { value: 'IN_PROGRESS', label: 'Em andamento' },
+    { value: 'DONE',        label: 'Concluídas' },
   ];
 
   get filteredTasks(): Task[] {
@@ -65,16 +63,22 @@ export class CategoryComponent implements OnInit {
     return this.tasks.filter(t => t.status === this.activeFilter);
   }
 
-  setFilter(value: 'ALL' | TaskStatus): void {
-    this.activeFilter = value;
-  }
+  setFilter(value: 'ALL' | TaskStatus): void { this.activeFilter = value; }
 
-  showForm = false;
+  // ── Estatísticas ──────────────────────────────────────────────────────────
+  get statTotal():    number { return this.tasks.length; }
+  get statActive():   number { return this.tasks.filter(t => t.status !== 'DONE').length; }
+  get statDone():     number { return this.tasks.filter(t => t.status === 'DONE').length; }
+  get statProgress(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
+  get statNotes():    number { return this.notes.length; }
+
+  // ── Formulário de tarefa ──────────────────────────────────────────────────
+  showForm       = false;
   formMode: 'create' | 'edit' = 'create';
   editingTaskId: number | null = null;
   form: TaskForm = emptyTaskForm();
-  formError = '';
-  isSaving  = false;
+  formError      = '';
+  isSaving       = false;
 
   deletingTaskId: number | null = null;
 
@@ -142,10 +146,7 @@ export class CategoryComponent implements OnInit {
     this.showNoteForm = false;
   }
 
-  cancelForm(): void {
-    this.showForm = false;
-    this.formError = '';
-  }
+  cancelForm(): void { this.showForm = false; this.formError = ''; }
 
   saveForm(): void {
     const title = this.form.title.trim();
@@ -176,13 +177,15 @@ export class CategoryComponent implements OnInit {
     }
   }
 
-  // ── Status rápido de tarefa ────────────────────────────────────────────────
+  // ── Status rápido ─────────────────────────────────────────────────────────
   onStatusChanged(event: { id: number; status: TaskStatus }): void {
     this.taskService.updateStatus(event.id, event.status).subscribe({
       next: (updated) => { this.replaceTask(updated); },
       error: ()       => { this.errorMessage = 'Erro ao atualizar status.'; },
     });
   }
+
+  onTaskUpdated(updated: Task): void { this.replaceTask(updated); }
 
   // ── Exclusão de tarefa ────────────────────────────────────────────────────
   onDeleteRequested(taskId: number): void { this.deletingTaskId = taskId; }
@@ -197,17 +200,11 @@ export class CategoryComponent implements OnInit {
 
   // ── Formulário de anotação ────────────────────────────────────────────────
   openNoteCreate(): void {
-    this.noteTitle     = '';
-    this.noteContent   = '';
-    this.noteFormError = '';
-    this.showNoteForm  = true;
-    this.showForm      = false;
+    this.noteTitle = ''; this.noteContent = ''; this.noteFormError = '';
+    this.showNoteForm = true; this.showForm = false;
   }
 
-  cancelNoteForm(): void {
-    this.showNoteForm = false;
-    this.noteFormError = '';
-  }
+  cancelNoteForm(): void { this.showNoteForm = false; this.noteFormError = ''; }
 
   saveNoteForm(): void {
     const title = this.noteTitle.trim();
@@ -216,8 +213,7 @@ export class CategoryComponent implements OnInit {
     if (this.noteContent.length > 2000) { this.noteFormError = 'Conteúdo: máximo 2000 caracteres.'; return; }
 
     const payload: NotePayload = { title, content: this.noteContent || null };
-    this.isSavingNote  = true;
-    this.noteFormError = '';
+    this.isSavingNote = true; this.noteFormError = '';
 
     this.noteService.create(this.categoryId, payload).subscribe({
       next: (note) => { this.notes.unshift(note); this.showNoteForm = false; this.isSavingNote = false; },
@@ -225,13 +221,11 @@ export class CategoryComponent implements OnInit {
     });
   }
 
-  // ── Atualização de anotação ───────────────────────────────────────────────
   onNoteUpdated(updated: Note): void {
     const idx = this.notes.findIndex(n => n.id === updated.id);
     if (idx !== -1) this.notes[idx] = updated;
   }
 
-  // ── Exclusão de anotação ──────────────────────────────────────────────────
   onNoteDeleteRequested(noteId: number): void { this.deletingNoteId = noteId; }
   cancelNoteDelete(): void                    { this.deletingNoteId = null; }
 
@@ -253,8 +247,7 @@ export class CategoryComponent implements OnInit {
     this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
   }
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
-  private replaceTask(updated: Task): void {
+  replaceTask(updated: Task): void {
     const idx = this.tasks.findIndex(t => t.id === updated.id);
     if (idx !== -1) this.tasks[idx] = updated;
   }

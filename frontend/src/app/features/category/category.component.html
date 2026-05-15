@@ -1,16 +1,17 @@
 <div class="category-page">
 
+  <!-- ── Breadcrumb ─────────────────────────────────────────────────────────── -->
+  <nav class="breadcrumb">
+    <a class="breadcrumb__link" routerLink="/">Início</a>
+    <span class="breadcrumb__sep">/</span>
+    <span class="breadcrumb__current">{{ category?.name ?? '...' }}</span>
+  </nav>
+
   <!-- ── Cabeçalho ──────────────────────────────────────────────────────────── -->
   <header class="cat-header">
-    <a class="back-btn" routerLink="/">← Início</a>
     <h1 class="cat-header__title">{{ category?.name ?? '...' }}</h1>
-    <app-theme-toggle />
     <button class="btn btn--primary" (click)="openCreate()">+ Nova Tarefa</button>
   </header>
-
-  <div class="search-wrapper">
-    <app-global-search />
-  </div>
 
   @if (errorMessage) {
     <div class="alert alert--error">{{ errorMessage }}</div>
@@ -19,6 +20,26 @@
   @if (isLoading) {
     <div class="loading">Carregando...</div>
   } @else {
+
+    <!-- ── Cards de estatísticas ──────────────────────────────────────────── -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-card__value">{{ statActive }}</span>
+        <span class="stat-card__label">Ativas</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__value">{{ statProgress }}</span>
+        <span class="stat-card__label">Em Andamento</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__value">{{ statDone }}</span>
+        <span class="stat-card__label">Concluídas</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-card__value">{{ statNotes }}</span>
+        <span class="stat-card__label">Anotações</span>
+      </div>
+    </div>
 
     <!-- ── Formulário de criação / edição de tarefa ────────────────────────── -->
     @if (showForm) {
@@ -78,8 +99,14 @@
 
     <!-- ── Lista de tarefas ────────────────────────────────────────────────── -->
     <section class="tasks-section">
+      <div class="section-header">
+        <h2 class="section-header__title">Tarefas</h2>
+        @if (!showForm) {
+          <button class="btn btn--ghost btn--sm" (click)="openCreate()">+ Nova</button>
+        }
+      </div>
 
-      <!-- Filtro por status (CA-23) -->
+      <!-- Filtro por status -->
       @if (tasks.length > 0 || activeFilter !== 'ALL') {
         <div class="filter-bar">
           @for (opt of filterOptions; track opt.value) {
@@ -119,6 +146,7 @@
                 (statusChanged)="onStatusChanged($event)"
                 (editRequested)="openEdit($event)"
                 (deleteRequested)="onDeleteRequested($event)"
+                (taskUpdated)="onTaskUpdated($event)"
               />
             </li>
           }
@@ -128,10 +156,10 @@
 
     <!-- ── Seção de anotações ──────────────────────────────────────────────── -->
     <section class="notes-section">
-      <div class="notes-header">
-        <h2 class="notes-header__title">Anotações</h2>
+      <div class="section-header">
+        <h2 class="section-header__title">Anotações</h2>
         @if (!showNoteForm) {
-          <button class="btn btn--primary btn--sm" (click)="openNoteCreate()">+ Nova Anotação</button>
+          <button class="btn btn--ghost btn--sm" (click)="openNoteCreate()">+ Nova</button>
         }
       </div>
 

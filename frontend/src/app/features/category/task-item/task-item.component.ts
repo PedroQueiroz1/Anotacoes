@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../../core/models/task.model';
 import { Subtask } from '../../../core/models/subtask.model';
 import { SubtaskService } from '../../../core/services/subtask.service';
+import { TaskService } from '../../../core/services/task.service';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
@@ -17,8 +18,10 @@ export class TaskItemComponent implements OnInit {
   @Output() statusChanged   = new EventEmitter<{ id: number; status: TaskStatus }>();
   @Output() editRequested   = new EventEmitter<Task>();
   @Output() deleteRequested = new EventEmitter<number>();
+  @Output() taskUpdated     = new EventEmitter<Task>();
 
   private subtaskService = inject(SubtaskService);
+  private taskService    = inject(TaskService);
 
   readonly PRIORITY_LABEL = PRIORITY_LABEL;
   readonly STATUS_LABEL   = STATUS_LABEL;
@@ -31,6 +34,12 @@ export class TaskItemComponent implements OnInit {
   newSubtaskText = '';
   subtaskError = '';
   isAddingSubtask = false;
+
+  // ── Inline editing ────────────────────────────────────────────────────────
+  editingField: 'title' | 'description' | null = null;
+  inlineValue   = '';
+  isSavingInline = false;
+  inlineError    = '';
 
   ngOnInit(): void {}
 
@@ -48,6 +57,52 @@ export class TaskItemComponent implements OnInit {
     return this.subtasks.length === 0
       ? 0
       : Math.round(this.doneCount / this.subtasks.length * 100);
+  }
+
+  // ── Inline editing ────────────────────────────────────────────────────────
+  startInlineEdit(field: 'title' | 'description', event: Event): void {
+    event.stopPropagation();
+    this.editingField = field;
+    this.inlineValue  = field === 'title' ? this.task.title : (this.task.description ?? '');
+    this.inlineError  = '';
+  }
+
+  cancelInlineEdit(): void {
+    this.editingField = null;
+    this.inlineError  = '';
+  }
+
+  saveInlineEdit(): void {
+    const value = this.inlineValue.trim();
+    if (this.editingField === 'title') {
+      if (!value) { this.inlineError = 'O título é obrigatório.'; return; }
+      if (value.length > 100) { this.inlineError = 'Máximo 100 caracteres.'; return; }
+    } else {
+      if (value.length > 500) { this.inlineError = 'Máximo 500 caracteres.'; return; }
+    }
+
+    this.isSavingInline = true;
+    this.inlineError = '';
+
+    const payload: any = {
+      title:       this.editingField === 'title' ? value : this.task.title,
+      description: this.editingField === 'description' ? (value || null) : (this.task.description ?? null),
+      dueDate:     this.task.dueDate ?? null,
+      status:      this.task.status,
+      priority:    this.task.priority,
+    };
+
+    this.taskService.update(this.task.id, payload).subscribe({
+      next: (updated) => {
+        this.taskUpdated.emit(updated);
+        this.editingField   = null;
+        this.isSavingInline = false;
+      },
+      error: (err) => {
+        this.inlineError    = err.error?.message ?? 'Erro ao salvar.';
+        this.isSavingInline = false;
+      },
+    });
   }
 
   // ── Expand / collapse subtarefas ──────────────────────────────────────────
