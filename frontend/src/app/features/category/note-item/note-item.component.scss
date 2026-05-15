@@ -1,17 +1,11 @@
-$primary: #4f46e5;
-$danger:  #e53e3e;
-$text:    #1a1a2e;
-$muted:   #6b7280;
-$border:  #e5e7eb;
-
 .note-item {
-  background: #fff;
-  border: 1px solid $border;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 14px 16px;
   transition: box-shadow 0.15s;
 
-  &:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  &:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
 }
 
 // ── Modo leitura ───────────────────────────────────────────────────────────
@@ -25,7 +19,7 @@ $border:  #e5e7eb;
   flex: 1;
   font-size: 15px;
   font-weight: 600;
-  color: $text;
+  color: var(--color-text);
 }
 
 .note-item__actions {
@@ -37,7 +31,7 @@ $border:  #e5e7eb;
 .note-item__content {
   margin: 8px 0 0;
   font-size: 14px;
-  color: $muted;
+  color: var(--color-muted);
   line-height: 1.5;
   white-space: pre-wrap;
 }
@@ -59,20 +53,25 @@ $border:  #e5e7eb;
 .form-label {
   font-size: 13px;
   font-weight: 500;
-  color: $muted;
+  color: var(--color-muted);
 }
 
 .form-input {
   padding: 9px 12px;
-  border: 1px solid $border;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   font-size: 14px;
   font-family: inherit;
-  color: $text;
+  color: var(--color-text);
+  background: var(--color-bg-card);
   width: 100%;
   box-sizing: border-box;
 
-  &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.12); }
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
+  }
 }
 
 .form-textarea {
@@ -82,7 +81,7 @@ $border:  #e5e7eb;
 
 .form-error {
   font-size: 13px;
-  color: $danger;
+  color: var(--color-danger);
   margin: 0 0 10px;
 }
 
@@ -107,8 +106,8 @@ $border:  #e5e7eb;
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
-.btn--primary { background: $primary; color: #fff; }
-.btn--ghost   { background: #f0f0f0; color: #444; }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--ghost   { background: var(--color-btn-ghost); color: var(--color-btn-ghost-text); }
 
 .btn-icon {
   background: none;
@@ -120,6 +119,6 @@ $border:  #e5e7eb;
   line-height: 1;
   transition: background 0.15s;
 
-  &:hover { background: #f0f0f0; }
-  &--danger:hover { background: #fee2e2; }
+  &:hover         { background: var(--color-btn-ghost); }
+  &--danger:hover { background: var(--color-danger-hover); }
 }

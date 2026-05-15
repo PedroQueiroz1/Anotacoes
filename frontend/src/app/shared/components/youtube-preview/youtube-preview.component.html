@@ -1,0 +1,12 @@
+@for (preview of previews; track preview.url) {
+  <a
+    class="yt-preview"
+    [href]="preview.url"
+    target="_blank"
+    rel="noopener noreferrer"
+    title="{{ preview.title }}"
+  >
+    <span class="yt-preview__icon">&#9654;</span>
+    <span class="yt-preview__title">{{ preview.title }}</span>
+  </a>
+}

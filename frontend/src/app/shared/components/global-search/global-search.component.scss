@@ -1,0 +1,129 @@
+.global-search {
+  position: relative;
+  width: 100%;
+}
+
+// ── Input box ──────────────────────────────────────────────────────────────
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 0 10px;
+  transition: border-color 0.15s;
+
+  &:focus-within { border-color: var(--color-primary); }
+}
+
+.search-box__icon {
+  font-size: 14px;
+  color: var(--color-muted);
+  flex-shrink: 0;
+}
+
+.search-box__input {
+  flex: 1;
+  padding: 9px 4px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--color-text);
+  outline: none;
+
+  &::placeholder { color: var(--color-muted); }
+  &::-webkit-search-cancel-button { display: none; }
+}
+
+.search-box__clear {
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+  font-family: inherit;
+
+  &:hover { color: var(--color-text); }
+}
+
+// ── Dropdown ───────────────────────────────────────────────────────────────
+.search-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 200;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.search-status {
+  padding: 14px 16px;
+  font-size: 14px;
+  color: var(--color-muted);
+  text-align: center;
+  margin: 0;
+}
+
+// ── Groups ─────────────────────────────────────────────────────────────────
+.search-group {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.search-group__label {
+  display: block;
+  padding: 0 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// ── Individual result ──────────────────────────────────────────────────────
+.search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.12s;
+
+  &:hover { background: var(--color-btn-ghost); }
+}
+
+.search-result__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.search-result__meta {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+
+.search-result__snippet {
+  font-size: 12px;
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

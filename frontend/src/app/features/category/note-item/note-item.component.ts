@@ -2,11 +2,12 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
+import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
   selector: 'app-note-item',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, YoutubePreviewComponent],
   templateUrl: './note-item.component.html',
   styleUrl: './note-item.component.scss',
 })

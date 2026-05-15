@@ -1,21 +1,15 @@
-// ── Variáveis ──────────────────────────────────────────────────────────────
-$primary:   #4f46e5;
-$danger:    #e53e3e;
-$text:      #1a1a2e;
-$muted:     #6b7280;
-$border:    #e5e7eb;
-$bg-page:   #f8f9fc;
-$bg-card:   #ffffff;
-$radius:    10px;
+$radius: 10px;
 
 // ── Layout base ────────────────────────────────────────────────────────────
 .home {
   max-width: 600px;
   margin: 0 auto;
   padding: 40px 20px 80px;
-  background: $bg-page;
+  background: var(--color-bg-page);
   min-height: 100vh;
 }
+
+.search-wrapper { margin-bottom: 20px; }
 
 // ── Cabeçalho ──────────────────────────────────────────────────────────────
 .home__header {
@@ -28,14 +22,20 @@ $radius:    10px;
 .home__title {
   font-size: 28px;
   font-weight: 700;
-  color: $text;
+  color: var(--color-text);
   margin: 0;
+}
+
+.home__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .limit-badge {
   font-size: 13px;
-  color: $muted;
-  background: #f0f0f0;
+  color: var(--color-muted);
+  background: var(--color-btn-ghost);
   padding: 6px 12px;
   border-radius: 20px;
 }
@@ -51,8 +51,8 @@ $radius:    10px;
 }
 
 .category-item {
-  background: $bg-card;
-  border: 1px solid $border;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: $radius;
   padding: 16px 18px;
   display: flex;
@@ -69,14 +69,14 @@ $radius:    10px;
   flex: 1;
   font-size: 16px;
   font-weight: 500;
-  color: $text;
+  color: var(--color-text);
   text-decoration: none;
 
-  &:hover { color: $primary; }
+  &:hover { color: var(--color-primary); }
 }
 
 .category-item__badge {
-  background: $primary;
+  background: var(--color-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -113,13 +113,13 @@ $radius:    10px;
 }
 
 .btn--primary {
-  background: $primary;
+  background: var(--color-primary);
   color: #fff;
 }
 
 .btn--ghost {
-  background: #f0f0f0;
-  color: #444;
+  background: var(--color-btn-ghost);
+  color: var(--color-btn-ghost-text);
 }
 
 .btn-icon {
@@ -132,8 +132,8 @@ $radius:    10px;
   line-height: 1;
   transition: background 0.15s;
 
-  &:hover { background: #f0f0f0; }
-  &--danger:hover { background: #fee2e2; }
+  &:hover { background: var(--color-btn-ghost); }
+  &--danger:hover { background: var(--color-danger-hover); }
 }
 
 // ── Formulário inline ─────────────────────────────────────────────────────
@@ -144,8 +144,8 @@ $radius:    10px;
   gap: 8px;
 
   &--new {
-    background: $bg-card;
-    border: 1px solid $border;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
     border-radius: $radius;
     padding: 18px;
   }
@@ -154,20 +154,24 @@ $radius:    10px;
 .inline-form__label {
   font-size: 13px;
   font-weight: 500;
-  color: $muted;
+  color: var(--color-muted);
 }
 
 .inline-form__input {
   padding: 9px 12px;
-  border: 1px solid $border;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   font-size: 15px;
   width: 100%;
   box-sizing: border-box;
   outline: none;
-  color: $text;
+  color: var(--color-text);
+  background: var(--color-bg-card);
 
-  &:focus { border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.15); }
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
+  }
 }
 
 .inline-form__actions {
@@ -183,7 +187,7 @@ $radius:    10px;
 // ── Feedback ───────────────────────────────────────────────────────────────
 .field-error {
   font-size: 13px;
-  color: $danger;
+  color: var(--color-danger);
 }
 
 .alert {
@@ -193,15 +197,15 @@ $radius:    10px;
   font-size: 14px;
 
   &--error {
-    background: #fff5f5;
-    color: $danger;
-    border: 1px solid #fed7d7;
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
   }
 }
 
 .loading {
   text-align: center;
-  color: $muted;
+  color: var(--color-muted);
   padding: 40px 0;
 }
 
@@ -216,7 +220,7 @@ $radius:    10px;
 }
 
 .empty-state__text {
-  color: $muted;
+  color: var(--color-muted);
   font-size: 16px;
   margin: 0;
 }
@@ -224,7 +228,7 @@ $radius:    10px;
 // ── Drag & Drop ────────────────────────────────────────────────────────────
 .drag-handle {
   cursor: grab;
-  color: $muted;
+  color: var(--color-muted);
   font-size: 18px;
   flex-shrink: 0;
   user-select: none;
@@ -233,11 +237,11 @@ $radius:    10px;
 }
 
 .cdk-drag-preview {
-  background: $bg-card;
-  border: 1px solid $border;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: $radius;
   padding: 16px 18px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   list-style: none;
   display: flex;
   align-items: center;

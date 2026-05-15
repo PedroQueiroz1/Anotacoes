@@ -5,13 +5,15 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { Category } from '../../core/models/category.model';
 import { CategoryService } from '../../core/services/category.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 
 const MAX_CATEGORIES = 5;
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, DragDropModule],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, DragDropModule, ThemeToggleComponent, GlobalSearchComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })

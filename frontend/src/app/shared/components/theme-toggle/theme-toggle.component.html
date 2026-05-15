@@ -1,0 +1,9 @@
+<button
+  class="theme-toggle"
+  [class.theme-toggle--dark]="isDark()"
+  (click)="toggle()"
+  [title]="isDark() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+>
+  <span class="theme-toggle__icon">{{ isDark() ? '&#9788;' : '&#9789;' }}</span>
+  <span class="theme-toggle__label">{{ isDark() ? 'Claro' : 'Escuro' }}</span>
+</button>

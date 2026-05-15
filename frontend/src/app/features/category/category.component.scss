@@ -1,9 +1,4 @@
-$primary: #4f46e5;
-$danger:  #e53e3e;
-$text:    #1a1a2e;
-$muted:   #6b7280;
-$border:  #e5e7eb;
-$radius:  10px;
+$radius: 10px;
 
 // ── Layout ─────────────────────────────────────────────────────────────────
 .category-page {
@@ -11,6 +6,7 @@ $radius:  10px;
   margin: 0 auto;
   padding: 32px 20px 80px;
   min-height: 100vh;
+  background: var(--color-bg-page);
 }
 
 // ── Cabeçalho ──────────────────────────────────────────────────────────────
@@ -24,18 +20,18 @@ $radius:  10px;
 
 .back-btn {
   font-size: 14px;
-  color: $muted;
+  color: var(--color-muted);
   text-decoration: none;
   white-space: nowrap;
 
-  &:hover { color: $primary; }
+  &:hover { color: var(--color-primary); }
 }
 
 .cat-header__title {
   flex: 1;
   font-size: 24px;
   font-weight: 700;
-  color: $text;
+  color: var(--color-text);
   margin: 0;
   min-width: 0;
   white-space: nowrap;
@@ -43,10 +39,12 @@ $radius:  10px;
   text-overflow: ellipsis;
 }
 
+.search-wrapper { margin-bottom: 20px; }
+
 // ── Formulário de tarefa ───────────────────────────────────────────────────
 .task-form-card {
-  background: #fff;
-  border: 1px solid $border;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: $radius;
   padding: 22px;
   margin-bottom: 24px;
@@ -55,7 +53,7 @@ $radius:  10px;
 .task-form-card__title {
   font-size: 17px;
   font-weight: 600;
-  color: $text;
+  color: var(--color-text);
   margin: 0 0 18px;
 }
 
@@ -69,20 +67,25 @@ $radius:  10px;
 .form-label {
   font-size: 13px;
   font-weight: 500;
-  color: $muted;
+  color: var(--color-muted);
 }
 
 .form-input {
   padding: 9px 12px;
-  border: 1px solid $border;
+  border: 1px solid var(--color-border);
   border-radius: 7px;
   font-size: 14px;
   font-family: inherit;
-  color: $text;
+  color: var(--color-text);
+  background: var(--color-bg-card);
   width: 100%;
   box-sizing: border-box;
 
-  &:focus { outline: none; border-color: $primary; box-shadow: 0 0 0 3px rgba($primary, 0.12); }
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
+  }
 }
 
 .form-textarea {
@@ -100,7 +103,7 @@ $radius:  10px;
 
 .form-error {
   font-size: 13px;
-  color: $danger;
+  color: var(--color-danger);
   margin: 0 0 10px;
 }
 
@@ -126,8 +129,37 @@ $radius:  10px;
   &:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 
-.btn--primary { background: $primary; color: #fff; }
-.btn--ghost   { background: #f0f0f0; color: #444; }
+.btn--primary { background: var(--color-primary); color: #fff; }
+.btn--ghost   { background: var(--color-btn-ghost); color: var(--color-btn-ghost-text); }
+
+// ── Filtro por status ──────────────────────────────────────────────────────
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+  &--active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+}
 
 // ── Lista de tarefas ───────────────────────────────────────────────────────
 .tasks-section { margin-top: 4px; }
@@ -148,10 +180,14 @@ $radius:  10px;
   margin-bottom: 20px;
   font-size: 14px;
 
-  &--error { background: #fff5f5; color: $danger; border: 1px solid #fed7d7; }
+  &--error {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border: 1px solid var(--color-danger-border);
+  }
 }
 
-.loading { text-align: center; color: $muted; padding: 40px 0; }
+.loading { text-align: center; color: var(--color-muted); padding: 40px 0; }
 
 .empty-state {
   text-align: center;
@@ -160,7 +196,7 @@ $radius:  10px;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  color: $muted;
+  color: var(--color-muted);
   font-size: 15px;
 
   &--sm { padding: 24px 20px; }
@@ -179,7 +215,7 @@ $radius:  10px;
 .notes-header__title {
   font-size: 18px;
   font-weight: 700;
-  color: $text;
+  color: var(--color-text);
   margin: 0;
 }
 
@@ -209,20 +245,22 @@ $radius:  10px;
 
 .drag-handle {
   cursor: grab;
-  color: $muted;
+  color: var(--color-muted);
   font-size: 18px;
   flex-shrink: 0;
   user-select: none;
   padding-top: 2px;
 
   &:active { cursor: grabbing; }
+
+  &--hidden { visibility: hidden; pointer-events: none; }
 }
 
 .cdk-drag-preview {
-  background: #fff;
-  border: 1px solid $border;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: $radius;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   list-style: none;
   display: flex;
   align-items: flex-start;

@@ -1,0 +1,78 @@
+<div class="global-search">
+
+  <div class="search-box">
+    <span class="search-box__icon" aria-hidden="true">&#128269;</span>
+    <input
+      class="search-box__input"
+      type="search"
+      [(ngModel)]="query"
+      (input)="onInput()"
+      (keydown)="onKeyDown($event)"
+      placeholder="Buscar tarefas, anotações, categorias..."
+      autocomplete="off"
+      aria-label="Busca global"
+    />
+    @if (query) {
+      <button class="search-box__clear" (click)="close()" aria-label="Limpar busca">&#10005;</button>
+    }
+  </div>
+
+  @if (showDropdown) {
+    <div class="search-dropdown" role="listbox">
+
+      @if (isSearching) {
+        <p class="search-status">Buscando...</p>
+      } @else if (results.length === 0) {
+        <p class="search-status">Nenhum resultado encontrado.</p>
+      } @else {
+
+        @if (categories.length > 0) {
+          <div class="search-group">
+            <span class="search-group__label">Categorias</span>
+            @for (r of categories; track r.id) {
+              <button class="search-result" (click)="navigate(r)" role="option">
+                <span class="search-result__title">{{ r.title }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        @if (tasks.length > 0) {
+          <div class="search-group">
+            <span class="search-group__label">Tarefas</span>
+            @for (r of tasks; track r.id) {
+              <button class="search-result" (click)="navigate(r)" role="option">
+                <span class="search-result__title">{{ r.title }}</span>
+                @if (r.categoryName) {
+                  <span class="search-result__meta">em {{ r.categoryName }}</span>
+                }
+                @if (r.snippet) {
+                  <span class="search-result__snippet">{{ r.snippet }}</span>
+                }
+              </button>
+            }
+          </div>
+        }
+
+        @if (notes.length > 0) {
+          <div class="search-group">
+            <span class="search-group__label">Anotações</span>
+            @for (r of notes; track r.id) {
+              <button class="search-result" (click)="navigate(r)" role="option">
+                <span class="search-result__title">{{ r.title }}</span>
+                @if (r.categoryName) {
+                  <span class="search-result__meta">em {{ r.categoryName }}</span>
+                }
+                @if (r.snippet) {
+                  <span class="search-result__snippet">{{ r.snippet }}</span>
+                }
+              </button>
+            }
+          </div>
+        }
+
+      }
+    </div>
+  }
+
+</div>

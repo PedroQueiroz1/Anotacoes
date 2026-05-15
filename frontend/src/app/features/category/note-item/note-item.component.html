@@ -12,6 +12,7 @@
       </div>
       @if (note.content) {
         <p class="note-item__content">{{ note.content }}</p>
+        <app-youtube-preview [text]="note.content" />
       }
     </div>
   } @else {

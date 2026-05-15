@@ -4,8 +4,13 @@
   <header class="cat-header">
     <a class="back-btn" routerLink="/">← Início</a>
     <h1 class="cat-header__title">{{ category?.name ?? '...' }}</h1>
+    <app-theme-toggle />
     <button class="btn btn--primary" (click)="openCreate()">+ Nova Tarefa</button>
   </header>
+
+  <div class="search-wrapper">
+    <app-global-search />
+  </div>
 
   @if (errorMessage) {
     <div class="alert alert--error">{{ errorMessage }}</div>
@@ -73,16 +78,42 @@
 
     <!-- ── Lista de tarefas ────────────────────────────────────────────────── -->
     <section class="tasks-section">
+
+      <!-- Filtro por status (CA-23) -->
+      @if (tasks.length > 0 || activeFilter !== 'ALL') {
+        <div class="filter-bar">
+          @for (opt of filterOptions; track opt.value) {
+            <button
+              class="filter-chip"
+              [class.filter-chip--active]="activeFilter === opt.value"
+              (click)="setFilter(opt.value)"
+            >{{ opt.label }}</button>
+          }
+        </div>
+      }
+
       @if (tasks.length === 0 && !showForm) {
         <div class="empty-state">
           <p>Nenhuma tarefa nesta categoria.</p>
           <button class="btn btn--primary" (click)="openCreate()">Criar primeira tarefa</button>
         </div>
+      } @else if (filteredTasks.length === 0) {
+        <div class="empty-state empty-state--sm">
+          <p>Nenhuma tarefa com status "{{ STATUS_LABEL[activeFilter === 'ALL' ? 'TODO' : activeFilter] }}".</p>
+        </div>
       } @else {
-        <ul class="task-list" cdkDropList (cdkDropListDropped)="dropTasks($event)">
-          @for (task of tasks; track task.id) {
-            <li class="task-list__item" cdkDrag>
-              <span class="drag-handle" cdkDragHandle title="Arrastar para reordenar">⠿</span>
+        <ul class="task-list"
+            cdkDropList
+            [cdkDropListDisabled]="activeFilter !== 'ALL'"
+            (cdkDropListDropped)="dropTasks($event)">
+          @for (task of filteredTasks; track task.id) {
+            <li class="task-list__item" cdkDrag [cdkDragDisabled]="activeFilter !== 'ALL'">
+              <span
+                class="drag-handle"
+                [class.drag-handle--hidden]="activeFilter !== 'ALL'"
+                cdkDragHandle
+                title="Arrastar para reordenar"
+              >⠿</span>
               <app-task-item
                 [task]="task"
                 (statusChanged)="onStatusChanged($event)"

@@ -1,14 +1,60 @@
-*, *::before, *::after {
-  box-sizing: border-box;
+*, *::before, *::after { box-sizing: border-box; }
+button { font-family: inherit; }
+input  { font-family: inherit; }
+a      { text-decoration: none; }
+
+// ── Tema claro (padrão) ────────────────────────────────────────────────────
+:root {
+  --color-primary:          #4f46e5;
+  --color-primary-focus:    rgba(79, 70, 229, 0.15);
+  --color-danger:           #e53e3e;
+  --color-danger-bg:        #fff5f5;
+  --color-danger-border:    #fed7d7;
+  --color-danger-hover:     #fee2e2;
+  --color-text:             #1a1a2e;
+  --color-muted:            #6b7280;
+  --color-border:           #e5e7eb;
+  --color-bg-page:          #f8f9fc;
+  --color-bg-card:          #ffffff;
+  --color-bg-input:         #fafafa;
+  --color-btn-ghost:        #f0f0f0;
+  --color-btn-ghost-text:   #444444;
+  --color-badge-high-bg:    #fef2f2;
+  --color-badge-high-text:  #b91c1c;
+  --color-badge-med-bg:     #fffbeb;
+  --color-badge-med-text:   #92400e;
+  --color-badge-low-bg:     #f0fdf4;
+  --color-badge-low-text:   #166534;
+}
+
+// ── Tema escuro ────────────────────────────────────────────────────────────
+body.dark-theme {
+  --color-primary:          #818cf8;
+  --color-primary-focus:    rgba(129, 140, 248, 0.2);
+  --color-danger:           #f87171;
+  --color-danger-bg:        #2d1515;
+  --color-danger-border:    #7f1d1d;
+  --color-danger-hover:     #3b0e0e;
+  --color-text:             #f1f5f9;
+  --color-muted:            #94a3b8;
+  --color-border:           #334155;
+  --color-bg-page:          #0f172a;
+  --color-bg-card:          #1e293b;
+  --color-bg-input:         #1e293b;
+  --color-btn-ghost:        #334155;
+  --color-btn-ghost-text:   #e2e8f0;
+  --color-badge-high-bg:    #450a0a;
+  --color-badge-high-text:  #fca5a5;
+  --color-badge-med-bg:     #451a03;
+  --color-badge-med-text:   #fcd34d;
+  --color-badge-low-bg:     #052e16;
+  --color-badge-low-text:   #86efac;
 }
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #f8f9fc;
-  color: #1a1a2e;
+  background: var(--color-bg-page);
+  color: var(--color-text);
+  transition: background 0.2s ease, color 0.2s ease;
 }
-
-a { text-decoration: none; }
-button { font-family: inherit; }
-input { font-family: inherit; }

@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../../core/models/task.model';
 import { Subtask } from '../../../core/models/subtask.model';
 import { SubtaskService } from '../../../core/services/subtask.service';
+import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
   selector: 'app-task-item',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, YoutubePreviewComponent],
   templateUrl: './task-item.component.html',
   styleUrl: './task-item.component.scss',
 })
@@ -37,6 +38,16 @@ export class TaskItemComponent implements OnInit {
 
   get priorityClass(): string {
     return `badge--${this.task.priority.toLowerCase()}`;
+  }
+
+  get doneCount(): number {
+    return this.subtasks.filter(s => s.done).length;
+  }
+
+  get progress(): number {
+    return this.subtasks.length === 0
+      ? 0
+      : Math.round(this.doneCount / this.subtasks.length * 100);
   }
 
   // ── Expand / collapse subtarefas ──────────────────────────────────────────

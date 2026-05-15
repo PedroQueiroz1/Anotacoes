@@ -2,6 +2,7 @@
 # Claude / Spec Driven local files
 # =========================
 .claude/
+CLAUDE.local.md
 specs/
 
 # =========================

@@ -16,6 +16,9 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
            nativeQuery = true)
     List<Note> findByCategoryIdOrdered(@Param("categoryId") Long categoryId);
 
+    @Query("SELECT n FROM Note n JOIN FETCH n.category WHERE LOWER(n.title) LIKE LOWER(:pattern) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:pattern))")
+    List<Note> searchByTitleOrContent(@Param("pattern") String pattern);
+
     @Modifying
     @Query("UPDATE Note n SET n.position = :position WHERE n.id = :id")
     void updatePosition(@Param("id") Long id, @Param("position") int position);

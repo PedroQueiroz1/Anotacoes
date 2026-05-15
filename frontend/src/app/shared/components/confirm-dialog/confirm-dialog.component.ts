@@ -25,17 +25,17 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
       z-index: 100;
     }
     .dialog {
-      background: #fff;
+      background: var(--color-bg-card);
       border-radius: 10px;
       padding: 28px 32px;
       max-width: 380px;
       width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
     }
     .dialog__message {
       margin: 0 0 24px;
       font-size: 15px;
-      color: #1a1a2e;
+      color: var(--color-text);
       line-height: 1.5;
     }
     .dialog__actions {
@@ -54,11 +54,11 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
     }
     .btn:hover { opacity: 0.85; }
     .btn--ghost {
-      background: #f0f0f0;
-      color: #444;
+      background: var(--color-btn-ghost);
+      color: var(--color-btn-ghost-text);
     }
     .btn--danger {
-      background: #e53e3e;
+      background: var(--color-danger);
       color: #fff;
     }
   `],

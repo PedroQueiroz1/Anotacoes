@@ -11,6 +11,8 @@ import { NoteService, NotePayload } from '../../core/services/note.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TaskItemComponent } from './task-item/task-item.component';
 import { NoteItemComponent } from './note-item/note-item.component';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { GlobalSearchComponent } from '../../shared/components/global-search/global-search.component';
 
 interface TaskForm {
   title: string;
@@ -27,7 +29,7 @@ function emptyTaskForm(): TaskForm {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule, ThemeToggleComponent, GlobalSearchComponent],
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
@@ -47,6 +49,25 @@ export class CategoryComponent implements OnInit {
 
   // ── Tarefas ───────────────────────────────────────────────────────────────
   tasks: Task[] = [];
+
+  // ── Filtro por status ─────────────────────────────────────────────────────
+  activeFilter: 'ALL' | TaskStatus = 'ALL';
+
+  readonly filterOptions: { value: 'ALL' | TaskStatus; label: string }[] = [
+    { value: 'ALL',         label: 'Todos' },
+    { value: 'TODO',        label: 'A Fazer' },
+    { value: 'IN_PROGRESS', label: 'Em Progresso' },
+    { value: 'DONE',        label: 'Concluída' },
+  ];
+
+  get filteredTasks(): Task[] {
+    if (this.activeFilter === 'ALL') return this.tasks;
+    return this.tasks.filter(t => t.status === this.activeFilter);
+  }
+
+  setFilter(value: 'ALL' | TaskStatus): void {
+    this.activeFilter = value;
+  }
 
   showForm = false;
   formMode: 'create' | 'edit' = 'create';
@@ -222,6 +243,7 @@ export class CategoryComponent implements OnInit {
   }
 
   dropTasks(event: CdkDragDrop<Task[]>): void {
+    if (this.activeFilter !== 'ALL') return;
     moveItemInArray(this.tasks, event.previousIndex, event.currentIndex);
     this.taskService.reorder(this.categoryId, this.tasks.map(t => t.id)).subscribe();
   }

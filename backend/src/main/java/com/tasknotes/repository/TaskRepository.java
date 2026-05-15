@@ -20,6 +20,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByCategoryIdAndStatusNot(Long categoryId, TaskStatus status);
 
+    @Query("SELECT t FROM Task t JOIN FETCH t.category WHERE LOWER(t.title) LIKE LOWER(:pattern) OR (t.description IS NOT NULL AND LOWER(t.description) LIKE LOWER(:pattern))")
+    List<Task> searchByTitleOrDescription(@Param("pattern") String pattern);
+
     @Modifying
     @Query("UPDATE Task t SET t.position = :position WHERE t.id = :id")
     void updatePosition(@Param("id") Long id, @Param("position") int position);

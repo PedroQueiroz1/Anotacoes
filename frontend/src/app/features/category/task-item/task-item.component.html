@@ -14,6 +14,7 @@
     }
     @if (task.description) {
       <p class="task-item__desc">{{ task.description }}</p>
+      <app-youtube-preview [text]="task.description" />
     }
 
     <!-- Linha de ações -->
@@ -41,6 +42,16 @@
     </div>
 
   </div>
+
+  <!-- Barra de progresso (CA-22) -->
+  @if (subtasks.length > 0) {
+    <div class="progress-wrapper">
+      <div class="progress-bar">
+        <div class="progress-bar__fill" [style.width.%]="progress"></div>
+      </div>
+      <span class="progress-label">{{ doneCount }}/{{ subtasks.length }}</span>
+    </div>
+  }
 
   <!-- Checklist de subtarefas (CA-10) -->
   @if (isExpanded) {
