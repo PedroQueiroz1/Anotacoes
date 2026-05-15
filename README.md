@@ -218,47 +218,6 @@ O banco MySQL está hospedado no Railway com volume persistente.
 
 ---
 
-## Endpoints Principais
-
-### Categorias
-
-```http
-GET    /api/categories
-POST   /api/categories
-PUT    /api/categories/{id}
-DELETE /api/categories/{id}
-```
-
-### Tarefas
-
-```http
-GET    /api/categories/{categoryId}/tasks
-POST   /api/categories/{categoryId}/tasks
-PUT    /api/tasks/{id}
-DELETE /api/tasks/{id}
-PATCH  /api/tasks/{id}/status
-```
-
-### Subtarefas
-
-```http
-GET    /api/tasks/{taskId}/subtasks
-POST   /api/tasks/{taskId}/subtasks
-PATCH  /api/subtasks/{id}/toggle
-DELETE /api/subtasks/{id}
-```
-
-### Anotações
-
-```http
-GET    /api/categories/{categoryId}/notes
-POST   /api/categories/{categoryId}/notes
-PUT    /api/notes/{id}
-DELETE /api/notes/{id}
-```
-
----
-
 ## Testes Planejados
 
 ### Backend
