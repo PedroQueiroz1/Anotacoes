@@ -327,34 +327,6 @@ Para celular físico, é necessário apontar a base URL para o IP local do compu
 
 ---
 
-## Roadmap
-
-### Concluído
-
-- Estrutura inicial do backend, frontend e Android.
-- CRUD de categorias.
-- CRUD de tarefas.
-- Checklist de subtarefas.
-- CRUD de anotações.
-- Filtros por status.
-- Busca global.
-- Cards de estatísticas.
-- Modo claro e modo escuro.
-- Deploy do frontend na Vercel.
-- Deploy do backend no Railway.
-- Banco MySQL no Railway.
-
-### Em melhoria
-
-- Correções de segurança.
-- Ajustes finos no frontend.
-- Melhorias de edição inline.
-- Ajustes na edição dos itens de checklist.
-- Tratamento automático de links do YouTube em checklists.
-- Melhorias de testes automatizados.
-
----
-
 ## Segurança
 
 Este projeto ainda possui melhorias de segurança planejadas.
@@ -365,20 +337,5 @@ Pontos de atenção:
 - Não deve ser usada para dados sensíveis em produção.
 - Melhorias futuras devem incluir autenticação, controle de acesso, proteção de endpoints e revisão de CORS.
 - O banco de dados deve possuir backup e variáveis sensíveis devem permanecer fora do repositório.
-
----
-
-## EXTRA
-
-Este projeto foi criado como parte do meu portfólio full-stack, com foco em demonstrar:
-
-- Desenvolvimento de API REST com Java e Spring Boot.
-- Integração com banco de dados relacional MySQL.
-- Construção de interface web com Angular.
-- Desenvolvimento mobile Android com Kotlin.
-- Deploy de frontend e backend em serviços cloud.
-- Organização de regras de negócio, validações e critérios de aceite.
-- Integração entre web, mobile, backend e banco de dados.
-- Evolução incremental de um projeto real de uso pessoal.
 
 ---
