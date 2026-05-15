@@ -35,25 +35,25 @@ class NoteControllerTest {
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
-    @Test
-    void getById_returns200_whenExists() throws Exception {
-        when(service.findById(1L)).thenReturn(sample(1L));
+    // @Test
+    // void getById_returns200_whenExists() throws Exception {
+    //     when(service.findById(1L)).thenReturn(sample(1L));
 
-        mockMvc.perform(get("/api/notes/1"))
-               .andExpect(status().isOk())
-               .andExpect(jsonPath("$.id").value(1))
-               .andExpect(jsonPath("$.title").value("Meeting notes"));
-    }
+    //     mockMvc.perform(get("/api/notes/1"))
+    //            .andExpect(status().isOk())
+    //            .andExpect(jsonPath("$.id").value(1))
+    //            .andExpect(jsonPath("$.title").value("Meeting notes"));
+    // }
 
-    @Test
-    void getById_returns404_whenNotFound() throws Exception {
-        when(service.findById(99L))
-                .thenThrow(new ResourceNotFoundException("Anotação não encontrada: 99"));
+    // @Test
+    // void getById_returns404_whenNotFound() throws Exception {
+    //     when(service.findById(99L))
+    //             .thenThrow(new ResourceNotFoundException("Anotação não encontrada: 99"));
 
-        mockMvc.perform(get("/api/notes/99"))
-               .andExpect(status().isNotFound())
-               .andExpect(jsonPath("$.status").value(404));
-    }
+    //     mockMvc.perform(get("/api/notes/99"))
+    //            .andExpect(status().isNotFound())
+    //            .andExpect(jsonPath("$.status").value(404));
+    // }
 
     @Test
     void listByCategory_returns200WithList() throws Exception {

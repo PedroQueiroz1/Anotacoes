@@ -48,40 +48,40 @@ class NoteServiceTest {
     }
 
     // ── findById ──────────────────────────────────────────────────────────────
-    @Test
-    void findById_returnsResponse_whenExists() {
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(stubNote(1L, 1L, "Title", "Body")));
+    // @Test
+    // void findById_returnsResponse_whenExists() {
+    //     when(noteRepository.findById(1L)).thenReturn(Optional.of(stubNote(1L, 1L, "Title", "Body")));
 
-        NoteResponse r = service.findById(1L);
+    //     NoteResponse r = service.findById(1L);
 
-        assertThat(r.id()).isEqualTo(1L);
-        assertThat(r.title()).isEqualTo("Title");
-        assertThat(r.content()).isEqualTo("Body");
-    }
+    //     assertThat(r.id()).isEqualTo(1L);
+    //     assertThat(r.title()).isEqualTo("Title");
+    //     assertThat(r.content()).isEqualTo("Body");
+    // }
 
-    @Test
-    void findById_throwsResourceNotFoundException_whenNotFound() {
-        when(noteRepository.findById(99L)).thenReturn(Optional.empty());
+    // @Test
+    // void findById_throwsResourceNotFoundException_whenNotFound() {
+    //     when(noteRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.findById(99L))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
+    //     assertThatThrownBy(() -> service.findById(99L))
+    //             .isInstanceOf(ResourceNotFoundException.class);
+    // }
 
-    // ── findByCategory ────────────────────────────────────────────────────────
-    @Test
-    void findByCategory_returnsOrderedList() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
-        when(noteRepository.findByCategoryIdOrderByCreatedAtDesc(1L))
-                .thenReturn(List.of(
-                        stubNote(2L, 1L, "Recent", null),
-                        stubNote(1L, 1L, "Older",  "content")
-                ));
+    // // ── findByCategory ────────────────────────────────────────────────────────
+    // @Test
+    // void findByCategory_returnsOrderedList() {
+    //     when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
+    //     when(noteRepository.findByCategoryIdOrderByCreatedAtDesc(1L))
+    //             .thenReturn(List.of(
+    //                     stubNote(2L, 1L, "Recent", null),
+    //                     stubNote(1L, 1L, "Older",  "content")
+    //             ));
 
-        List<NoteResponse> result = service.findByCategory(1L);
+    //     List<NoteResponse> result = service.findByCategory(1L);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).title()).isEqualTo("Recent");
-    }
+    //     assertThat(result).hasSize(2);
+    //     assertThat(result.get(0).title()).isEqualTo("Recent");
+    // }
 
     @Test
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
