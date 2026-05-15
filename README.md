@@ -1,8 +1,7 @@
 ## PRÓXIMAS ATUALIZAÇÕES:
 1) Correções de segurança
 2) Melhorias no frontend
-3) Adicionar uma funcionalidade de "drag and drop" nos itens da tela
-4) Tirar as funcionalidades no código do botão atualizar e salvar
+3) Correções de segurança
 
 ---
 
