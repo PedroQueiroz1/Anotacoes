@@ -16,12 +16,11 @@ interface TaskForm {
   title: string;
   description: string;
   dueDate: string;
-  priority: Priority;
   status: TaskStatus;
 }
 
 function emptyTaskForm(): TaskForm {
-  return { title: '', description: '', dueDate: '', priority: 'MEDIUM', status: 'TODO' };
+  return { title: '', description: '', dueDate: '', status: 'TODO' };
 }
 
 @Component({
@@ -111,7 +110,6 @@ export class CategoryComponent implements OnInit {
       title:       task.title,
       description: task.description ?? '',
       dueDate:     task.dueDate ?? '',
-      priority:    task.priority,
       status:      task.status,
     };
     this.formError = '';
@@ -136,7 +134,6 @@ export class CategoryComponent implements OnInit {
       title,
       description: this.form.description || null,
       dueDate:     this.form.dueDate || null,
-      priority:    this.form.priority,
     };
 
     this.isSaving = true;
