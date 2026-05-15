@@ -1,47 +1,113 @@
-## PRÓXIMAS ATUALIZAÇÕES:
-1) Correções de segurança
-2) Melhorias no frontend
-3) Correções de segurança
+## PRÓXIMAS ATUALIZAÇÕES
+
+1. Correções de segurança.
+2. Melhorias de usabilidade no frontend.
+3. Ajustes e refinamentos no aplicativo Android.
+4. Melhorias nos testes automatizados.
+5. Evolução da documentação do projeto.
 
 ---
 
 # TaskNotes
 
-**TaskNotes** é uma aplicação de produtividade pessoal para organizar tarefas e anotações por categorias temáticas.  
-O objetivo desse projeto é somente pra eu conseguir fazer anotações dos meus estudos em casa e poder acessar elas facilmente pelo apk enquanto eu estiver na academia. </br>
-Sabe aqueles aprox.30s a 2min de descanso entre uma série e outra na academia? Então, eu costumo ficar lendo notícias de economia e estudando um pouco de geopolítica. </br>
-Tem vezes que dá vontade de pesquisar algo de programação ali na hora mas fico com preguiça. </br>
-Criei esse projeto para eu poder concentrar todas minhas anotações nele e acessar diretamente pelo celular enquanto eu estiver na academia. </br>
+**TaskNotes** é uma aplicação de produtividade pessoal para organizar tarefas, checklists e anotações por categorias temáticas.
 
-> Status atual: **FINALIZADO v1.0 - Ainda é necessário ajustes de segurança no código**
+O projeto nasceu de uma necessidade pessoal: concentrar anotações de estudo, programação, economia e outros temas em um sistema simples, acessível pela web e também pelo celular. A ideia é permitir consultas rápidas em momentos do dia a dia, como intervalos entre tarefas, estudos ou até durante descansos na academia.
+
+> Status atual: **FINALIZADO v1.0 — aplicação web e backend publicados, com melhorias de segurança ainda planejadas**
 
 ---
 
 ## Visão Geral
 
-O sistema permite criar categorias como **Estudos**, **Saúde**, **Economia**, **Trabalho** ou qualquer outro tema pessoal.  
-Dentro de cada categoria, o usuário poderá gerenciar:
+O sistema permite criar categorias como **Estudos**, **Economia**, **Programação**, **Saúde**, **Trabalho** ou qualquer outro tema pessoal.
+
+Dentro de cada categoria, o usuário pode gerenciar:
 
 - **Tarefas**, com título, descrição, prazo, prioridade, status e subtarefas.
+- **Checklists**, vinculados às tarefas, com acompanhamento de progresso.
 - **Anotações**, com título e conteúdo em texto livre.
-- **Categorias**, com limite máximo de 5 categorias simultâneas.
+- **Filtros por status**, para visualizar tarefas a fazer, em andamento, concluídas ou todas.
+- **Busca global**, para localizar categorias, tarefas, descrições, anotações e itens de checklist.
+- **Modo claro e modo escuro**, com alternância visual na interface.
+- **Painel de estatísticas**, com resumo da categoria selecionada.
 
 A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo uma mesma API REST.
 
 ---
 
-## Ponto importante do projeto e também o mais complexo...
+## Funcionalidades Implementadas
 
-### Sincronização Manual
+### Categorias
 
-O projeto também prevê um fluxo de sincronização manual com os botões:
+- Criar categoria.
+- Listar categorias na sidebar.
+- Editar categoria.
+- Excluir categoria com confirmação.
+- Limite máximo de 5 categorias.
+- Reorganização por drag and drop.
+- Navegação entre categorias pela sidebar.
 
-- **Salvar**: envia alterações locais para o servidor.
-- **Atualizar**: busca a versão mais recente do servidor.
+### Tarefas
 
-Esse fluxo utilizará o campo `updated_at` para detectar possíveis conflitos entre alterações locais e dados já salvos no servidor.
+- Criar tarefas dentro de uma categoria.
+- Editar título, descrição, prazo, prioridade e status.
+- Excluir tarefas.
+- Alterar status entre:
+  - A Fazer
+  - Em andamento
+  - Concluída
+- Filtrar tarefas por status.
+- Reorganizar tarefas por drag and drop.
 
-Também existe o tratamento para evitar conflitos de "merge" entre as versões.
+### Checklists / Subtarefas
+
+- Adicionar itens de checklist em uma tarefa.
+- Marcar e desmarcar itens como concluídos.
+- Exibir barra de progresso do checklist.
+- Calcular progresso geral da categoria com base nos checklists.
+- Planejamento de edição inline dos itens do checklist.
+
+### Anotações
+
+- Criar anotações dentro de uma categoria.
+- Editar título e conteúdo.
+- Excluir anotações.
+- Listar anotações por categoria.
+
+### Interface Web
+
+- Layout com sidebar lateral.
+- Cards de estatísticas.
+- Busca global.
+- Filtros de tarefas.
+- Modo claro e modo escuro.
+- Interface responsiva para uso em desktop.
+- Deploy do frontend na Vercel.
+
+### Backend
+
+- API REST com Spring Boot.
+- Persistência em MySQL.
+- Integração com frontend Angular.
+- Deploy do backend no Railway.
+- Banco MySQL hospedado no Railway.
+
+---
+
+## Ponto importante do projeto
+
+### Sincronização e consistência dos dados
+
+O projeto foi estruturado para centralizar os dados no backend, permitindo que o frontend web e o aplicativo Android consumam a mesma API REST.
+
+A API é responsável por:
+
+- Persistir categorias, tarefas, subtarefas e anotações.
+- Aplicar regras de negócio.
+- Validar dados enviados pelo frontend.
+- Garantir integridade entre categorias e seus conteúdos vinculados.
+- Manter o banco MySQL como fonte principal de dados.
 
 ---
 
@@ -66,6 +132,7 @@ Também existe o tratamento para evitar conflitos de "merge" entre as versões.
 - Angular Router
 - HttpClient
 - CSS / SCSS
+- Deploy na Vercel
 
 ### Mobile
 
@@ -80,6 +147,7 @@ Também existe o tratamento para evitar conflitos de "merge" entre as versões.
 ### Banco de Dados
 
 - MySQL 8.x
+- Banco hospedado no Railway
 - Modelo relacional com entidades para categorias, tarefas, subtarefas e anotações.
 
 ---
@@ -98,8 +166,37 @@ Angular Web App        Android App
                   MySQL
 ```
 
-A API REST será responsável por centralizar as regras de negócio e persistência dos dados.  
-Tanto a aplicação web quanto o aplicativo Android consumirão os mesmos endpoints.
+A API REST centraliza as regras de negócio e a persistência dos dados.
+
+Tanto a aplicação web quanto o aplicativo Android consomem os mesmos endpoints.
+
+---
+
+## Deploy
+
+### Frontend
+
+O frontend web está preparado para deploy estático na **Vercel**.
+
+Fluxo:
+
+```text
+Angular → Build estático → Vercel
+```
+
+### Backend
+
+O backend está preparado para deploy no **Railway**.
+
+Fluxo:
+
+```text
+Spring Boot API → Railway → MySQL Railway
+```
+
+### Banco de Dados
+
+O banco MySQL está hospedado no Railway com volume persistente.
 
 ---
 
@@ -110,12 +207,55 @@ Tanto a aplicação web quanto o aplicativo Android consumirão os mesmos endpoi
 - O título da tarefa é obrigatório e possui limite de 100 caracteres.
 - A descrição da tarefa possui limite de 500 caracteres.
 - Toda tarefa criada inicia com status **A Fazer**.
-- A prioridade padrão de uma tarefa é **Média**.
+- A prioridade padrão de uma tarefa é **Baixa**.
 - Uma tarefa pode ter no máximo **20 subtarefas**.
 - O título da anotação é obrigatório e possui limite de 100 caracteres.
 - O conteúdo da anotação possui limite de 2000 caracteres.
 - Ao excluir uma categoria, suas tarefas e anotações são removidas em cascata.
 - Ao excluir uma tarefa, suas subtarefas também são removidas.
+- Tarefas, categorias e anotações podem ser reorganizadas dentro de suas respectivas listas.
+- O sistema não permite mover tarefa para a área de anotações nem anotação para a área de tarefas.
+
+---
+
+## Endpoints Principais
+
+### Categorias
+
+```http
+GET    /api/categories
+POST   /api/categories
+PUT    /api/categories/{id}
+DELETE /api/categories/{id}
+```
+
+### Tarefas
+
+```http
+GET    /api/categories/{categoryId}/tasks
+POST   /api/categories/{categoryId}/tasks
+PUT    /api/tasks/{id}
+DELETE /api/tasks/{id}
+PATCH  /api/tasks/{id}/status
+```
+
+### Subtarefas
+
+```http
+GET    /api/tasks/{taskId}/subtasks
+POST   /api/tasks/{taskId}/subtasks
+PATCH  /api/subtasks/{id}/toggle
+DELETE /api/subtasks/{id}
+```
+
+### Anotações
+
+```http
+GET    /api/categories/{categoryId}/notes
+POST   /api/categories/{categoryId}/notes
+PUT    /api/notes/{id}
+DELETE /api/notes/{id}
+```
 
 ---
 
@@ -127,6 +267,7 @@ Tanto a aplicação web quanto o aplicativo Android consumirão os mesmos endpoi
 - Testes de integração com MockMvc.
 - Validação de regras de negócio em services.
 - Validação de endpoints REST.
+- Testes para regras de categoria, tarefas, subtarefas e anotações.
 
 ### Frontend Angular
 
@@ -134,6 +275,7 @@ Tanto a aplicação web quanto o aplicativo Android consumirão os mesmos endpoi
 - Testes de componentes.
 - Validação de estados da interface.
 - Testes de fluxo para criação, edição e exclusão de categorias.
+- Testes de filtros, busca global e alternância de tema.
 
 ### Android
 
@@ -143,14 +285,30 @@ Tanto a aplicação web quanto o aplicativo Android consumirão os mesmos endpoi
 
 ---
 
-## Como Executar o Projeto
+## Como Executar o Projeto Localmente
 
-> Instruções em construção. Esta seção será atualizada conforme as etapas forem implementadas.
+### Pré-requisitos
+
+- Java 17+
+- Maven
+- Node.js
+- Angular CLI
+- MySQL 8.x ou MariaDB 10.x
+- Android Studio, caso queira executar o app Android
+
+---
 
 ### Backend
 
+Acesse a pasta do backend:
+
 ```bash
 cd backend
+```
+
+Execute a aplicação:
+
+```bash
 mvn spring-boot:run
 ```
 
@@ -166,29 +324,88 @@ Swagger:
 http://localhost:8080/swagger-ui.html
 ```
 
+---
+
 ### Frontend
+
+Acesse a pasta do frontend:
 
 ```bash
 cd frontend
+```
+
+Instale as dependências:
+
+```bash
 npm install
+```
+
+Execute a aplicação:
+
+```bash
 npm start
 ```
 
-Aplicação web:
+Aplicação web local:
 
 ```text
 http://localhost:4200
 ```
 
+---
+
 ### Android
 
-O app Android será executado pelo Android Studio ou emulador configurado com acesso à API local.
+O app Android pode ser executado pelo Android Studio.
 
-Base URL prevista para o emulador:
+Para emulador Android, a base URL prevista para acessar o backend local é:
 
 ```text
 http://10.0.2.2:8080
 ```
+
+Para celular físico, é necessário apontar a base URL para o IP local do computador onde o backend está rodando.
+
+---
+
+## Roadmap
+
+### Concluído
+
+- Estrutura inicial do backend, frontend e Android.
+- CRUD de categorias.
+- CRUD de tarefas.
+- Checklist de subtarefas.
+- CRUD de anotações.
+- Filtros por status.
+- Busca global.
+- Cards de estatísticas.
+- Modo claro e modo escuro.
+- Deploy do frontend na Vercel.
+- Deploy do backend no Railway.
+- Banco MySQL no Railway.
+
+### Em melhoria
+
+- Correções de segurança.
+- Ajustes finos no frontend.
+- Melhorias de edição inline.
+- Ajustes na edição dos itens de checklist.
+- Tratamento automático de links do YouTube em checklists.
+- Melhorias de testes automatizados.
+
+---
+
+## Segurança
+
+Este projeto ainda possui melhorias de segurança planejadas.
+
+Pontos de atenção:
+
+- A aplicação é single-user e ainda não possui autenticação.
+- Não deve ser usada para dados sensíveis em produção.
+- Melhorias futuras devem incluir autenticação, controle de acesso, proteção de endpoints e revisão de CORS.
+- O banco de dados deve possuir backup e variáveis sensíveis devem permanecer fora do repositório.
 
 ---
 
@@ -199,6 +416,10 @@ Este projeto foi criado como parte do meu portfólio full-stack, com foco em dem
 - Desenvolvimento de API REST com Java e Spring Boot.
 - Integração com banco de dados relacional MySQL.
 - Construção de interface web com Angular.
-- Planejamento de arquitetura separando backend, frontend e mobile.
+- Desenvolvimento mobile Android com Kotlin.
+- Deploy de frontend e backend em serviços cloud.
 - Organização de regras de negócio, validações e critérios de aceite.
-- Evolução incremental do projeto por etapas.
+- Integração entre web, mobile, backend e banco de dados.
+- Evolução incremental de um projeto real de uso pessoal.
+
+---
