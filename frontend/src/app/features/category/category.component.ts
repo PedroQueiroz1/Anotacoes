@@ -2,14 +2,18 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription, EMPTY } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
+import { ConceptSuggestion } from '../../core/models/programming-concept.model';
 import { CategoryService } from '../../core/services/category.service';
 import { TaskService, TaskPayload } from '../../core/services/task.service';
 import { NoteService, NotePayload } from '../../core/services/note.service';
+import { ProgrammingConceptService } from '../../core/services/programming-concept.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TaskItemComponent } from './task-item/task-item.component';
 import { NoteItemComponent } from './note-item/note-item.component';
@@ -40,8 +44,24 @@ export class CategoryComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
   private noteService     = inject(NoteService);
+  private conceptService  = inject(ProgrammingConceptService);
 
   private routeSub?: Subscription;
+  private conceptSub?: Subscription;
+  private conceptSearch$ = new Subject<string>();
+
+  // ── Autocomplete de conceitos ─────────────────────────────────────────────
+  conceptSuggestion: ConceptSuggestion | null = null;
+  conceptSuggestionSource = '';
+  conceptIsLoading = false;
+  private lastNoteTextarea: HTMLTextAreaElement | null = null;
+
+  get conceptSourceLabel(): string {
+    if (this.conceptSuggestionSource === 'LOCAL') return 'base local';
+    if (this.conceptSuggestionSource === 'EXTERNAL') return 'pesquisa';
+    if (this.conceptSuggestionSource === 'AI') return 'IA';
+    return '';
+  }
 
   readonly PRIORITY_LABEL = PRIORITY_LABEL;
   readonly STATUS_LABEL   = STATUS_LABEL;
@@ -122,9 +142,36 @@ export class CategoryComponent implements OnInit, OnDestroy {
       this.resetState();
       this.load(slug);
     });
+
+    this.conceptSub = this.conceptSearch$.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      switchMap(term => {
+        if (term.length < 2) {
+          this.conceptSuggestion = null;
+          this.conceptIsLoading  = false;
+          return EMPTY;
+        }
+        this.conceptIsLoading = true;
+        return this.conceptService.suggest(term).pipe(
+          catchError(() => { this.conceptIsLoading = false; return of({ found: false, source: null, concept: null }); })
+        );
+      })
+    ).subscribe(resp => {
+      this.conceptIsLoading = false;
+      if (resp.found && resp.concept) {
+        this.conceptSuggestion       = resp.concept;
+        this.conceptSuggestionSource = resp.source ?? 'LOCAL';
+      } else {
+        this.conceptSuggestion = null;
+      }
+    });
   }
 
-  ngOnDestroy(): void { this.routeSub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+    this.conceptSub?.unsubscribe();
+  }
 
   private resetState(): void {
     this.category = null;
@@ -138,6 +185,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.deletingNoteId = null;
     this.resetTaskPagination();
     this.resetNotePagination();
+    this.resetConceptSuggestion();
+  }
+
+  private resetConceptSuggestion(): void {
+    this.conceptSuggestion       = null;
+    this.conceptSuggestionSource = '';
+    this.conceptIsLoading        = false;
+    this.lastNoteTextarea        = null;
   }
 
   private resetTaskPagination(): void {
@@ -312,10 +367,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
   // ── Formulário de anotação ────────────────────────────────────────────────
   openNoteCreate(): void {
     this.noteTitle = ''; this.noteContent = ''; this.noteFormError = '';
+    this.resetConceptSuggestion();
     this.showNoteForm = true; this.showForm = false;
   }
 
-  cancelNoteForm(): void { this.showNoteForm = false; this.noteFormError = ''; }
+  cancelNoteForm(): void {
+    this.showNoteForm = false; this.noteFormError = '';
+    this.resetConceptSuggestion();
+  }
 
   saveNoteForm(): void {
     const title = this.noteTitle.trim();
@@ -373,5 +432,82 @@ export class CategoryComponent implements OnInit, OnDestroy {
   replaceTask(updated: Task): void {
     const idx = this.tasks.findIndex(t => t.id === updated.id);
     if (idx !== -1) this.tasks[idx] = updated;
+  }
+
+  // ── Autocomplete handlers ─────────────────────────────────────────────────
+
+  onNoteContentInput(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    this.lastNoteTextarea = textarea;
+    const term = this.extractCurrentTerm(textarea);
+    if (term.length >= 2) {
+      this.conceptSearch$.next(term);
+    } else {
+      this.conceptSuggestion = null;
+      this.conceptIsLoading  = false;
+    }
+  }
+
+  onNoteContentKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.conceptSuggestion = null;
+      this.conceptIsLoading  = false;
+      return;
+    }
+    if (event.key === 'Enter' && !event.shiftKey && this.conceptSuggestion) {
+      event.preventDefault();
+      this.acceptConceptSuggestion(event.target as HTMLTextAreaElement);
+    }
+    // Shift+Enter or Enter without suggestion → default textarea behaviour (new line)
+  }
+
+  acceptConceptSuggestion(textareaEl?: HTMLTextAreaElement): void {
+    const suggestion = this.conceptSuggestion;
+    const source     = this.conceptSuggestionSource;
+    if (!suggestion) return;
+
+    const textarea = textareaEl ?? this.lastNoteTextarea;
+    if (!textarea) return;
+
+    const pos     = textarea.selectionStart;
+    const value   = textarea.value;
+    const before  = value.substring(0, pos);
+    const after   = value.substring(pos);
+
+    // Replace the last non-whitespace token before cursor
+    const match     = before.match(/(\S+)$/);
+    const wordStart = match ? pos - match[1].length : pos;
+    const prefix    = value.substring(0, wordStart);
+
+    const insertion   = `- ${suggestion.term}: ${suggestion.summary}`;
+    this.noteContent  = prefix + insertion + after;
+    const newCursor   = wordStart + insertion.length;
+
+    this.conceptSuggestion = null;
+
+    // Update cursor position after Angular's change detection runs
+    setTimeout(() => {
+      textarea.setSelectionRange(newCursor, newCursor);
+      textarea.focus();
+    }, 0);
+
+    // Record the acceptance (updates accepted_count / saves if external)
+    this.conceptService.accept({
+      term:      suggestion.term,
+      summary:   suggestion.summary,
+      source,
+      sourceUrl: null,
+    }).subscribe();
+  }
+
+  private extractCurrentTerm(textarea: HTMLTextAreaElement): string {
+    const pos       = textarea.selectionStart;
+    const textBefore = textarea.value.substring(0, pos);
+    // Work on the text after the last newline to avoid picking up previous lines
+    const lastNewline = textBefore.lastIndexOf('\n');
+    const currentLine = textBefore.substring(lastNewline + 1);
+    // Grab the last non-space token on the current line
+    const match = currentLine.match(/(\S+)$/);
+    return match ? match[1] : '';
   }
 }

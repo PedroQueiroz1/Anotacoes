@@ -179,8 +179,36 @@
 
           <div class="form-group">
             <label class="form-label">Conteúdo</label>
-            <textarea class="form-input form-textarea form-textarea--tall" [(ngModel)]="noteContent" maxlength="2000"
-              placeholder="Conteúdo opcional (máx. 2000 caracteres)"></textarea>
+            <div class="autocomplete-wrap">
+              <textarea
+                class="form-input form-textarea form-textarea--tall"
+                [(ngModel)]="noteContent"
+                maxlength="2000"
+                placeholder="Conteúdo opcional (máx. 2000 caracteres)"
+                (input)="onNoteContentInput($event)"
+                (keydown)="onNoteContentKeydown($event)"
+              ></textarea>
+
+              @if (conceptIsLoading) {
+                <div class="autocomplete-loading">Buscando sugestão...</div>
+              }
+
+              @if (conceptSuggestion) {
+                <div class="autocomplete-box" (mousedown)="$event.preventDefault()">
+                  <div class="autocomplete-box__body" (click)="acceptConceptSuggestion()">
+                    <span class="autocomplete-box__term">{{ conceptSuggestion.term }}</span>
+                    <span class="autocomplete-box__sep"> — </span>
+                    <span class="autocomplete-box__desc">{{ conceptSuggestion.summary }}</span>
+                  </div>
+                  <div class="autocomplete-box__footer">
+                    @if (conceptSourceLabel) {
+                      <span class="autocomplete-box__source">{{ conceptSourceLabel }}</span>
+                    }
+                    <span class="autocomplete-box__hint">↵ aceitar &nbsp;·&nbsp; Esc fechar</span>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
 
           @if (noteFormError) {
