@@ -170,7 +170,7 @@ public class ProgrammingConceptService {
         "not","no","yes","if","then","when","where","how","what","who","which"
     ));
 
-    private static final Set<String> TECH_KEYWORDS = Set.of(
+    private static final Set<String> TECH_KEYWORDS = Set.copyOf(List.of(
         "java","python","javascript","typescript","golang","go","rust","kotlin",
         "swift","scala","ruby","php","perl","bash","shell","powershell",
         "spring","angular","react","vue","node","express","django","flask",
@@ -199,7 +199,7 @@ public class ProgrammingConceptService {
         "deploy","pipeline","artifact","build","test","lint","coverage",
         "proxy","gateway","balancer","cdn","dns","vpc","subnet","firewall",
         "n8n","webhook","integration","automation","workflow","pipeline"
-    );
+    ));
 
     boolean isTechnicalTerm(String rawTerm) {
         String term = rawTerm.trim();
