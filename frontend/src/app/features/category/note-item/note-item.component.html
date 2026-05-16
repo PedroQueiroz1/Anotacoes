@@ -11,7 +11,7 @@
         </div>
       </div>
       @if (note.content) {
-        <p class="note-item__content" [class.note-item__content--collapsed]="isLong && !isExpanded">{{ note.content }}</p>
+        <p #contentEl class="note-item__content" [class.note-item__content--collapsed]="!isExpanded">{{ note.content }}</p>
         @if (isLong) {
           <button class="note-expand-btn" (click)="toggleExpand()">
             {{ isExpanded ? 'Ver menos' : 'Ver mais' }}

@@ -1,4 +1,8 @@
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import {
+  AfterViewInit, Component, ElementRef, EventEmitter,
+  Input, OnChanges, OnDestroy, Output, SimpleChanges,
+  ViewChild, inject,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
@@ -11,23 +15,57 @@ import { YoutubePreviewComponent } from '../../../shared/components/youtube-prev
   templateUrl: './note-item.component.html',
   styleUrl: './note-item.component.scss',
 })
-export class NoteItemComponent {
+export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) note!: Note;
   @Output() noteUpdated     = new EventEmitter<Note>();
   @Output() deleteRequested = new EventEmitter<number>();
 
-  private noteService = inject(NoteService);
+  @ViewChild('contentEl') contentEl?: ElementRef<HTMLParagraphElement>;
+
+  private noteService    = inject(NoteService);
+  private resizeObserver?: ResizeObserver;
 
   isEditing  = false;
   isSaving   = false;
   editError  = '';
-  editTitle   = '';
+  editTitle  = '';
   editContent = '';
+  isLong     = false;
   isExpanded = false;
 
-  get isLong(): boolean { return (this.note.content?.length ?? 0) > 300; }
+  ngAfterViewInit(): void {
+    this.scheduleMeasure();
+    const el = this.contentEl?.nativeElement;
+    if (el) {
+      this.resizeObserver = new ResizeObserver(() => {
+        if (!this.isExpanded) this.scheduleMeasure();
+      });
+      this.resizeObserver.observe(el);
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['note'] && !changes['note'].firstChange) {
+      this.isExpanded = false;
+      this.scheduleMeasure();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.resizeObserver?.disconnect();
+  }
 
   toggleExpand(): void { this.isExpanded = !this.isExpanded; }
+
+  private scheduleMeasure(): void {
+    setTimeout(() => this.measureOverflow());
+  }
+
+  private measureOverflow(): void {
+    const el = this.contentEl?.nativeElement;
+    if (!el) { this.isLong = false; return; }
+    this.isLong = el.scrollHeight > el.clientHeight;
+  }
 
   startEdit(): void {
     this.editTitle   = this.note.title;
