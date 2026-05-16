@@ -33,16 +33,7 @@
   font-size: 14px;
   color: var(--color-muted);
   line-height: 1.5;
-  white-space: pre-wrap;
-
-  &--collapsed {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    white-space: normal;
-  }
+  white-space: pre-line;
 }
 
 .note-expand-btn {

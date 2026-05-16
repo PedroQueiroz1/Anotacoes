@@ -1,8 +1,4 @@
-import {
-  AfterViewInit, Component, ElementRef, EventEmitter,
-  Input, OnChanges, OnDestroy, Output, SimpleChanges,
-  ViewChild, inject,
-} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
@@ -15,57 +11,38 @@ import { YoutubePreviewComponent } from '../../../shared/components/youtube-prev
   templateUrl: './note-item.component.html',
   styleUrl: './note-item.component.scss',
 })
-export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class NoteItemComponent implements OnChanges {
   @Input({ required: true }) note!: Note;
   @Output() noteUpdated     = new EventEmitter<Note>();
   @Output() deleteRequested = new EventEmitter<number>();
 
-  @ViewChild('contentEl') contentEl?: ElementRef<HTMLParagraphElement>;
+  private noteService = inject(NoteService);
 
-  private noteService    = inject(NoteService);
-  private resizeObserver?: ResizeObserver;
-
-  isEditing  = false;
-  isSaving   = false;
-  editError  = '';
-  editTitle  = '';
+  isEditing   = false;
+  isSaving    = false;
+  editError   = '';
+  editTitle   = '';
   editContent = '';
-  isLong     = false;
-  isExpanded = false;
+  isExpanded  = false;
 
-  ngAfterViewInit(): void {
-    this.scheduleMeasure();
-    const el = this.contentEl?.nativeElement;
-    if (el) {
-      this.resizeObserver = new ResizeObserver(() => {
-        if (!this.isExpanded) this.scheduleMeasure();
-      });
-      this.resizeObserver.observe(el);
-    }
+  private lines(): string[] {
+    return this.note.content?.split(/\r?\n/) ?? [];
+  }
+
+  get isLong(): boolean { return this.lines().length > 3; }
+
+  get displayContent(): string {
+    if (this.isExpanded || !this.isLong) return this.note.content ?? '';
+    return this.lines().slice(0, 3).join('\n');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['note'] && !changes['note'].firstChange) {
       this.isExpanded = false;
-      this.scheduleMeasure();
     }
   }
 
-  ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
-  }
-
   toggleExpand(): void { this.isExpanded = !this.isExpanded; }
-
-  private scheduleMeasure(): void {
-    setTimeout(() => this.measureOverflow());
-  }
-
-  private measureOverflow(): void {
-    const el = this.contentEl?.nativeElement;
-    if (!el) { this.isLong = false; return; }
-    this.isLong = el.scrollHeight > el.clientHeight;
-  }
 
   startEdit(): void {
     this.editTitle   = this.note.title;
