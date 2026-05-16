@@ -23,6 +23,11 @@ export class NoteItemComponent {
   editError  = '';
   editTitle   = '';
   editContent = '';
+  isExpanded = false;
+
+  get isLong(): boolean { return (this.note.content?.length ?? 0) > 300; }
+
+  toggleExpand(): void { this.isExpanded = !this.isExpanded; }
 
   startEdit(): void {
     this.editTitle   = this.note.title;

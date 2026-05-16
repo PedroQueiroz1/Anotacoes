@@ -242,10 +242,15 @@ export class TaskItemComponent implements OnInit {
   }
 
   toggleSubtask(subtask: Subtask): void {
+    const idx = this.subtasks.findIndex(s => s.id === subtask.id);
+    if (idx !== -1) this.subtasks[idx] = { ...subtask, done: !subtask.done };
+
     this.subtaskService.toggle(subtask.id).subscribe({
       next: (updated) => {
-        const idx = this.subtasks.findIndex(s => s.id === updated.id);
         if (idx !== -1) this.subtasks[idx] = updated;
+      },
+      error: () => {
+        if (idx !== -1) this.subtasks[idx] = subtask;
       },
     });
   }
