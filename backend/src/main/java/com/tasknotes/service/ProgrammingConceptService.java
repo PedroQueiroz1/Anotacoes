@@ -156,7 +156,7 @@ public class ProgrammingConceptService {
 
     // ── Technical term heuristic ──────────────────────────────────────────────
 
-    private static final Set<String> STOPWORDS = Set.of(
+    private static final Set<String> STOPWORDS = Set.copyOf(List.of(
         "de","da","do","dos","das","um","uma","uns","umas","o","a","os","as",
         "e","em","no","na","nos","nas","se","que","para","com","por","mas",
         "ou","nem","sim","não","já","só","também","mais","menos","muito",
@@ -168,7 +168,7 @@ public class ProgrammingConceptService {
         "of","by","as","from","with","about","this","that","these","those",
         "it","its","he","she","they","we","you","i","me","him","her",
         "not","no","yes","if","then","when","where","how","what","who","which"
-    );
+    ));
 
     private static final Set<String> TECH_KEYWORDS = Set.of(
         "java","python","javascript","typescript","golang","go","rust","kotlin",
