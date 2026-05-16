@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
@@ -16,6 +17,12 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findAllOrdered();
 
     List<Category> findByNameContainingIgnoreCase(String name);
+
+    Optional<Category> findBySlug(String slug);
+
+    boolean existsBySlug(String slug);
+
+    boolean existsBySlugAndIdNot(String slug, Long id);
 
     @Modifying
     @Query("UPDATE Category c SET c.position = :position WHERE c.id = :id")

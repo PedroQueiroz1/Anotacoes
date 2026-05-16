@@ -34,6 +34,12 @@ public class CategoryController {
         return service.findById(id);
     }
 
+    @GetMapping("/slug/{slug}")
+    @Operation(summary = "Buscar categoria por slug")
+    public CategoryResponse findBySlug(@PathVariable String slug) {
+        return service.findBySlug(slug);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Criar uma nova categoria")

@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -35,6 +36,7 @@ function emptyTaskForm(): TaskForm {
 export class CategoryComponent implements OnInit, OnDestroy {
   // paramMap subscription ensures data reloads when navigating between categories
   private route           = inject(ActivatedRoute);
+  private titleService    = inject(Title);
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
   private noteService     = inject(NoteService);
@@ -99,9 +101,9 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
-      this.categoryId = Number(params.get('id'));
+      const slug = params.get('slug') ?? '';
       this.resetState();
-      this.load();
+      this.load(slug);
     });
   }
 
@@ -119,12 +121,17 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.deletingNoteId = null;
   }
 
-  load(): void {
+  load(slug: string): void {
     this.isLoading = true;
     this.errorMessage = '';
-    this.categoryService.getById(this.categoryId).subscribe({
-      next: (cat) => { this.category = cat; this.loadTasks(); },
-      error: ()    => { this.errorMessage = 'Categoria não encontrada.'; this.isLoading = false; },
+    this.categoryService.getBySlug(slug).subscribe({
+      next: (cat) => {
+        this.category   = cat;
+        this.categoryId = cat.id;
+        this.titleService.setTitle(`TaskNotes — ${cat.name}`);
+        this.loadTasks();
+      },
+      error: () => { this.errorMessage = 'Categoria não encontrada.'; this.isLoading = false; },
     });
   }
 

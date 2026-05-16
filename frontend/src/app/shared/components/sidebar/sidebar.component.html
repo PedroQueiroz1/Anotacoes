@@ -52,7 +52,7 @@
       @for (cat of categories; track cat.id) {
         <li
           class="sidebar__item"
-          [class.sidebar__item--active]="cat.id === activeCategoryId"
+          [class.sidebar__item--active]="cat.slug === activeCategorySlug"
           cdkDrag
         >
 
@@ -77,7 +77,7 @@
             <!-- Modo normal -->
             <span class="sidebar__drag-handle" cdkDragHandle title="Arrastar">⠿</span>
 
-            <a class="sidebar__cat-link" [routerLink]="['/categories', cat.id]" [title]="cat.name">
+            <a class="sidebar__cat-link" [routerLink]="['/categories', cat.slug]" [title]="cat.name">
               <span class="sidebar__cat-name">{{ cat.name }}</span>
               @if (cat.pendingTaskCount > 0) {
                 <span class="sidebar__badge">{{ cat.pendingTaskCount }}</span>

@@ -1,9 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { catchError, of } from 'rxjs';
 import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../../core/models/task.model';
 import { Subtask } from '../../../core/models/subtask.model';
 import { SubtaskService } from '../../../core/services/subtask.service';
 import { TaskService } from '../../../core/services/task.service';
+import { LinkPreviewService } from '../../../core/services/link-preview.service';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
@@ -20,8 +22,29 @@ export class TaskItemComponent implements OnInit {
   @Output() deleteRequested = new EventEmitter<number>();
   @Output() taskUpdated     = new EventEmitter<Task>();
 
-  private subtaskService = inject(SubtaskService);
-  private taskService    = inject(TaskService);
+  private subtaskService      = inject(SubtaskService);
+  private taskService         = inject(TaskService);
+  private linkPreviewService  = inject(LinkPreviewService);
+
+  // YouTube-only subtask detection (anchored regex)
+  private readonly YT_ONLY =
+    /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^"'\s]*&)?v=|shorts\/)|youtu\.be\/)[\w-]+(?:[?&][\w=&%+.-]*)?$/i;
+
+  // subtaskPreviews[id] = title string, null (no title), or undefined (not fetched yet)
+  subtaskPreviews: Record<number, string | null | undefined> = {};
+
+  isOnlyYoutubeUrl(text: string): boolean {
+    return this.YT_ONLY.test(text.trim());
+  }
+
+  private fetchSubtaskPreview(subtask: Subtask): void {
+    const url = subtask.text.trim();
+    this.linkPreviewService.fetchYoutube(url).pipe(
+      catchError(() => of(null))
+    ).subscribe(preview => {
+      this.subtaskPreviews[subtask.id] = preview?.title ?? null;
+    });
+  }
 
   readonly PRIORITY_LABEL = PRIORITY_LABEL;
   readonly STATUS_LABEL   = STATUS_LABEL;
@@ -66,6 +89,11 @@ export class TaskItemComponent implements OnInit {
         if (idx !== -1) this.subtasks[idx] = updated;
         this.editingSubtaskId = null;
         this.isSavingSubtask  = false;
+        if (this.isOnlyYoutubeUrl(updated.text)) {
+          this.fetchSubtaskPreview(updated);
+        } else {
+          delete this.subtaskPreviews[updated.id];
+        }
       },
       error: (err) => {
         this.subtaskEditError = err.error?.message ?? 'Erro ao salvar.';
@@ -155,8 +183,12 @@ export class TaskItemComponent implements OnInit {
   private loadSubtasks(): void {
     this.isLoadingSubtasks = true;
     this.subtaskService.getByTask(this.task.id).subscribe({
-      next: (list) => { this.subtasks = list; this.isLoadingSubtasks = false; },
-      error: ()    => { this.isLoadingSubtasks = false; },
+      next: (list) => {
+        this.subtasks = list;
+        this.isLoadingSubtasks = false;
+        list.filter(s => this.isOnlyYoutubeUrl(s.text)).forEach(s => this.fetchSubtaskPreview(s));
+      },
+      error: () => { this.isLoadingSubtasks = false; },
     });
   }
 
@@ -170,7 +202,12 @@ export class TaskItemComponent implements OnInit {
     this.isAddingSubtask = true;
     this.subtaskError = '';
     this.subtaskService.create(this.task.id, text).subscribe({
-      next: (s)  => { this.subtasks.push(s); this.newSubtaskText = ''; this.isAddingSubtask = false; },
+      next: (s)  => {
+        this.subtasks.push(s);
+        this.newSubtaskText = '';
+        this.isAddingSubtask = false;
+        if (this.isOnlyYoutubeUrl(s.text)) this.fetchSubtaskPreview(s);
+      },
       error: (e) => { this.subtaskError = e.error?.message ?? 'Erro ao adicionar.'; this.isAddingSubtask = false; },
     });
   }

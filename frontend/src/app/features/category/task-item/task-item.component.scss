@@ -299,6 +299,45 @@
   &:hover { background: var(--color-btn-ghost); color: var(--color-primary); }
 }
 
+// ── YouTube inline em subtarefa ────────────────────────────────────────────
+.subtask-item__checkbox {
+  cursor: pointer;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.subtask-yt-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: 13px;
+  overflow: hidden;
+
+  &:hover { text-decoration: underline; }
+
+  &--done {
+    color: var(--color-muted);
+    .subtask-yt-title { text-decoration: line-through; }
+  }
+}
+
+.subtask-yt-icon {
+  color: #f00;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.subtask-yt-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 // ── Edição inline de subtarefa ─────────────────────────────────────────────
 .subtask-edit {
   display: flex;

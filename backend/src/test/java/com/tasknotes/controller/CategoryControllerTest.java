@@ -32,7 +32,7 @@ class CategoryControllerTest {
     @MockBean  CategoryService service;
 
     private CategoryResponse sample() {
-        return new CategoryResponse(1L, "Work", LocalDateTime.now(), LocalDateTime.now(), 2);
+        return new CategoryResponse(1L, "Work", "work", LocalDateTime.now(), LocalDateTime.now(), 2);
     }
 
     @Test
@@ -97,7 +97,7 @@ class CategoryControllerTest {
 
     @Test
     void update_returns200WithUpdatedCategory() throws Exception {
-        CategoryResponse updated = new CategoryResponse(1L, "Personal", LocalDateTime.now(), LocalDateTime.now(), 0);
+        CategoryResponse updated = new CategoryResponse(1L, "Personal", "personal", LocalDateTime.now(), LocalDateTime.now(), 0);
         when(service.update(eq(1L), any())).thenReturn(updated);
 
         mockMvc.perform(put("/api/categories/1")

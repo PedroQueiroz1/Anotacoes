@@ -28,7 +28,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
   categories: Category[] = [];
   isLoading  = false;
 
-  activeCategoryId: number | null = null;
+  activeCategoryId:   number | null = null;
+  activeCategorySlug: string | null = null;
 
   showNewForm  = false;
   newName      = '';
@@ -57,14 +58,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void { this.routerSub?.unsubscribe(); }
 
   private updateActiveId(): void {
-    const match = this.router.url.match(/\/categories\/(\d+)/);
-    this.activeCategoryId = match ? Number(match[1]) : null;
+    const match = this.router.url.match(/\/categories\/([^/?]+)/);
+    const slug = match ? match[1] : null;
+    this.activeCategorySlug = slug;
+    const active = this.categories.find(c => c.slug === slug);
+    this.activeCategoryId = active?.id ?? null;
   }
 
   load(): void {
     this.isLoading = true;
     this.categoryService.getAll().subscribe({
-      next: (list) => { this.categories = list; this.isLoading = false; },
+      next: (list) => { this.categories = list; this.isLoading = false; this.updateActiveId(); },
       error: ()     => { this.isLoading = false; },
     });
   }
@@ -89,7 +93,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         this.categories.push(cat);
         this.showNewForm = false;
         this.isSavingNew = false;
-        this.router.navigate(['/categories', cat.id]);
+        this.router.navigate(['/categories', cat.slug]);
       },
       error: (err) => {
         this.newError    = err.error?.message ?? 'Erro ao criar.';
@@ -119,8 +123,12 @@ export class SidebarComponent implements OnInit, OnDestroy {
       next: (updated) => {
         const idx = this.categories.findIndex(c => c.id === updated.id);
         if (idx !== -1) this.categories[idx] = updated;
+        const wasActive = updated.id === this.activeCategoryId;
         this.editingId    = null;
         this.isSavingEdit = false;
+        if (wasActive && updated.slug !== this.activeCategorySlug) {
+          this.router.navigate(['/categories', updated.slug]);
+        }
       },
       error: (err) => {
         this.editingError = err.error?.message ?? 'Erro ao atualizar.';

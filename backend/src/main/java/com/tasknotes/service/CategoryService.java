@@ -8,9 +8,12 @@ import com.tasknotes.model.Category;
 import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.Normalizer;
 import java.util.List;
 
 @Service
@@ -28,6 +31,12 @@ public class CategoryService {
 
     public CategoryResponse findById(Long id) {
         return toResponse(findOrThrow(id));
+    }
+
+    public CategoryResponse findBySlug(String slug) {
+        Category c = repository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + slug));
+        return toResponse(c);
     }
 
     public List<CategoryResponse> findAll() {
@@ -50,18 +59,50 @@ public class CategoryService {
         }
         Category category = new Category();
         category.setName(request.name().trim());
+        category.setSlug(uniqueSlug(generateSlug(request.name().trim()), null));
         return toResponse(repository.save(category));
     }
 
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = findOrThrow(id);
         category.setName(request.name().trim());
+        category.setSlug(uniqueSlug(generateSlug(request.name().trim()), id));
         return toResponse(repository.save(category));
     }
 
     public void delete(Long id) {
         findOrThrow(id);
         repository.deleteById(id);
+    }
+
+    // Backfill slugs for categories created before this field was added
+    @EventListener(ApplicationReadyEvent.class)
+    public void backfillSlugs() {
+        for (Category c : repository.findAll()) {
+            if (c.getSlug() == null || c.getSlug().isEmpty()) {
+                c.setSlug(uniqueSlug(generateSlug(c.getName()), c.getId()));
+                repository.save(c);
+            }
+        }
+    }
+
+    private String generateSlug(String name) {
+        String normalized = Normalizer.normalize(name, Normalizer.Form.NFD);
+        String ascii = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+        String slug = ascii.toLowerCase().replaceAll("[^a-z0-9]+", "-");
+        slug = slug.replaceAll("^-+|-+$", "");
+        return slug.isEmpty() ? "categoria" : slug;
+    }
+
+    private String uniqueSlug(String base, Long excludeId) {
+        String candidate = base;
+        int suffix = 2;
+        while (excludeId != null
+                ? repository.existsBySlugAndIdNot(candidate, excludeId)
+                : repository.existsBySlug(candidate)) {
+            candidate = base + "-" + suffix++;
+        }
+        return candidate;
     }
 
     private Category findOrThrow(Long id) {
@@ -75,6 +116,7 @@ public class CategoryService {
         return new CategoryResponse(
                 c.getId(),
                 c.getName(),
+                c.getSlug(),
                 c.getCreatedAt(),
                 c.getUpdatedAt(),
                 pending

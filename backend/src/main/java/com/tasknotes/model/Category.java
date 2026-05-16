@@ -17,6 +17,9 @@ public class Category {
     @Column(nullable = false, length = 50)
     private String name;
 
+    @Column(unique = true, length = 70)
+    private String slug;
+
     @Column
     private Integer position;
 
@@ -31,6 +34,8 @@ public class Category {
     public Long getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
     public Integer getPosition() { return position; }
     public void setPosition(Integer position) { this.position = position; }
     public LocalDateTime getCreatedAt() { return createdAt; }
