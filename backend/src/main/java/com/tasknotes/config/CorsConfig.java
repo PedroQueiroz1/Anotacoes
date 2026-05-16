@@ -13,7 +13,7 @@ public class CorsConfig implements WebMvcConfigurer {
                 .allowedOrigins(
                         "http://localhost:4200",   // Angular dev server
                         "http://10.0.2.2:4200",     // Angular via emulador Android
-                        "https://*.vercel.app" // ADICIONEI AQUI PRA FUNCIONAR LOGO
+                        "https://minhasanotacoespedroqueiroz-amber.vercel.app/" // ADICIONEI AQUI PRA FUNCIONAR LOGO, CORRIGIR ISSO DEPOIS
                 )
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
