@@ -34,6 +34,14 @@
   color: var(--color-muted);
   line-height: 1.5;
   white-space: pre-line;
+
+  &--collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 .note-expand-btn {
