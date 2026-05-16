@@ -4,7 +4,8 @@
 2. Melhorias de usabilidade no frontend.
 3. Ajustes e refinamentos no aplicativo Android.
 4. Melhorias nos testes automatizados.
-5. Evolução da documentação do projeto.
+5. Evolução da documentação do projeto. (README DESATUALIZADO)
+6. 
 
 ---
 
