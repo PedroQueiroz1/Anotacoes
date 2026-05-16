@@ -4,7 +4,23 @@
 
     <!-- Prioridade + Título -->
     <div class="task-item__header">
-      <span class="badge" [class]="priorityClass">{{ PRIORITY_LABEL[task.priority] }}</span>
+      <div class="priority-wrapper" (click)="togglePriorityDropdown($event)">
+        <span class="badge badge--clickable" [class]="priorityClass" title="Clique para alterar prioridade">{{ PRIORITY_LABEL[task.priority] }}</span>
+        @if (priorityDropdownOpen) {
+          <div class="priority-dropdown">
+            @for (p of PRIORITY_OPTIONS; track p) {
+              <button
+                class="priority-option"
+                [class.priority-option--active]="p === task.priority"
+                (click)="selectPriority(p, $event)"
+              >{{ PRIORITY_LABEL[p] }}</button>
+            }
+          </div>
+        }
+      </div>
+      @if (priorityError) {
+        <span class="priority-error">{{ priorityError }}</span>
+      }
 
       @if (editingField === 'title') {
         <div class="inline-edit inline-edit--title">

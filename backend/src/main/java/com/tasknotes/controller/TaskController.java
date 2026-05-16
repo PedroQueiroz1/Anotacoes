@@ -2,6 +2,7 @@ package com.tasknotes.controller;
 
 import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
+import com.tasknotes.dto.UpdatePriorityRequest;
 import com.tasknotes.dto.TaskResponse;
 import com.tasknotes.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,6 +52,14 @@ public class TaskController {
             @PathVariable Long id,
             @Valid @RequestBody StatusUpdateRequest request) {
         return service.updateStatus(id, request);
+    }
+
+    @PatchMapping("/api/tasks/{id}/priority")
+    @Operation(summary = "Atualizar prioridade de uma tarefa")
+    public TaskResponse updatePriority(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdatePriorityRequest request) {
+        return service.updatePriority(id, request);
     }
 
     @PutMapping("/api/categories/{categoryId}/tasks/reorder")

@@ -2,6 +2,7 @@ package com.tasknotes.service;
 
 import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
+import com.tasknotes.dto.UpdatePriorityRequest;
 import com.tasknotes.dto.TaskResponse;
 import com.tasknotes.exception.ResourceNotFoundException;
 import com.tasknotes.model.Priority;
@@ -57,6 +58,12 @@ public class TaskService {
     public TaskResponse updateStatus(Long id, StatusUpdateRequest request) {
         Task task = findOrThrow(id);
         task.setStatus(request.status());
+        return toResponse(taskRepository.save(task));
+    }
+
+    public TaskResponse updatePriority(Long id, UpdatePriorityRequest request) {
+        Task task = findOrThrow(id);
+        task.setPriority(request.priority());
         return toResponse(taskRepository.save(task));
     }
 

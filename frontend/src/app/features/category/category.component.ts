@@ -186,6 +186,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
       title,
       description: this.form.description || null,
       dueDate:     this.form.dueDate || null,
+      priority:    this.form.priority,
     };
 
     this.isSaving = true;

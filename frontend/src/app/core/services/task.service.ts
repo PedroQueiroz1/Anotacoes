@@ -30,6 +30,10 @@ export class TaskService {
     return this.http.patch<Task>(`/api/tasks/${id}/status`, { status });
   }
 
+  updatePriority(id: number, priority: Priority): Observable<Task> {
+    return this.http.patch<Task>(`/api/tasks/${id}/priority`, { priority });
+  }
+
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`/api/tasks/${id}`);
   }

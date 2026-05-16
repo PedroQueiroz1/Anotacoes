@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../../core/models/task.model';
@@ -46,9 +46,38 @@ export class TaskItemComponent implements OnInit {
     });
   }
 
-  readonly PRIORITY_LABEL = PRIORITY_LABEL;
-  readonly STATUS_LABEL   = STATUS_LABEL;
+  readonly PRIORITY_LABEL   = PRIORITY_LABEL;
+  readonly STATUS_LABEL     = STATUS_LABEL;
   readonly STATUS_OPTIONS: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE'];
+  readonly PRIORITY_OPTIONS: Priority[] = ['LOW', 'MEDIUM', 'HIGH'];
+
+  // ── Inline priority editing ────────────────────────────────────────────────
+  priorityDropdownOpen = false;
+  priorityError        = '';
+
+  togglePriorityDropdown(event: Event): void {
+    event.stopPropagation();
+    this.priorityDropdownOpen = !this.priorityDropdownOpen;
+    this.priorityError = '';
+  }
+
+  @HostListener('document:click')
+  closePriorityDropdown(): void { this.priorityDropdownOpen = false; }
+
+  selectPriority(priority: Priority, event: Event): void {
+    event.stopPropagation();
+    if (priority === this.task.priority) { this.priorityDropdownOpen = false; return; }
+    const previous = this.task.priority;
+    this.task = { ...this.task, priority };
+    this.priorityDropdownOpen = false;
+    this.taskService.updatePriority(this.task.id, priority).subscribe({
+      next: (updated) => { this.taskUpdated.emit(updated); },
+      error: () => {
+        this.task = { ...this.task, priority: previous };
+        this.priorityError = 'Erro ao atualizar prioridade.';
+      },
+    });
+  }
 
   subtasks: Subtask[] = [];
   isExpanded = false;
