@@ -1,4 +1,4 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.sidebar--resizing]="isResizing" [style]="sidebarStyle">
 
   <!-- ── Brand ───────────────────────────────────────────────────────────── -->
   <div class="sidebar__brand">
@@ -17,9 +17,18 @@
   <!-- ── Cabeçalho de categorias ──────────────────────────────────────────── -->
   <div class="sidebar__section-header">
     <span class="sidebar__section-label">CATEGORIAS</span>
-    @if (!isAtLimit && !showNewForm) {
-      <button class="sidebar__add-btn" (click)="openNewForm()" title="Nova categoria">+</button>
-    }
+    <div class="sidebar__section-actions">
+      @if (categories.length > 0) {
+        <button
+          class="sidebar__expand-btn"
+          (click)="toggleTasksExpanded()"
+          [title]="tasksExpanded ? 'Recolher tarefas' : 'Expandir tarefas'"
+        >{{ tasksExpanded ? 'Recolher' : 'Expandir' }}</button>
+      }
+      @if (!isAtLimit && !showNewForm) {
+        <button class="sidebar__add-btn" (click)="openNewForm()" title="Nova categoria">+</button>
+      }
+    </div>
   </div>
 
   <!-- ── Formulário de nova categoria ─────────────────────────────────────── -->
@@ -74,28 +83,56 @@
               </div>
             </div>
           } @else {
-            <!-- Modo normal -->
-            <span class="sidebar__drag-handle" cdkDragHandle title="Arrastar">⠿</span>
+            <!-- Modo normal: linha da categoria -->
+            <div class="sidebar__item-row">
+              <span class="sidebar__drag-handle" cdkDragHandle title="Arrastar">⠿</span>
 
-            <a class="sidebar__cat-link" [routerLink]="['/categories', cat.slug]" [title]="cat.name">
-              <span class="sidebar__cat-name">{{ cat.name }}</span>
-              @if (cat.pendingTaskCount > 0) {
-                <span class="sidebar__badge">{{ cat.pendingTaskCount }}</span>
-              }
-            </a>
+              <a class="sidebar__cat-link" [routerLink]="['/categories', cat.slug]" [title]="cat.name">
+                <span class="sidebar__cat-name">{{ cat.name }}</span>
+                @if (cat.pendingTaskCount > 0) {
+                  <span class="sidebar__badge">{{ cat.pendingTaskCount }}</span>
+                }
+              </a>
 
-            <div class="sidebar__item-actions">
-              <button
-                class="sidebar__icon-btn"
-                (click)="startEdit(cat, $event)"
-                title="Editar nome"
-              >✏</button>
-              <button
-                class="sidebar__icon-btn sidebar__icon-btn--danger"
-                (click)="startDelete(cat.id, $event)"
-                title="Excluir"
-              >🗑</button>
+              <div class="sidebar__item-actions">
+                <button
+                  class="sidebar__icon-btn"
+                  (click)="startEdit(cat, $event)"
+                  title="Editar nome"
+                >✏</button>
+                <button
+                  class="sidebar__icon-btn sidebar__icon-btn--danger"
+                  (click)="startDelete(cat.id, $event)"
+                  title="Excluir"
+                >🗑</button>
+              </div>
             </div>
+
+            <!-- Tarefas resumidas (modo expandido) -->
+            @if (tasksExpanded) {
+              <div class="sidebar__task-preview">
+                @if (categoryTasksLoading[cat.id]) {
+                  <p class="sidebar__task-state">Carregando...</p>
+                } @else if (categoryTasksError[cat.id]) {
+                  <p class="sidebar__task-state sidebar__task-state--error">Erro ao carregar</p>
+                } @else if (categoryTasks[cat.id] !== undefined) {
+                  @if (tasksOf(cat.id).length === 0) {
+                    <p class="sidebar__task-state">Sem tarefas</p>
+                  } @else {
+                    <ul class="sidebar__task-list">
+                      @for (task of tasksOf(cat.id).slice(0, TASKS_PER_CAT); track task.id) {
+                        <li class="sidebar__task-item">
+                          <span class="sidebar__task-title" [title]="task.title">{{ task.title }}</span>
+                        </li>
+                      }
+                      @if (extraTaskCount(cat.id) > 0) {
+                        <li class="sidebar__task-more">+ {{ extraTaskCount(cat.id) }} tarefas</li>
+                      }
+                    </ul>
+                  }
+                }
+              </div>
+            }
           }
 
         </li>
@@ -111,7 +148,22 @@
     }
   </div>
 
+  <!-- ── Handle de resize ─────────────────────────────────────────────────── -->
+  <div
+    class="sidebar__resize-handle"
+    (mousedown)="initResize($event)"
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Redimensionar menu lateral"
+    title="Redimensionar menu lateral"
+  ></div>
+
 </aside>
+
+<!-- ── Overlay de resize (mantém cursor durante drag) ───────────────────── -->
+@if (isResizing) {
+  <div class="sidebar-resize-overlay"></div>
+}
 
 <!-- ── Confirmação de exclusão ──────────────────────────────────────────── -->
 @if (deletingId !== null) {
