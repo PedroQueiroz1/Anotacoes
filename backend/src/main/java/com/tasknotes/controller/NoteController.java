@@ -1,5 +1,6 @@
 package com.tasknotes.controller;
 
+import com.tasknotes.dto.CursorPageResponse;
 import com.tasknotes.dto.NoteRequest;
 import com.tasknotes.dto.NoteResponse;
 import com.tasknotes.service.NoteService;
@@ -19,8 +20,10 @@ public class NoteController {
     }
 
     @GetMapping("/api/categories/{categoryId}/notes")
-    public List<NoteResponse> listByCategory(@PathVariable Long categoryId) {
-        return service.findByCategory(categoryId);
+    public CursorPageResponse<NoteResponse> listByCategory(
+            @PathVariable Long categoryId,
+            @RequestParam(required = false) String cursor) {
+        return service.findByCategory(categoryId, cursor);
     }
 
     @PostMapping("/api/categories/{categoryId}/notes")

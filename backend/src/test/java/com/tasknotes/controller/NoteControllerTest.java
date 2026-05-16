@@ -1,6 +1,7 @@
 package com.tasknotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tasknotes.dto.CursorPageResponse;
 import com.tasknotes.dto.NoteRequest;
 import com.tasknotes.dto.NoteResponse;
 import com.tasknotes.exception.GlobalExceptionHandler;
@@ -31,7 +32,7 @@ class NoteControllerTest {
     @MockBean  NoteService  service;
 
     private NoteResponse sample(long id) {
-        return new NoteResponse(id, 1L, "Meeting notes", "Content here",
+        return new NoteResponse(id, null, 1L, "Meeting notes", "Content here",
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
@@ -57,12 +58,15 @@ class NoteControllerTest {
 
     @Test
     void listByCategory_returns200WithList() throws Exception {
-        when(service.findByCategory(1L)).thenReturn(List.of(sample(1L), sample(2L)));
+        CursorPageResponse<NoteResponse> page = new CursorPageResponse<>(
+                List.of(sample(1L), sample(2L)), null, false, 10);
+        when(service.findByCategory(eq(1L), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/categories/1/notes"))
                .andExpect(status().isOk())
-               .andExpect(jsonPath("$.length()").value(2))
-               .andExpect(jsonPath("$[0].title").value("Meeting notes"));
+               .andExpect(jsonPath("$.items.length()").value(2))
+               .andExpect(jsonPath("$.items[0].title").value("Meeting notes"))
+               .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
@@ -88,7 +92,7 @@ class NoteControllerTest {
 
     @Test
     void update_returns200WithUpdatedNote() throws Exception {
-        NoteResponse updated = new NoteResponse(1L, 1L, "Updated", "New content",
+        NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content",
                 LocalDateTime.now(), LocalDateTime.now());
         when(service.update(eq(1L), any())).thenReturn(updated);
 

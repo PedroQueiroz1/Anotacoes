@@ -1,5 +1,6 @@
 package com.tasknotes.model;
 
+import com.tasknotes.util.UuidV7Generator;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.OnDelete;
@@ -16,6 +17,9 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "uuid", length = 36, unique = true)
+    private String uuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
@@ -50,7 +54,14 @@ public class Task {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    private void prePersist() {
+        if (this.uuid == null) this.uuid = UuidV7Generator.generate();
+    }
+
     public Long getId()                  { return id; }
+    public String getUuid()              { return uuid; }
+    public void setUuid(String uuid)     { this.uuid = uuid; }
     public Category getCategory()        { return category; }
     public void setCategory(Category c)  { this.category = c; }
     public String getTitle()             { return title; }

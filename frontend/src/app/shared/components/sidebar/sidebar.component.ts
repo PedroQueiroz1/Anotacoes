@@ -147,8 +147,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.categoryTasksError   = { ...this.categoryTasksError,   [categoryId]: false };
 
     this.taskService.getByCategory(categoryId).subscribe({
-      next: (tasks) => {
-        this.categoryTasks        = { ...this.categoryTasks,        [categoryId]: tasks };
+      next: (page) => {
+        this.categoryTasks        = { ...this.categoryTasks,        [categoryId]: page.items };
         this.categoryTasksLoading = { ...this.categoryTasksLoading, [categoryId]: false };
       },
       error: () => {

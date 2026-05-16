@@ -1,5 +1,6 @@
 package com.tasknotes.service;
 
+import com.tasknotes.dto.SubtaskPageResponse;
 import com.tasknotes.dto.SubtaskRequest;
 import com.tasknotes.dto.SubtaskResponse;
 import com.tasknotes.exception.BusinessException;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,51 +34,59 @@ class SubtaskServiceTest {
 
     private Task stubTask(Long id) {
         Task t = mock(Task.class);
-        when(t.getId()).thenReturn(id);
+        lenient().when(t.getId()).thenReturn(id);
+        lenient().when(t.getUuid()).thenReturn(null);
         return t;
     }
 
     private Subtask stubSubtask(Long id, Long taskId, String text, boolean done) {
-        Subtask s = mock(Subtask.class);
-        when(s.getId()).thenReturn(id);
-        when(s.getTask()).thenReturn(stubTask(taskId));
-        when(s.getText()).thenReturn(text);
-        when(s.isDone()).thenReturn(done);
-        when(s.getCreatedAt()).thenReturn(LocalDateTime.now());
+        Task    task = stubTask(taskId);
+        Subtask s    = mock(Subtask.class);
+        lenient().when(s.getId()).thenReturn(id);
+        lenient().when(s.getUuid()).thenReturn(null);
+        lenient().when(s.getTask()).thenReturn(task);
+        lenient().when(s.getText()).thenReturn(text);
+        lenient().when(s.isDone()).thenReturn(done);
+        lenient().when(s.getCreatedAt()).thenReturn(LocalDateTime.now());
         return s;
     }
 
     // ── findByTask ────────────────────────────────────────────────────────────
     @Test
-    void findByTask_returnsList_whenTaskExists() {
+    void findByTask_returnsPage_whenTaskExists() {
+        Subtask sub1 = stubSubtask(1L, 1L, "Buy milk", false);
+        Subtask sub2 = stubSubtask(2L, 1L, "Pay bill", true);
         when(taskRepository.existsById(1L)).thenReturn(true);
-        when(subtaskRepository.findByTaskIdOrderByCreatedAtAsc(1L))
-                .thenReturn(List.of(
-                        stubSubtask(1L, 1L, "Buy milk", false),
-                        stubSubtask(2L, 1L, "Pay bill", true)
-                ));
+        when(subtaskRepository.findByTaskFirstPage(eq(1L), any(Pageable.class)))
+                .thenReturn(List.of(sub1, sub2));
+        when(subtaskRepository.countByTaskId(1L)).thenReturn(2L);
+        when(subtaskRepository.countByTaskIdAndDone(1L, true)).thenReturn(1L);
 
-        List<SubtaskResponse> result = service.findByTask(1L);
+        SubtaskPageResponse result = service.findByTask(1L, null);
 
-        assertThat(result).hasSize(2);
-        assertThat(result.get(0).text()).isEqualTo("Buy milk");
-        assertThat(result.get(1).done()).isTrue();
+        assertThat(result.items()).hasSize(2);
+        assertThat(result.items().get(0).text()).isEqualTo("Buy milk");
+        assertThat(result.items().get(1).done()).isTrue();
+        assertThat(result.totalCount()).isEqualTo(2);
+        assertThat(result.completedCount()).isEqualTo(1);
+        assertThat(result.hasNext()).isFalse();
     }
 
     @Test
     void findByTask_throwsResourceNotFoundException_whenTaskMissing() {
         when(taskRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.findByTask(99L))
+        assertThatThrownBy(() -> service.findByTask(99L, null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── create ────────────────────────────────────────────────────────────────
     @Test
     void create_savesSubtask_whenUnderLimit() {
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(stubTask(1L)));
-        when(subtaskRepository.countByTaskId(1L)).thenReturn(5L);
+        Task    task  = stubTask(1L);
         Subtask saved = stubSubtask(10L, 1L, "New sub", false);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(subtaskRepository.countByTaskId(1L)).thenReturn(5L);
         when(subtaskRepository.save(any())).thenReturn(saved);
 
         SubtaskResponse r = service.create(1L, new SubtaskRequest("New sub"));
@@ -88,7 +98,8 @@ class SubtaskServiceTest {
 
     @Test
     void create_throwsBusinessException_whenAtTwentySubtasks() {
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(stubTask(1L)));
+        Task task = stubTask(1L);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(20L);
 
         assertThatThrownBy(() -> service.create(1L, new SubtaskRequest("Extra")))
@@ -108,7 +119,8 @@ class SubtaskServiceTest {
 
     @Test
     void create_trimsText_beforeSaving() {
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(stubTask(1L)));
+        Task task = stubTask(1L);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(0L);
         when(subtaskRepository.save(any())).thenAnswer(inv -> {
             Subtask s = inv.getArgument(0);
@@ -156,7 +168,8 @@ class SubtaskServiceTest {
     // ── delete ────────────────────────────────────────────────────────────────
     @Test
     void delete_callsDeleteById_whenExists() {
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(stubSubtask(1L, 1L, "X", false)));
+        Subtask existing = stubSubtask(1L, 1L, "X", false);
+        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(existing));
 
         service.delete(1L);
 

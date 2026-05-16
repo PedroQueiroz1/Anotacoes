@@ -32,18 +32,20 @@ class NoteServiceTest {
 
     private Category stubCategory(Long id) {
         Category c = mock(Category.class);
-        when(c.getId()).thenReturn(id);
+        lenient().when(c.getId()).thenReturn(id);
         return c;
     }
 
     private Note stubNote(Long id, Long categoryId, String title, String content) {
-        Note n = mock(Note.class);
-        when(n.getId()).thenReturn(id);
-        when(n.getCategory()).thenReturn(stubCategory(categoryId));
-        when(n.getTitle()).thenReturn(title);
-        when(n.getContent()).thenReturn(content);
-        when(n.getCreatedAt()).thenReturn(LocalDateTime.now());
-        when(n.getUpdatedAt()).thenReturn(LocalDateTime.now());
+        Category cat = stubCategory(categoryId);
+        Note     n   = mock(Note.class);
+        lenient().when(n.getId()).thenReturn(id);
+        lenient().when(n.getUuid()).thenReturn(null);
+        lenient().when(n.getCategory()).thenReturn(cat);
+        lenient().when(n.getTitle()).thenReturn(title);
+        lenient().when(n.getContent()).thenReturn(content);
+        lenient().when(n.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(n.getUpdatedAt()).thenReturn(LocalDateTime.now());
         return n;
     }
 
@@ -87,15 +89,17 @@ class NoteServiceTest {
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
         when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.findByCategory(99L))
+        assertThatThrownBy(() -> service.findByCategory(99L, null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── create ────────────────────────────────────────────────────────────────
     @Test
     void create_savesAndReturnsNote() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
-        when(noteRepository.save(any())).thenReturn(stubNote(5L, 1L, "My Note", "Content"));
+        Category cat  = stubCategory(1L);
+        Note     note = stubNote(5L, 1L, "My Note", "Content");
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
+        when(noteRepository.save(any())).thenReturn(note);
 
         NoteResponse r = service.create(1L, new NoteRequest("My Note", "Content"));
 
@@ -106,7 +110,8 @@ class NoteServiceTest {
 
     @Test
     void create_throwsBusinessException_whenContentExceeds2000Chars() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
+        Category cat = stubCategory(1L);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
         String tooLong = "x".repeat(2001);
 
         assertThatThrownBy(() -> service.create(1L, new NoteRequest("Title", tooLong)))
@@ -118,8 +123,10 @@ class NoteServiceTest {
 
     @Test
     void create_allowsNullContent() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
-        when(noteRepository.save(any())).thenReturn(stubNote(1L, 1L, "Title", null));
+        Category cat  = stubCategory(1L);
+        Note     note = stubNote(1L, 1L, "Title", null);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
+        when(noteRepository.save(any())).thenReturn(note);
 
         NoteResponse r = service.create(1L, new NoteRequest("Title", null));
 
@@ -150,7 +157,8 @@ class NoteServiceTest {
 
     @Test
     void update_throwsBusinessException_whenContentTooLong() {
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(stubNote(1L, 1L, "X", null)));
+        Note note = stubNote(1L, 1L, "X", null);
+        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
         String tooLong = "y".repeat(2001);
 
         assertThatThrownBy(() -> service.update(1L, new NoteRequest("Title", tooLong)))
@@ -170,7 +178,8 @@ class NoteServiceTest {
     // ── delete ────────────────────────────────────────────────────────────────
     @Test
     void delete_callsDeleteById_whenExists() {
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(stubNote(1L, 1L, "X", null)));
+        Note note = stubNote(1L, 1L, "X", null);
+        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
 
         service.delete(1L);
 

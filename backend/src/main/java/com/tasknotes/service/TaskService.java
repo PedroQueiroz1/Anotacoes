@@ -1,5 +1,6 @@
 package com.tasknotes.service;
 
+import com.tasknotes.dto.CursorPageResponse;
 import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
 import com.tasknotes.dto.UpdatePriorityRequest;
@@ -7,15 +8,25 @@ import com.tasknotes.dto.TaskResponse;
 import com.tasknotes.exception.ResourceNotFoundException;
 import com.tasknotes.model.Priority;
 import com.tasknotes.model.Task;
+import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.CursorCodec;
+import com.tasknotes.util.UuidV7Generator;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
 public class TaskService {
+
+    private static final int TASK_LIMIT = 10;
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
@@ -25,12 +36,31 @@ public class TaskService {
         this.categoryRepository = categoryRepository;
     }
 
-    public List<TaskResponse> findByCategory(Long categoryId) {
+    public CursorPageResponse<TaskResponse> findByCategory(Long categoryId, String cursor, TaskStatus statusFilter) {
         validateCategory(categoryId);
-        return taskRepository.findByCategoryIdOrdered(categoryId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        int fetch = TASK_LIMIT + 1;
+        var pageable = PageRequest.of(0, fetch);
+        List<Task> raw;
+
+        if (cursor == null) {
+            raw = statusFilter == null
+                    ? taskRepository.findByCategoryFirstPage(categoryId, pageable)
+                    : taskRepository.findByCategoryFirstPageByStatus(categoryId, statusFilter.name(), pageable);
+        } else {
+            CursorCodec.CursorPayload p = CursorCodec.decode(cursor);
+            if (p == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cursor de paginação inválido.");
+            raw = statusFilter == null
+                    ? taskRepository.findByCategoryAfterCursor(categoryId, p.createdAt(), p.id(), pageable)
+                    : taskRepository.findByCategoryAfterCursorByStatus(categoryId, statusFilter.name(), p.createdAt(), p.id(), pageable);
+        }
+
+        boolean hasNext = raw.size() > TASK_LIMIT;
+        List<Task> page = hasNext ? raw.subList(0, TASK_LIMIT) : raw;
+        String nextCursor = hasNext
+                ? CursorCodec.encode(page.get(page.size() - 1).getCreatedAt(), page.get(page.size() - 1).getId())
+                : null;
+
+        return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, TASK_LIMIT);
     }
 
     public TaskResponse create(Long categoryId, TaskRequest request) {
@@ -80,6 +110,16 @@ public class TaskService {
         }
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void backfillUuids() {
+        for (Task t : taskRepository.findAll()) {
+            if (t.getUuid() == null) {
+                t.setUuid(UuidV7Generator.generate());
+                taskRepository.save(t);
+            }
+        }
+    }
+
     private Task findOrThrow(Long id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + id));
@@ -94,6 +134,7 @@ public class TaskService {
     private TaskResponse toResponse(Task t) {
         return new TaskResponse(
                 t.getId(),
+                t.getUuid(),
                 t.getCategory().getId(),
                 t.getTitle(),
                 t.getDescription(),

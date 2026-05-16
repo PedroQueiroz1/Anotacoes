@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Task, TaskStatus, Priority } from '../models/task.model';
+import { CursorPage } from '../models/pagination.model';
 
 export interface TaskPayload {
   title: string;
@@ -14,8 +15,11 @@ export interface TaskPayload {
 export class TaskService {
   private http = inject(HttpClient);
 
-  getByCategory(categoryId: number): Observable<Task[]> {
-    return this.http.get<Task[]>(`/api/categories/${categoryId}/tasks`);
+  getByCategory(categoryId: number, cursor?: string | null, status?: TaskStatus | null): Observable<CursorPage<Task>> {
+    let params = new HttpParams();
+    if (cursor) params = params.set('cursor', cursor);
+    if (status) params = params.set('status', status);
+    return this.http.get<CursorPage<Task>>(`/api/categories/${categoryId}/tasks`, { params });
   }
 
   create(categoryId: number, payload: TaskPayload): Observable<Task> {

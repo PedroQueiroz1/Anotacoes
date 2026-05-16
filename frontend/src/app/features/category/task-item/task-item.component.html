@@ -94,8 +94,8 @@
       <!-- Botão subtarefas -->
       <button class="btn-text" (click)="toggleExpand()">
         {{ isExpanded ? '▲ Checklist' : '▼ Checklist' }}
-        @if (subtasks.length > 0) {
-          <span class="subtask-count">({{ subtasks.length }})</span>
+        @if (subtaskTotalCount > 0) {
+          <span class="subtask-count">({{ subtaskTotalCount }})</span>
         }
       </button>
 
@@ -107,12 +107,12 @@
   </div>
 
   <!-- Barra de progresso -->
-  @if (subtasks.length > 0) {
+  @if (subtaskTotalCount > 0) {
     <div class="progress-wrapper">
       <div class="progress-bar">
         <div class="progress-bar__fill" [style.width.%]="progress"></div>
       </div>
-      <span class="progress-label">{{ doneCount }}/{{ subtasks.length }}</span>
+      <span class="progress-label">{{ subtaskCompletedCount }}/{{ subtaskTotalCount }}</span>
     </div>
   }
 
@@ -191,7 +191,7 @@
         </ul>
 
         <!-- Adicionar subtarefa -->
-        @if (subtasks.length < 20) {
+        @if (subtaskTotalCount < 20) {
           <div class="subtask-add">
             <input
               class="subtask-input"

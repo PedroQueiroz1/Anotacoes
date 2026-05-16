@@ -1,5 +1,6 @@
 package com.tasknotes.controller;
 
+import com.tasknotes.dto.SubtaskPageResponse;
 import com.tasknotes.dto.SubtaskRequest;
 import com.tasknotes.dto.SubtaskResponse;
 import com.tasknotes.service.SubtaskService;
@@ -8,8 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @Tag(name = "Subtarefas", description = "Checklist de subtarefas por tarefa")
@@ -22,9 +21,11 @@ public class SubtaskController {
     }
 
     @GetMapping("/api/tasks/{taskId}/subtasks")
-    @Operation(summary = "Listar subtarefas de uma tarefa")
-    public List<SubtaskResponse> findByTask(@PathVariable Long taskId) {
-        return service.findByTask(taskId);
+    @Operation(summary = "Listar subtarefas de uma tarefa (paginado por cursor)")
+    public SubtaskPageResponse findByTask(
+            @PathVariable Long taskId,
+            @RequestParam(required = false) String cursor) {
+        return service.findByTask(taskId, cursor);
     }
 
     @PostMapping("/api/tasks/{taskId}/subtasks")

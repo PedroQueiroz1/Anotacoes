@@ -34,54 +34,41 @@ class TaskServiceTest {
 
     private Category stubCategory(Long id) {
         Category c = mock(Category.class);
-        when(c.getId()).thenReturn(id);
+        lenient().when(c.getId()).thenReturn(id);
         return c;
     }
 
     private Task stubTask(Long id, Priority priority, TaskStatus status) {
-        Task t = mock(Task.class);
-        when(t.getId()).thenReturn(id);
-        when(t.getCategory()).thenReturn(stubCategory(1L));
-        when(t.getTitle()).thenReturn("Task " + id);
-        when(t.getDescription()).thenReturn(null);
-        when(t.getDueDate()).thenReturn(null);
-        when(t.getPriority()).thenReturn(priority);
-        when(t.getStatus()).thenReturn(status);
-        when(t.getCreatedAt()).thenReturn(LocalDateTime.now());
-        when(t.getUpdatedAt()).thenReturn(LocalDateTime.now());
+        Task t       = mock(Task.class);
+        Category cat = stubCategory(1L);
+        lenient().when(t.getId()).thenReturn(id);
+        lenient().when(t.getUuid()).thenReturn(null);
+        lenient().when(t.getCategory()).thenReturn(cat);
+        lenient().when(t.getTitle()).thenReturn("Task " + id);
+        lenient().when(t.getDescription()).thenReturn(null);
+        lenient().when(t.getDueDate()).thenReturn(null);
+        lenient().when(t.getPriority()).thenReturn(priority);
+        lenient().when(t.getStatus()).thenReturn(status);
+        lenient().when(t.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(t.getUpdatedAt()).thenReturn(LocalDateTime.now());
         return t;
     }
 
     // ── findByCategory ────────────────────────────────────────────────────────
-    // @Test
-    // void findByCategory_returnsSortedByPriority() {
-    //     when(categoryRepository.existsById(1L)).thenReturn(true);
-    //     Task low    = stubTask(1L, Priority.LOW,    TaskStatus.TODO);
-    //     Task high   = stubTask(2L, Priority.HIGH,   TaskStatus.TODO);
-    //     Task medium = stubTask(3L, Priority.MEDIUM, TaskStatus.TODO);
-    //     when(taskRepository.findByCategoryId(1L)).thenReturn(List.of(low, high, medium));
-
-    //     List<TaskResponse> result = service.findByCategory(1L);
-
-    //     assertThat(result).hasSize(3);
-    //     assertThat(result.get(0).priority()).isEqualTo(Priority.HIGH);
-    //     assertThat(result.get(1).priority()).isEqualTo(Priority.MEDIUM);
-    //     assertThat(result.get(2).priority()).isEqualTo(Priority.LOW);
-    // }
-
     @Test
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
         when(categoryRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.findByCategory(99L))
+        assertThatThrownBy(() -> service.findByCategory(99L, null, null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── create ────────────────────────────────────────────────────────────────
     @Test
     void create_savesAndReturnsTask() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
-        Task saved = stubTask(10L, Priority.MEDIUM, TaskStatus.TODO);
+        Category cat  = stubCategory(1L);
+        Task     saved = stubTask(10L, Priority.MEDIUM, TaskStatus.TODO);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
         when(taskRepository.save(any())).thenReturn(saved);
 
         TaskResponse r = service.create(1L, new TaskRequest("Buy milk", null, null, Priority.MEDIUM));
@@ -91,17 +78,17 @@ class TaskServiceTest {
     }
 
     @Test
-    void create_defaultsPriorityToMedium_whenNull() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
+    void create_defaultsPriorityToLow_whenNull() {
+        Category cat = stubCategory(1L);
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
         when(taskRepository.save(any())).thenAnswer(inv -> {
             Task t = inv.getArgument(0);
-            Task saved = stubTask(1L, t.getPriority(), TaskStatus.TODO);
-            return saved;
+            return stubTask(1L, t.getPriority(), TaskStatus.TODO);
         });
 
         TaskResponse r = service.create(1L, new TaskRequest("Task", null, null, null));
 
-        assertThat(r.priority()).isEqualTo(Priority.MEDIUM);
+        assertThat(r.priority()).isEqualTo(Priority.LOW);
     }
 
     @Test
@@ -159,7 +146,8 @@ class TaskServiceTest {
     // ── delete ────────────────────────────────────────────────────────────────
     @Test
     void delete_callsDeleteById_whenExists() {
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(stubTask(1L, Priority.LOW, TaskStatus.TODO)));
+        Task existing = stubTask(1L, Priority.LOW, TaskStatus.TODO);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(existing));
 
         service.delete(1L);
 

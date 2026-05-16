@@ -1,9 +1,11 @@
 package com.tasknotes.controller;
 
+import com.tasknotes.dto.CursorPageResponse;
 import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
 import com.tasknotes.dto.UpdatePriorityRequest;
 import com.tasknotes.dto.TaskResponse;
+import com.tasknotes.model.TaskStatus;
 import com.tasknotes.service.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,9 +26,12 @@ public class TaskController {
     }
 
     @GetMapping("/api/categories/{categoryId}/tasks")
-    @Operation(summary = "Listar tarefas de uma categoria (ordenadas por prioridade)")
-    public List<TaskResponse> findByCategory(@PathVariable Long categoryId) {
-        return service.findByCategory(categoryId);
+    @Operation(summary = "Listar tarefas de uma categoria (paginado por cursor)")
+    public CursorPageResponse<TaskResponse> findByCategory(
+            @PathVariable Long categoryId,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) TaskStatus status) {
+        return service.findByCategory(categoryId, cursor, status);
     }
 
     @PostMapping("/api/categories/{categoryId}/tasks")

@@ -80,6 +80,8 @@ export class TaskItemComponent implements OnInit {
   }
 
   subtasks: Subtask[] = [];
+  subtaskTotalCount = 0;
+  subtaskCompletedCount = 0;
   isExpanded = false;
   isLoadingSubtasks = false;
 
@@ -145,14 +147,12 @@ export class TaskItemComponent implements OnInit {
     return `badge--${this.task.priority.toLowerCase()}`;
   }
 
-  get doneCount(): number {
-    return this.subtasks.filter(s => s.done).length;
-  }
+  get doneCount(): number { return this.subtaskCompletedCount; }
 
   get progress(): number {
-    return this.subtasks.length === 0
+    return this.subtaskTotalCount === 0
       ? 0
-      : Math.round(this.doneCount / this.subtasks.length * 100);
+      : Math.round(this.subtaskCompletedCount / this.subtaskTotalCount * 100);
   }
 
   // ── Inline editing ────────────────────────────────────────────────────────
@@ -212,10 +212,12 @@ export class TaskItemComponent implements OnInit {
   private loadSubtasks(): void {
     this.isLoadingSubtasks = true;
     this.subtaskService.getByTask(this.task.id).subscribe({
-      next: (list) => {
-        this.subtasks = list;
+      next: (page) => {
+        this.subtasks = page.items;
+        this.subtaskTotalCount = page.totalCount;
+        this.subtaskCompletedCount = page.completedCount;
         this.isLoadingSubtasks = false;
-        list.filter(s => this.isOnlyYoutubeUrl(s.text)).forEach(s => this.fetchSubtaskPreview(s));
+        page.items.filter(s => this.isOnlyYoutubeUrl(s.text)).forEach(s => this.fetchSubtaskPreview(s));
       },
       error: () => { this.isLoadingSubtasks = false; },
     });
@@ -233,6 +235,7 @@ export class TaskItemComponent implements OnInit {
     this.subtaskService.create(this.task.id, text).subscribe({
       next: (s)  => {
         this.subtasks.push(s);
+        this.subtaskTotalCount++;
         this.newSubtaskText = '';
         this.isAddingSubtask = false;
         if (this.isOnlyYoutubeUrl(s.text)) this.fetchSubtaskPreview(s);
@@ -244,6 +247,7 @@ export class TaskItemComponent implements OnInit {
   toggleSubtask(subtask: Subtask): void {
     const idx = this.subtasks.findIndex(s => s.id === subtask.id);
     if (idx !== -1) this.subtasks[idx] = { ...subtask, done: !subtask.done };
+    this.subtaskCompletedCount += subtask.done ? -1 : 1;
 
     this.subtaskService.toggle(subtask.id).subscribe({
       next: (updated) => {
@@ -251,13 +255,19 @@ export class TaskItemComponent implements OnInit {
       },
       error: () => {
         if (idx !== -1) this.subtasks[idx] = subtask;
+        this.subtaskCompletedCount += subtask.done ? 1 : -1;
       },
     });
   }
 
   deleteSubtask(id: number): void {
+    const target = this.subtasks.find(s => s.id === id);
     this.subtaskService.delete(id).subscribe({
-      next: () => { this.subtasks = this.subtasks.filter(s => s.id !== id); },
+      next: () => {
+        this.subtasks = this.subtasks.filter(s => s.id !== id);
+        this.subtaskTotalCount--;
+        if (target?.done) this.subtaskCompletedCount--;
+      },
     });
   }
 

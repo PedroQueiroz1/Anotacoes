@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 
 public record TaskResponse(
         Long id,
+        String uuid,
         Long categoryId,
         String title,
         String description,

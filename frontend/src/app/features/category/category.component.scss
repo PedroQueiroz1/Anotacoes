@@ -328,3 +328,16 @@ $radius: 10px;
 .note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
   transition: transform 200ms ease;
 }
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+
+  &__page {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+  }
+}

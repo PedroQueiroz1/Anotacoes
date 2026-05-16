@@ -33,10 +33,11 @@ class CategoryServiceTest {
 
     private Category stub(Long id, String name) {
         Category c = mock(Category.class);
-        when(c.getId()).thenReturn(id);
-        when(c.getName()).thenReturn(name);
-        when(c.getCreatedAt()).thenReturn(LocalDateTime.now());
-        when(c.getUpdatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(c.getId()).thenReturn(id);
+        lenient().when(c.getUuid()).thenReturn(null);
+        lenient().when(c.getName()).thenReturn(name);
+        lenient().when(c.getCreatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(c.getUpdatedAt()).thenReturn(LocalDateTime.now());
         return c;
     }
 
@@ -69,7 +70,8 @@ class CategoryServiceTest {
     // ── findById ──────────────────────────────────────────────────────────────
     @Test
     void findById_returnsResponse_whenExists() {
-        when(repository.findById(1L)).thenReturn(Optional.of(stub(1L, "Work")));
+        Category cat = stub(1L, "Work");
+        when(repository.findById(1L)).thenReturn(Optional.of(cat));
 
         CategoryResponse r = service.findById(1L);
 
@@ -89,8 +91,9 @@ class CategoryServiceTest {
     // ── create ────────────────────────────────────────────────────────────────
     @Test
     void create_savesAndReturnsResponse_whenUnderLimit() {
+        Category saved = stub(4L, "New");
         when(repository.count()).thenReturn(3L);
-        when(repository.save(any())).thenReturn(stub(4L, "New"));
+        when(repository.save(any())).thenReturn(saved);
 
         CategoryResponse r = service.create(new CategoryRequest("New"));
 
@@ -147,7 +150,8 @@ class CategoryServiceTest {
     // ── delete ────────────────────────────────────────────────────────────────
     @Test
     void delete_callsDeleteById_whenExists() {
-        when(repository.findById(1L)).thenReturn(Optional.of(stub(1L, "X")));
+        Category cat = stub(1L, "X");
+        when(repository.findById(1L)).thenReturn(Optional.of(cat));
 
         service.delete(1L);
 
@@ -167,7 +171,8 @@ class CategoryServiceTest {
     // ── pendingTaskCount ──────────────────────────────────────────────────────
     @Test
     void findById_includesPendingTaskCount() {
-        when(repository.findById(1L)).thenReturn(Optional.of(stub(1L, "Work")));
+        Category cat = stub(1L, "Work");
+        when(repository.findById(1L)).thenReturn(Optional.of(cat));
         when(taskRepository.countByCategoryIdAndStatusNot(1L, TaskStatus.DONE)).thenReturn(3L);
 
         CategoryResponse r = service.findById(1L);

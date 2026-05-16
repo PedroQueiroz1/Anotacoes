@@ -124,20 +124,16 @@
           <p>Nenhuma tarefa nesta categoria.</p>
           <button class="btn btn--primary" (click)="openCreate()">Criar primeira tarefa</button>
         </div>
-      } @else if (filteredTasks.length === 0) {
-        <div class="empty-state empty-state--sm">
-          <p>Nenhuma tarefa com status "{{ STATUS_LABEL[activeFilter === 'ALL' ? 'TODO' : activeFilter] }}".</p>
-        </div>
       } @else {
         <ul class="task-list"
             cdkDropList
-            [cdkDropListDisabled]="activeFilter !== 'ALL'"
+            [cdkDropListDisabled]="taskDragDisabled"
             (cdkDropListDropped)="dropTasks($event)">
-          @for (task of filteredTasks; track task.id) {
-            <li class="task-list__item" cdkDrag [cdkDragDisabled]="activeFilter !== 'ALL'">
+          @for (task of tasks; track task.id) {
+            <li class="task-list__item" cdkDrag [cdkDragDisabled]="taskDragDisabled">
               <span
                 class="drag-handle"
-                [class.drag-handle--hidden]="activeFilter !== 'ALL'"
+                [class.drag-handle--hidden]="taskDragDisabled"
                 cdkDragHandle
                 title="Arrastar para reordenar"
               >⠿</span>
@@ -151,6 +147,14 @@
             </li>
           }
         </ul>
+
+        @if (taskHasPrev || taskHasNext) {
+          <div class="pagination-bar">
+            <button class="btn btn--ghost btn--sm" [disabled]="!taskHasPrev" (click)="taskPrevPage()">&#8592; Anterior</button>
+            <span class="pagination-bar__page">Página {{ taskPageIndex + 1 }}</span>
+            <button class="btn btn--ghost btn--sm" [disabled]="!taskHasNext" (click)="taskNextPage()">Próxima &#8594;</button>
+          </div>
+        }
       }
     </section>
 
@@ -208,6 +212,14 @@
             </li>
           }
         </ul>
+
+        @if (noteHasPrev || noteHasNext) {
+          <div class="pagination-bar">
+            <button class="btn btn--ghost btn--sm" [disabled]="!noteHasPrev" (click)="notePrevPage()">&#8592; Anterior</button>
+            <span class="pagination-bar__page">Página {{ notePageIndex + 1 }}</span>
+            <button class="btn btn--ghost btn--sm" [disabled]="!noteHasNext" (click)="noteNextPage()">Próxima &#8594;</button>
+          </div>
+        }
       }
     </section>
 

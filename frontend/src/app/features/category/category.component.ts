@@ -54,6 +54,15 @@ export class CategoryComponent implements OnInit, OnDestroy {
   // ── Tarefas ───────────────────────────────────────────────────────────────
   tasks: Task[] = [];
 
+  // ── Paginação de tarefas ──────────────────────────────────────────────────
+  taskCursorHistory: (string | null)[] = [null];
+  taskPageIndex = 0;
+  taskNextCursor: string | null = null;
+  taskHasNext = false;
+
+  get taskHasPrev(): boolean { return this.taskPageIndex > 0; }
+  get taskDragDisabled(): boolean { return this.activeFilter !== 'ALL' || this.taskHasNext || this.taskPageIndex > 0; }
+
   // ── Filtro por status ─────────────────────────────────────────────────────
   activeFilter: 'ALL' | TaskStatus = 'ALL';
 
@@ -64,12 +73,12 @@ export class CategoryComponent implements OnInit, OnDestroy {
     { value: 'DONE',        label: 'Concluídas' },
   ];
 
-  get filteredTasks(): Task[] {
-    if (this.activeFilter === 'ALL') return this.tasks;
-    return this.tasks.filter(t => t.status === this.activeFilter);
+  setFilter(value: 'ALL' | TaskStatus): void {
+    if (this.activeFilter === value) return;
+    this.activeFilter = value;
+    this.resetTaskPagination();
+    this.loadTasks(null);
   }
-
-  setFilter(value: 'ALL' | TaskStatus): void { this.activeFilter = value; }
 
   // ── Estatísticas ──────────────────────────────────────────────────────────
   get statTotal():    number { return this.tasks.length; }
@@ -90,6 +99,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   // ── Anotações ─────────────────────────────────────────────────────────────
   notes: Note[] = [];
+
+  // ── Paginação de anotações ────────────────────────────────────────────────
+  noteCursorHistory: (string | null)[] = [null];
+  notePageIndex = 0;
+  noteNextCursor: string | null = null;
+  noteHasNext = false;
+
+  get noteHasPrev(): boolean { return this.notePageIndex > 0; }
 
   showNoteForm   = false;
   noteTitle      = '';
@@ -119,6 +136,22 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.deletingTaskId = null;
     this.deletingNoteId = null;
+    this.resetTaskPagination();
+    this.resetNotePagination();
+  }
+
+  private resetTaskPagination(): void {
+    this.taskCursorHistory = [null];
+    this.taskPageIndex = 0;
+    this.taskNextCursor = null;
+    this.taskHasNext = false;
+  }
+
+  private resetNotePagination(): void {
+    this.noteCursorHistory = [null];
+    this.notePageIndex = 0;
+    this.noteNextCursor = null;
+    this.noteHasNext = false;
   }
 
   load(slug: string): void {
@@ -129,24 +162,62 @@ export class CategoryComponent implements OnInit, OnDestroy {
         this.category   = cat;
         this.categoryId = cat.id;
         this.titleService.setTitle(`TaskNotes — ${cat.name}`);
-        this.loadTasks();
+        this.loadTasks(null);
       },
       error: () => { this.errorMessage = 'Categoria não encontrada.'; this.isLoading = false; },
     });
   }
 
-  private loadTasks(): void {
-    this.taskService.getByCategory(this.categoryId).subscribe({
-      next: (list) => { this.tasks = list; this.loadNotes(); },
-      error: ()    => { this.errorMessage = 'Erro ao carregar tarefas.'; this.isLoading = false; },
+  private loadTasks(cursor: string | null): void {
+    const status = this.activeFilter === 'ALL' ? null : this.activeFilter;
+    this.taskService.getByCategory(this.categoryId, cursor, status).subscribe({
+      next: (page) => {
+        this.tasks = page.items;
+        this.taskNextCursor = page.nextCursor;
+        this.taskHasNext = page.hasNext;
+        this.loadNotes(null);
+      },
+      error: () => { this.errorMessage = 'Erro ao carregar tarefas.'; this.isLoading = false; },
     });
   }
 
-  private loadNotes(): void {
-    this.noteService.getByCategory(this.categoryId).subscribe({
-      next: (list) => { this.notes = list; this.isLoading = false; },
+  private loadNotes(cursor: string | null): void {
+    this.noteService.getByCategory(this.categoryId, cursor).subscribe({
+      next: (page) => { this.notes = page.items; this.noteNextCursor = page.nextCursor; this.noteHasNext = page.hasNext; this.isLoading = false; },
       error: ()    => { this.errorMessage = 'Erro ao carregar anotações.'; this.isLoading = false; },
     });
+  }
+
+  // ── Paginação — tarefas ───────────────────────────────────────────────────
+  taskNextPage(): void {
+    if (!this.taskHasNext || !this.taskNextCursor) return;
+    this.taskPageIndex++;
+    if (this.taskCursorHistory.length <= this.taskPageIndex) {
+      this.taskCursorHistory.push(this.taskNextCursor);
+    }
+    this.loadTasks(this.taskCursorHistory[this.taskPageIndex]);
+  }
+
+  taskPrevPage(): void {
+    if (this.taskPageIndex <= 0) return;
+    this.taskPageIndex--;
+    this.loadTasks(this.taskCursorHistory[this.taskPageIndex]);
+  }
+
+  // ── Paginação — anotações ─────────────────────────────────────────────────
+  noteNextPage(): void {
+    if (!this.noteHasNext || !this.noteNextCursor) return;
+    this.notePageIndex++;
+    if (this.noteCursorHistory.length <= this.notePageIndex) {
+      this.noteCursorHistory.push(this.noteNextCursor);
+    }
+    this.loadNotes(this.noteCursorHistory[this.notePageIndex]);
+  }
+
+  notePrevPage(): void {
+    if (this.notePageIndex <= 0) return;
+    this.notePageIndex--;
+    this.loadNotes(this.noteCursorHistory[this.notePageIndex]);
   }
 
   // ── Formulário de tarefa ───────────────────────────────────────────────────
@@ -194,7 +265,12 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
     if (this.formMode === 'create') {
       this.taskService.create(this.categoryId, payload).subscribe({
-        next: (task) => { this.tasks.push(task); this.showForm = false; this.isSaving = false; },
+        next: (task) => {
+          this.resetTaskPagination();
+          this.loadTasks(null);
+          this.showForm = false;
+          this.isSaving = false;
+        },
         error: (err)  => { this.formError = err.error?.message ?? 'Erro ao criar tarefa.'; this.isSaving = false; },
       });
     } else {
@@ -222,7 +298,13 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   confirmDelete(): void {
     this.taskService.delete(this.deletingTaskId!).subscribe({
-      next: () => { this.tasks = this.tasks.filter(t => t.id !== this.deletingTaskId); this.deletingTaskId = null; },
+      next: () => {
+        this.tasks = this.tasks.filter(t => t.id !== this.deletingTaskId);
+        this.deletingTaskId = null;
+        if (this.tasks.length === 0 && this.taskPageIndex > 0) {
+          this.taskPrevPage();
+        }
+      },
       error: () => { this.errorMessage = 'Erro ao excluir tarefa.'; this.deletingTaskId = null; },
     });
   }
@@ -245,7 +327,12 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.isSavingNote = true; this.noteFormError = '';
 
     this.noteService.create(this.categoryId, payload).subscribe({
-      next: (note) => { this.notes.unshift(note); this.showNoteForm = false; this.isSavingNote = false; },
+      next: () => {
+        this.resetNotePagination();
+        this.loadNotes(null);
+        this.showNoteForm = false;
+        this.isSavingNote = false;
+      },
       error: (err)  => { this.noteFormError = err.error?.message ?? 'Erro ao criar anotação.'; this.isSavingNote = false; },
     });
   }
@@ -260,18 +347,25 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   confirmNoteDelete(): void {
     this.noteService.delete(this.deletingNoteId!).subscribe({
-      next: () => { this.notes = this.notes.filter(n => n.id !== this.deletingNoteId); this.deletingNoteId = null; },
+      next: () => {
+        this.notes = this.notes.filter(n => n.id !== this.deletingNoteId);
+        this.deletingNoteId = null;
+        if (this.notes.length === 0 && this.notePageIndex > 0) {
+          this.notePrevPage();
+        }
+      },
       error: () => { this.errorMessage = 'Erro ao excluir anotação.'; this.deletingNoteId = null; },
     });
   }
 
   dropTasks(event: CdkDragDrop<Task[]>): void {
-    if (this.activeFilter !== 'ALL') return;
+    if (this.taskDragDisabled) return;
     moveItemInArray(this.tasks, event.previousIndex, event.currentIndex);
     this.taskService.reorder(this.categoryId, this.tasks.map(t => t.id)).subscribe();
   }
 
   dropNotes(event: CdkDragDrop<Note[]>): void {
+    if (this.notePageIndex > 0 || this.noteHasNext) return;
     moveItemInArray(this.notes, event.previousIndex, event.currentIndex);
     this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
   }

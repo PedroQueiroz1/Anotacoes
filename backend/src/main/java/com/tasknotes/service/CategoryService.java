@@ -8,6 +8,7 @@ import com.tasknotes.model.Category;
 import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -75,14 +76,19 @@ public class CategoryService {
         repository.deleteById(id);
     }
 
-    // Backfill slugs for categories created before this field was added
     @EventListener(ApplicationReadyEvent.class)
-    public void backfillSlugs() {
+    public void backfillSlugsAndUuids() {
         for (Category c : repository.findAll()) {
+            boolean dirty = false;
             if (c.getSlug() == null || c.getSlug().isEmpty()) {
                 c.setSlug(uniqueSlug(generateSlug(c.getName()), c.getId()));
-                repository.save(c);
+                dirty = true;
             }
+            if (c.getUuid() == null) {
+                c.setUuid(UuidV7Generator.generate());
+                dirty = true;
+            }
+            if (dirty) repository.save(c);
         }
     }
 
@@ -115,6 +121,7 @@ public class CategoryService {
         int pending = (int) taskRepository.countByCategoryIdAndStatusNot(c.getId(), TaskStatus.DONE);
         return new CategoryResponse(
                 c.getId(),
+                c.getUuid(),
                 c.getName(),
                 c.getSlug(),
                 c.getCreatedAt(),

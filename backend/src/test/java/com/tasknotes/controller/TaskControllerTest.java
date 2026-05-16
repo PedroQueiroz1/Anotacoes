@@ -1,6 +1,7 @@
 package com.tasknotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tasknotes.dto.CursorPageResponse;
 import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
 import com.tasknotes.dto.TaskResponse;
@@ -16,7 +17,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,7 +35,7 @@ class TaskControllerTest {
 
     private TaskResponse sample(long id) {
         return new TaskResponse(
-                id, 1L, "Buy milk", null, null,
+                id, null, 1L, "Buy milk", null, null,
                 Priority.MEDIUM, TaskStatus.TODO,
                 LocalDateTime.now(), LocalDateTime.now()
         );
@@ -43,17 +43,20 @@ class TaskControllerTest {
 
     @Test
     void findByCategory_returns200WithList() throws Exception {
-        when(service.findByCategory(1L)).thenReturn(List.of(sample(1L), sample(2L)));
+        CursorPageResponse<TaskResponse> page = new CursorPageResponse<>(
+                List.of(sample(1L), sample(2L)), null, false, 10);
+        when(service.findByCategory(eq(1L), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/categories/1/tasks"))
                .andExpect(status().isOk())
-               .andExpect(jsonPath("$.length()").value(2))
-               .andExpect(jsonPath("$[0].title").value("Buy milk"));
+               .andExpect(jsonPath("$.items.length()").value(2))
+               .andExpect(jsonPath("$.items[0].title").value("Buy milk"))
+               .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
     void findByCategory_returns404_whenCategoryMissing() throws Exception {
-        when(service.findByCategory(99L))
+        when(service.findByCategory(eq(99L), isNull(), isNull()))
                 .thenThrow(new ResourceNotFoundException("Categoria não encontrada: 99"));
 
         mockMvc.perform(get("/api/categories/99/tasks"))
@@ -85,7 +88,7 @@ class TaskControllerTest {
     @Test
     void update_returns200WithUpdatedTask() throws Exception {
         TaskResponse updated = new TaskResponse(
-                1L, 1L, "Updated", "desc", null,
+                1L, null, 1L, "Updated", "desc", null,
                 Priority.HIGH, TaskStatus.IN_PROGRESS,
                 LocalDateTime.now(), LocalDateTime.now()
         );
@@ -103,7 +106,7 @@ class TaskControllerTest {
     @Test
     void updateStatus_returns200WithNewStatus() throws Exception {
         TaskResponse done = new TaskResponse(
-                1L, 1L, "Task", null, null,
+                1L, null, 1L, "Task", null, null,
                 Priority.MEDIUM, TaskStatus.DONE,
                 LocalDateTime.now(), LocalDateTime.now()
         );
