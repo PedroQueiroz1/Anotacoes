@@ -1,11 +1,13 @@
 ## PRÓXIMAS ATUALIZAÇÕES
 
-1. Correções de segurança.
-2. Melhorias de usabilidade no frontend.
-3. Ajustes e refinamentos no aplicativo Android.
-4. Melhorias nos testes automatizados.
-5. Evolução da documentação do projeto. (README DESATUALIZADO)
-6. 
+1. Melhorias de segurança, autenticação e autorização.
+2. Exportação de categoria em arquivo `.txt` para backup manual.
+3. Paginação por cursor para tarefas, anotações e subtarefas.
+4. Identificadores públicos com UUID v7.
+5. Melhorias no aplicativo Android.
+6. Ampliação dos testes automatizados.
+7. Melhorias de observabilidade, logs e tratamento de erros.
+8. Ajustes na funcionalidade de autocomplete
 
 ---
 
@@ -13,27 +15,29 @@
 
 **TaskNotes** é uma aplicação de produtividade pessoal para organizar tarefas, checklists e anotações por categorias temáticas.
 
-O projeto nasceu de uma necessidade pessoal: concentrar anotações de estudo, programação, economia e outros temas em um sistema simples, acessível pela web e também pelo celular. A ideia é permitir consultas rápidas em momentos do dia a dia, como intervalos entre tarefas, estudos ou até durante descansos na academia.
+O projeto nasceu de uma necessidade pessoal: concentrar anotações de estudo, programação, economia, desenvolvimento de software e outros temas em um sistema simples, rápido e acessível. A proposta é permitir que o usuário organize conteúdos por categoria, acompanhe tarefas, registre anotações importantes e consulte informações técnicas de forma prática no dia a dia.
 
-> Status atual: **FINALIZADO v1.0 — aplicação web e backend publicados, com melhorias de segurança ainda planejadas**
+> Status atual: **v2.0 — aplicação web e backend publicados, com novas funcionalidades em evolução e melhorias de segurança planejadas**
 
 ---
 
 ## Visão Geral
 
-O sistema permite criar categorias como **Estudos**, **Economia**, **Programação**, **Saúde**, **Trabalho** ou qualquer outro tema pessoal.
+O sistema permite criar categorias como **Estudos de Programação**, **Economia**, **Lista de Leitura**, **Projetos Pessoais** ou qualquer outro tema pessoal.
 
 Dentro de cada categoria, o usuário pode gerenciar:
 
-- **Tarefas**, com título, descrição, prazo, prioridade, status e subtarefas.
-- **Checklists**, vinculados às tarefas, com acompanhamento de progresso.
+- **Tarefas**, com título, descrição, prioridade, status, prazo e subtarefas.
+- **Checklists**, vinculados às tarefas, com controle de conclusão e barra de progresso.
 - **Anotações**, com título e conteúdo em texto livre.
+- **Categorias**, com limite máximo de 5 categorias simultâneas.
 - **Filtros por status**, para visualizar tarefas a fazer, em andamento, concluídas ou todas.
 - **Busca global**, para localizar categorias, tarefas, descrições, anotações e itens de checklist.
 - **Modo claro e modo escuro**, com alternância visual na interface.
 - **Painel de estatísticas**, com resumo da categoria selecionada.
+- **Autocomplete técnico em anotações**, com sugestões de conceitos de programação e tecnologia.
 
-A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo uma mesma API REST.
+A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo uma mesma API REST centralizada.
 
 ---
 
@@ -48,11 +52,14 @@ A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo 
 - Limite máximo de 5 categorias.
 - Reorganização por drag and drop.
 - Navegação entre categorias pela sidebar.
+- Suporte a URLs amigáveis por categoria, quando configurado por slug.
 
 ### Tarefas
 
 - Criar tarefas dentro de uma categoria.
-- Editar título, descrição, prazo, prioridade e status.
+- Editar título e descrição.
+- Editar status da tarefa.
+- Editar prioridade da tarefa.
 - Excluir tarefas.
 - Alterar status entre:
   - A Fazer
@@ -60,14 +67,29 @@ A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo 
   - Concluída
 - Filtrar tarefas por status.
 - Reorganizar tarefas por drag and drop.
+- Exibir prioridade visualmente por nível:
+  - Baixa
+  - Média
+  - Alta
 
 ### Checklists / Subtarefas
 
 - Adicionar itens de checklist em uma tarefa.
 - Marcar e desmarcar itens como concluídos.
+- Exibir itens concluídos com marcação visual.
 - Exibir barra de progresso do checklist.
-- Calcular progresso geral da categoria com base nos checklists.
-- Planejamento de edição inline dos itens do checklist.
+- Calcular progresso com base nas subtarefas concluídas.
+- Editar itens do checklist.
+- Excluir itens do checklist.
+- Suporte visual para links do YouTube dentro de itens do checklist.
+
+### Links do YouTube em Checklists
+
+- Detecção de links do YouTube em itens de checklist.
+- Exibição do título do vídeo quando o item contém um link reconhecido.
+- Link clicável para abrir o vídeo original.
+- Separação da área clicável do link em relação aos botões de editar e excluir.
+- Fallback para exibição do link quando o título não puder ser obtido.
 
 ### Anotações
 
@@ -75,15 +97,47 @@ A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo 
 - Editar título e conteúdo.
 - Excluir anotações.
 - Listar anotações por categoria.
+- Preservar quebras de linha no conteúdo.
+- Exibir conteúdo longo de forma resumida.
+- Expandir conteúdo com **Ver mais**.
+- Recolher conteúdo com **Ver menos**.
+- Manter o conteúdo completo disponível para edição e busca.
+
+### Autocomplete Técnico em Anotações
+
+- Sugestão de conceitos de programação no campo de conteúdo das anotações.
+- Foco em termos técnicos como:
+  - JSON
+  - UUID
+  - POJO
+  - DTO
+  - REST
+  - CORS
+  - TypeScript
+  - Array
+  - Bubble Sort
+  - N8N
+  - Docker
+  - Kubernetes
+- Base local de conceitos técnicos.
+- Salvamento de conceitos aceitos na base local.
+- Estrutura preparada para fallback externo e IA opcional por variável de ambiente.
+- Comportamento de teclado:
+  - `Enter` aceita sugestão quando o autocomplete está aberto.
+  - `Enter` cria nova linha quando não há sugestão ativa.
+  - `Shift + Enter` sempre cria nova linha.
+  - `Esc` fecha a sugestão.
 
 ### Interface Web
 
 - Layout com sidebar lateral.
-- Cards de estatísticas.
+- Cards de estatísticas por categoria.
 - Busca global.
 - Filtros de tarefas.
 - Modo claro e modo escuro.
-- Interface responsiva para uso em desktop.
+- Design responsivo para desktop.
+- Ações por hover em categorias, tarefas e anotações.
+- Feedback visual para estados de carregamento e erro.
 - Deploy do frontend na Vercel.
 
 ### Backend
@@ -93,6 +147,9 @@ A aplicação foi planejada para funcionar em ambiente web e mobile, consumindo 
 - Integração com frontend Angular.
 - Deploy do backend no Railway.
 - Banco MySQL hospedado no Railway.
+- Configuração de CORS para ambientes locais e produção.
+- Estrutura de services, controllers, repositories e DTOs.
+- Logs planejados para fluxos críticos sem expor conteúdo sensível.
 
 ---
 
@@ -104,11 +161,12 @@ O projeto foi estruturado para centralizar os dados no backend, permitindo que o
 
 A API é responsável por:
 
-- Persistir categorias, tarefas, subtarefas e anotações.
+- Persistir categorias, tarefas, subtarefas, anotações e conceitos técnicos.
 - Aplicar regras de negócio.
 - Validar dados enviados pelo frontend.
 - Garantir integridade entre categorias e seus conteúdos vinculados.
 - Manter o banco MySQL como fonte principal de dados.
+- Preparar a aplicação para futuras melhorias de segurança e autenticação.
 
 ---
 
@@ -149,7 +207,12 @@ A API é responsável por:
 
 - MySQL 8.x
 - Banco hospedado no Railway
-- Modelo relacional com entidades para categorias, tarefas, subtarefas e anotações.
+- Modelo relacional com entidades para:
+  - categorias;
+  - tarefas;
+  - subtarefas;
+  - anotações;
+  - conceitos técnicos de programação.
 
 ---
 
@@ -169,7 +232,7 @@ Angular Web App        Android App
 
 A API REST centraliza as regras de negócio e a persistência dos dados.
 
-Tanto a aplicação web quanto o aplicativo Android consomem os mesmos endpoints.
+Tanto a aplicação web quanto o aplicativo Android foram pensados para consumir os mesmos endpoints.
 
 ---
 
@@ -204,18 +267,75 @@ O banco MySQL está hospedado no Railway com volume persistente.
 ## Principais Regras de Negócio
 
 - O sistema permite no máximo **5 categorias**.
-- O nome da categoria é obrigatório e possui limite de 50 caracteres.
-- O título da tarefa é obrigatório e possui limite de 100 caracteres.
-- A descrição da tarefa possui limite de 500 caracteres.
-- Toda tarefa criada inicia com status **A Fazer**.
-- A prioridade padrão de uma tarefa é **Baixa**.
-- Uma tarefa pode ter no máximo **20 subtarefas**.
-- O título da anotação é obrigatório e possui limite de 100 caracteres.
-- O conteúdo da anotação possui limite de 2000 caracteres.
-- Ao excluir uma categoria, suas tarefas e anotações são removidas em cascata.
-- Ao excluir uma tarefa, suas subtarefas também são removidas.
-- Tarefas, categorias e anotações podem ser reorganizadas dentro de suas respectivas listas.
-- O sistema não permite mover tarefa para a área de anotações nem anotação para a área de tarefas.
+- O nome da categoria é obrigatório.
+- O título da tarefa é obrigatório.
+- Toda tarefa deve possuir um status válido.
+- Toda tarefa deve possuir uma prioridade válida.
+- A prioridade padrão de uma tarefa é **Baixa**, quando nenhuma prioridade é informada.
+- Uma tarefa pode possuir subtarefas/checklist.
+- Itens de checklist podem ser marcados como concluídos ou pendentes.
+- A barra de progresso do checklist deve considerar os itens concluídos.
+- O título da anotação é obrigatório.
+- O conteúdo da anotação deve preservar quebras de linha.
+- O conteúdo longo de uma anotação pode ser exibido de forma resumida.
+- Ao excluir uma categoria, seus dados vinculados devem ser tratados de forma consistente.
+- Ao excluir uma tarefa, suas subtarefas também devem ser removidas.
+- O sistema não deve mover tarefa para a área de anotações nem anotação para a área de tarefas.
+- Sugestões de autocomplete devem ser limitadas a conceitos de programação/tecnologia.
+- Conteúdo completo de anotações não deve ser enviado para serviços externos de sugestão.
+
+---
+
+## Endpoints Principais
+
+> Os caminhos podem variar conforme a evolução do projeto.
+
+### Categorias
+
+```http
+GET    /api/categories
+POST   /api/categories
+PUT    /api/categories/{id}
+DELETE /api/categories/{id}
+GET    /api/categories/slug/{slug}
+```
+
+### Tarefas
+
+```http
+GET    /api/categories/{categoryId}/tasks
+POST   /api/categories/{categoryId}/tasks
+PUT    /api/tasks/{id}
+DELETE /api/tasks/{id}
+PATCH  /api/tasks/{id}/status
+PATCH  /api/tasks/{id}/priority
+```
+
+### Subtarefas
+
+```http
+GET    /api/tasks/{taskId}/subtasks
+POST   /api/tasks/{taskId}/subtasks
+PUT    /api/subtasks/{id}
+PATCH  /api/subtasks/{id}/toggle
+DELETE /api/subtasks/{id}
+```
+
+### Anotações
+
+```http
+GET    /api/categories/{categoryId}/notes
+POST   /api/categories/{categoryId}/notes
+PUT    /api/notes/{id}
+DELETE /api/notes/{id}
+```
+
+### Conceitos Técnicos
+
+```http
+GET    /api/concepts/suggest?term={term}
+POST   /api/concepts/accept
+```
 
 ---
 
@@ -227,7 +347,9 @@ O banco MySQL está hospedado no Railway com volume persistente.
 - Testes de integração com MockMvc.
 - Validação de regras de negócio em services.
 - Validação de endpoints REST.
-- Testes para regras de categoria, tarefas, subtarefas e anotações.
+- Testes para categorias, tarefas, subtarefas e anotações.
+- Testes para autocomplete de conceitos técnicos.
+- Testes para regras de prioridade, status e progresso de checklist.
 
 ### Frontend Angular
 
@@ -236,6 +358,8 @@ O banco MySQL está hospedado no Railway com volume persistente.
 - Validação de estados da interface.
 - Testes de fluxo para criação, edição e exclusão de categorias.
 - Testes de filtros, busca global e alternância de tema.
+- Testes de autocomplete no textarea de anotações.
+- Testes de expansão/recolhimento de conteúdo de anotações.
 
 ### Android
 
@@ -264,6 +388,18 @@ Acesse a pasta do backend:
 
 ```bash
 cd backend
+```
+
+Configure as variáveis de ambiente necessárias para conexão com o banco.
+
+Exemplo:
+
+```properties
+MYSQLHOST=localhost
+MYSQLPORT=3306
+MYSQLDATABASE=tasknotes
+MYSQLUSER=root
+MYSQLPASSWORD=senha
 ```
 
 Execute a aplicação:
@@ -328,15 +464,53 @@ Para celular físico, é necessário apontar a base URL para o IP local do compu
 
 ---
 
+## Variáveis de Ambiente
+
+### Backend
+
+Exemplos de variáveis usadas ou previstas:
+
+```text
+MYSQLHOST
+MYSQLPORT
+MYSQLDATABASE
+MYSQLUSER
+MYSQLPASSWORD
+APP_CORS_ALLOWED_ORIGIN_PATTERNS
+CONCEPT_AI_ENABLED
+CONCEPT_AI_PROVIDER
+CONCEPT_AI_API_KEY
+CONCEPT_EXTERNAL_SEARCH_ENABLED
+CONCEPT_EXTERNAL_SEARCH_API_KEY
+```
+
+### CORS
+
+A aplicação pode usar uma variável para controlar origens permitidas:
+
+```text
+APP_CORS_ALLOWED_ORIGIN_PATTERNS
+```
+
+Exemplo:
+
+```text
+http://localhost:4200,https://*.vercel.app,https://*.pedroqueiroz.app
+```
+
+---
+
 ## Segurança
 
 Este projeto ainda possui melhorias de segurança planejadas.
 
 Pontos de atenção:
 
-- A aplicação é single-user e ainda não possui autenticação.
-- Não deve ser usada para dados sensíveis em produção.
+- A aplicação ainda é voltada para uso pessoal/single-user.
+- Não deve ser usada para dados sensíveis em produção sem autenticação e autorização.
 - Melhorias futuras devem incluir autenticação, controle de acesso, proteção de endpoints e revisão de CORS.
-- O banco de dados deve possuir backup e variáveis sensíveis devem permanecer fora do repositório.
+- O banco de dados deve possuir backup.
+- Variáveis sensíveis devem permanecer fora do repositório.
+- Chaves de serviços externos não devem ser expostas no frontend.
+- Logs não devem registrar conteúdo completo de anotações, descrições ou dados sensíveis.
 
----
