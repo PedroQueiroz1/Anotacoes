@@ -14,6 +14,7 @@ import { CategoryService } from '../../core/services/category.service';
 import { TaskService, TaskPayload } from '../../core/services/task.service';
 import { NoteService, NotePayload } from '../../core/services/note.service';
 import { ProgrammingConceptService } from '../../core/services/programming-concept.service';
+import { CategoryExportService } from '../../core/services/category-export.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TaskItemComponent } from './task-item/task-item.component';
 import { NoteItemComponent } from './note-item/note-item.component';
@@ -45,6 +46,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
   private taskService     = inject(TaskService);
   private noteService     = inject(NoteService);
   private conceptService  = inject(ProgrammingConceptService);
+  private exportService   = inject(CategoryExportService);
 
   private routeSub?: Subscription;
   private conceptSub?: Subscription;
@@ -135,6 +137,10 @@ export class CategoryComponent implements OnInit, OnDestroy {
   isSavingNote   = false;
 
   deletingNoteId: number | null = null;
+
+  // ── Exportação TXT ────────────────────────────────────────────────────────
+  isExporting   = false;
+  exportError   = '';
 
   ngOnInit(): void {
     this.routeSub = this.route.paramMap.subscribe(params => {
@@ -498,6 +504,36 @@ export class CategoryComponent implements OnInit, OnDestroy {
       source,
       sourceUrl: null,
     }).subscribe();
+  }
+
+  // ── Exportação TXT ────────────────────────────────────────────────────────
+  exportTxt(): void {
+    if (!this.category?.slug || this.isExporting) return;
+    this.isExporting = true;
+    this.exportError = '';
+
+    this.exportService.downloadTxt(this.category.slug).subscribe({
+      next: (blob) => {
+        const slug = this.category!.slug ?? 'categoria';
+        const date = new Date().toISOString().slice(0, 10);
+        const filename = `tasknotes-categoria-${slug}-${date}.txt`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.isExporting = false;
+      },
+      error: (err) => {
+        this.isExporting = false;
+        if (err.status === 404) {
+          this.exportError = 'Categoria não encontrada para exportação.';
+        } else {
+          this.exportError = 'Não foi possível exportar a categoria agora. Tente novamente.';
+        }
+      },
+    });
   }
 
   private extractCurrentTerm(textarea: HTMLTextAreaElement): string {

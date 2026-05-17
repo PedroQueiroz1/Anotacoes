@@ -10,8 +10,17 @@
   <!-- ── Cabeçalho ──────────────────────────────────────────────────────────── -->
   <header class="cat-header">
     <h1 class="cat-header__title">{{ category?.name ?? '...' }}</h1>
-<!--    <button class="btn btn--primary" (click)="openCreate()">+ Nova Tarefa</button>-->
+    <button class="btn btn--outline btn--export"
+            (click)="exportTxt()"
+            [disabled]="isExporting"
+            title="Exportar categoria como arquivo TXT">
+      {{ isExporting ? 'Exportando...' : 'Exportar TXT' }}
+    </button>
   </header>
+
+  @if (exportError) {
+    <div class="alert alert--error">{{ exportError }}</div>
+  }
 
   @if (errorMessage) {
     <div class="alert alert--error">{{ errorMessage }}</div>
