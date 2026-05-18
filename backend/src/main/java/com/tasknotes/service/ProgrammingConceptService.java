@@ -37,7 +37,7 @@ public class ProgrammingConceptService {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public ConceptSuggestionResponse suggest(String rawTerm) {
+    public ConceptSuggestionResponse suggest(String rawTerm, boolean semicolonTrigger) {
         if (rawTerm == null || rawTerm.isBlank()) return ConceptSuggestionResponse.notFound();
 
         String term       = rawTerm.trim();
@@ -59,7 +59,7 @@ public class ProgrammingConceptService {
         if (exact.isPresent()) {
             var resp = ConceptSuggestionResponse.of(exact.get(), "LOCAL");
             putCache(normalized, Optional.of(resp));
-            log.info("concept_suggestion_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
+            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
                     normalized, System.currentTimeMillis() - start);
             return resp;
         }
@@ -69,13 +69,13 @@ public class ProgrammingConceptService {
         if (!prefixMatches.isEmpty()) {
             var resp = ConceptSuggestionResponse.of(prefixMatches.get(0), "LOCAL");
             putCache(normalized, Optional.of(resp));
-            log.info("concept_suggestion_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
+            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
                     normalized, System.currentTimeMillis() - start);
             return resp;
         }
 
-        // ── 4. Heuristic: reject if not a technical term ──────────────────────
-        if (!isTechnicalTerm(term)) {
+        // ── 4. Heuristic: reject non-technical terms (skipped for explicit ; trigger) ──
+        if (!semicolonTrigger && !isTechnicalTerm(term)) {
             putCache(normalized, Optional.empty());
             log.info("concept_suggestion_rejected termNormalized={} reason=not_technical_term", normalized);
             return ConceptSuggestionResponse.notFound();
@@ -83,7 +83,7 @@ public class ProgrammingConceptService {
 
         // ── 5. External/AI providers would go here (disabled by default) ───────
         putCache(normalized, Optional.empty());
-        log.info("concept_suggestion_lookup_completed termNormalized={} source=NONE found=false durationMs={}",
+        log.info("concept_semicolon_lookup_not_found termNormalized={} durationMs={}",
                 normalized, System.currentTimeMillis() - start);
         return ConceptSuggestionResponse.notFound();
     }
@@ -102,7 +102,7 @@ public class ProgrammingConceptService {
                 existing.setAcceptedCount(existing.getAcceptedCount() + 1);
                 existing.setLastUsedAt(LocalDateTime.now());
                 repository.save(existing);
-                log.info("concept_suggestion_accepted termNormalized={} source={} persisted=false (updated)",
+                log.info("concept_semicolon_lookup_completed termNormalized={} source={} accepted=true persisted=updated",
                         normalized, source);
             },
             () -> {
@@ -115,7 +115,12 @@ public class ProgrammingConceptService {
                 c.setAcceptedCount(1);
                 repository.save(c);
                 cache.remove(normalized);
-                log.info("concept_suggestion_accepted termNormalized={} source={} persisted=true", normalized, source);
+                if ("USER".equals(source)) {
+                    log.info("concept_manual_definition_saved termNormalized={} source=USER", normalized);
+                } else {
+                    log.info("concept_semicolon_lookup_completed termNormalized={} source={} accepted=true persisted=new",
+                            normalized, source);
+                }
             }
         );
     }

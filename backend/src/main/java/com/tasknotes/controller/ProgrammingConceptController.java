@@ -22,14 +22,15 @@ public class ProgrammingConceptController {
     }
 
     /**
-     * GET /api/concepts/suggest?term=POJO
-     * Returns a concept suggestion for the given term.
+     * GET /api/concepts/suggest?term=POJO&semicolonTrigger=true
      * Only the term is sent — never the full note content.
+     * semicolonTrigger=true bypasses the technical-term heuristic for explicit ; lookups.
      */
     @GetMapping("/suggest")
     public ConceptSuggestionResponse suggest(
-            @RequestParam @NotBlank @Size(max = 80) String term) {
-        return service.suggest(term);
+            @RequestParam @NotBlank @Size(max = 80) String term,
+            @RequestParam(required = false, defaultValue = "false") boolean semicolonTrigger) {
+        return service.suggest(term, semicolonTrigger);
     }
 
     /**

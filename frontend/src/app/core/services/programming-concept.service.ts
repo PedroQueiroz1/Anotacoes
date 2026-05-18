@@ -26,7 +26,7 @@ export class ProgrammingConceptService {
       return of(cached ? { found: true, source: 'LOCAL', concept: cached } : NOT_FOUND);
     }
 
-    const params = new HttpParams().set('term', term.trim());
+    const params = new HttpParams().set('term', term.trim()).set('semicolonTrigger', 'true');
     return this.http.get<ConceptSuggestionResponse>('/api/concepts/suggest', { params }).pipe(
       tap(resp => this.cache.set(key, resp.found ? resp.concept : null))
     );

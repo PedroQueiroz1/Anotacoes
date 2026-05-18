@@ -217,6 +217,44 @@
                   </div>
                 </div>
               }
+
+              @if (conceptNotFound && !conceptManualMode) {
+                <div class="autocomplete-box autocomplete-box--notfound" (mousedown)="$event.preventDefault()">
+                  <div class="autocomplete-box__body">
+                    Não encontrei uma explicação para <strong>{{ pendingTerm }}</strong>.
+                  </div>
+                  <div class="autocomplete-box__footer">
+                    <button class="btn btn--ghost btn--sm" (click)="openManualConceptForm()">Salvar nova explicação</button>
+                    <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Fechar</button>
+                  </div>
+                </div>
+              }
+
+              @if (conceptManualMode) {
+                <div class="autocomplete-manual" (mousedown)="$event.preventDefault()">
+                  <h4 class="autocomplete-manual__title">Nova explicação</h4>
+                  <div class="autocomplete-manual__field">
+                    <label class="form-label">Termo</label>
+                    <input class="form-input" [(ngModel)]="conceptManualTerm" maxlength="80"
+                           placeholder="Termo técnico" />
+                  </div>
+                  <div class="autocomplete-manual__field">
+                    <label class="form-label">Explicação</label>
+                    <textarea class="form-input" [(ngModel)]="conceptManualSummary" maxlength="500"
+                              placeholder="Explicação resumida (10–500 caracteres)" rows="3"></textarea>
+                  </div>
+                  @if (conceptManualError) {
+                    <p class="form-error">{{ conceptManualError }}</p>
+                  }
+                  <div class="autocomplete-manual__actions">
+                    <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Cancelar</button>
+                    <button class="btn btn--primary btn--sm" (click)="saveManualConcept()"
+                            [disabled]="isSavingConcept">
+                      {{ isSavingConcept ? 'Salvando...' : 'Salvar' }}
+                    </button>
+                  </div>
+                </div>
+              }
             </div>
           </div>
 

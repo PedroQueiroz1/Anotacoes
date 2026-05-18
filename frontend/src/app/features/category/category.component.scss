@@ -414,4 +414,43 @@ $radius: 10px;
     color: var(--color-text-muted);
     margin-left: auto;
   }
+
+  &--notfound {
+    cursor: default;
+    .autocomplete-box__body { font-size: 0.88rem; color: var(--color-text); }
+    .autocomplete-box__footer { gap: 6px; justify-content: flex-end; }
+  }
+}
+
+.autocomplete-manual {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: $radius;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+  padding: 12px 14px 10px;
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 10px;
+  }
+
+  &__field {
+    margin-bottom: 8px;
+
+    .form-label { font-size: 12px; margin-bottom: 4px; }
+    textarea { resize: vertical; min-height: 60px; }
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 10px;
+  }
 }

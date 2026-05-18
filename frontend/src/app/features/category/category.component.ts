@@ -2,9 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription, EMPTY } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
-import { of } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
@@ -49,14 +47,21 @@ export class CategoryComponent implements OnInit, OnDestroy {
   private exportService   = inject(CategoryExportService);
 
   private routeSub?: Subscription;
-  private conceptSub?: Subscription;
-  private conceptSearch$ = new Subject<string>();
 
   // ── Autocomplete de conceitos ─────────────────────────────────────────────
   conceptSuggestion: ConceptSuggestion | null = null;
   conceptSuggestionSource = '';
   conceptIsLoading = false;
+  conceptNotFound      = false;
+  conceptManualMode    = false;
+  conceptManualTerm    = '';
+  conceptManualSummary = '';
+  conceptManualError   = '';
+  isSavingConcept      = false;
+  private pendingReplacement: { semicolonPos: number; term: string } | null = null;
   private lastNoteTextarea: HTMLTextAreaElement | null = null;
+
+  get pendingTerm(): string { return this.pendingReplacement?.term ?? ''; }
 
   get conceptSourceLabel(): string {
     if (this.conceptSuggestionSource === 'LOCAL') return 'base local';
@@ -149,34 +154,10 @@ export class CategoryComponent implements OnInit, OnDestroy {
       this.load(slug);
     });
 
-    this.conceptSub = this.conceptSearch$.pipe(
-      debounceTime(400),
-      distinctUntilChanged(),
-      switchMap(term => {
-        if (term.length < 2) {
-          this.conceptSuggestion = null;
-          this.conceptIsLoading  = false;
-          return EMPTY;
-        }
-        this.conceptIsLoading = true;
-        return this.conceptService.suggest(term).pipe(
-          catchError(() => { this.conceptIsLoading = false; return of({ found: false, source: null, concept: null }); })
-        );
-      })
-    ).subscribe(resp => {
-      this.conceptIsLoading = false;
-      if (resp.found && resp.concept) {
-        this.conceptSuggestion       = resp.concept;
-        this.conceptSuggestionSource = resp.source ?? 'LOCAL';
-      } else {
-        this.conceptSuggestion = null;
-      }
-    });
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
-    this.conceptSub?.unsubscribe();
   }
 
   private resetState(): void {
@@ -198,6 +179,13 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.conceptSuggestion       = null;
     this.conceptSuggestionSource = '';
     this.conceptIsLoading        = false;
+    this.conceptNotFound         = false;
+    this.conceptManualMode       = false;
+    this.conceptManualTerm       = '';
+    this.conceptManualSummary    = '';
+    this.conceptManualError      = '';
+    this.isSavingConcept         = false;
+    this.pendingReplacement      = null;
     this.lastNoteTextarea        = null;
   }
 
@@ -445,18 +433,49 @@ export class CategoryComponent implements OnInit, OnDestroy {
   onNoteContentInput(event: Event): void {
     const textarea = event.target as HTMLTextAreaElement;
     this.lastNoteTextarea = textarea;
-    const term = this.extractCurrentTerm(textarea);
-    if (term.length >= 2) {
-      this.conceptSearch$.next(term);
-    } else {
-      this.conceptSuggestion = null;
-      this.conceptIsLoading  = false;
-    }
+
+    const cursor = textarea.selectionStart;
+    const value  = textarea.value;
+
+    // Only trigger lookup when `;` was just typed
+    if (cursor === 0 || value[cursor - 1] !== ';') return;
+
+    const semicolonPos = cursor - 1;
+    const term = this.extractTermFromSemicolon(value, semicolonPos);
+    if (!term) return;
+
+    this.pendingReplacement      = { semicolonPos, term };
+    this.conceptSuggestion       = null;
+    this.conceptNotFound         = false;
+    this.conceptManualMode       = false;
+    this.conceptManualError      = '';
+    this.conceptIsLoading        = true;
+    this.conceptSuggestionSource = '';
+
+    this.conceptService.suggest(term).subscribe({
+      next: (resp) => {
+        if (this.pendingReplacement?.term !== term) return;
+        this.conceptIsLoading = false;
+        if (resp.found && resp.concept) {
+          this.conceptSuggestion       = resp.concept;
+          this.conceptSuggestionSource = resp.source ?? 'LOCAL';
+        } else {
+          this.conceptNotFound = true;
+        }
+      },
+      error: () => {
+        if (this.pendingReplacement?.term !== term) return;
+        this.conceptIsLoading = false;
+        this.conceptNotFound  = true;
+      },
+    });
   }
 
   onNoteContentKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
       this.conceptSuggestion = null;
+      this.conceptNotFound   = false;
+      this.conceptManualMode = false;
       this.conceptIsLoading  = false;
       return;
     }
@@ -469,35 +488,29 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   acceptConceptSuggestion(textareaEl?: HTMLTextAreaElement): void {
     const suggestion = this.conceptSuggestion;
-    const source     = this.conceptSuggestionSource;
-    if (!suggestion) return;
+    if (!suggestion || !this.pendingReplacement) return;
 
     const textarea = textareaEl ?? this.lastNoteTextarea;
     if (!textarea) return;
 
-    const pos     = textarea.selectionStart;
-    const value   = textarea.value;
-    const before  = value.substring(0, pos);
-    const after   = value.substring(pos);
+    const { semicolonPos } = this.pendingReplacement;
+    const source    = this.conceptSuggestionSource;
+    const insertion = ` - ${suggestion.summary}`;
 
-    // Replace the last non-whitespace token before cursor
-    const match     = before.match(/(\S+)$/);
-    const wordStart = match ? pos - match[1].length : pos;
-    const prefix    = value.substring(0, wordStart);
+    // Replace the `;` with ` - summary`, preserving text before and after
+    this.noteContent = textarea.value.substring(0, semicolonPos)
+                     + insertion
+                     + textarea.value.substring(semicolonPos + 1);
+    const newCursor = semicolonPos + insertion.length;
 
-    const insertion   = `- ${suggestion.term}: ${suggestion.summary}`;
-    this.noteContent  = prefix + insertion + after;
-    const newCursor   = wordStart + insertion.length;
+    this.conceptSuggestion  = null;
+    this.pendingReplacement = null;
 
-    this.conceptSuggestion = null;
-
-    // Update cursor position after Angular's change detection runs
     setTimeout(() => {
       textarea.setSelectionRange(newCursor, newCursor);
       textarea.focus();
     }, 0);
 
-    // Record the acceptance (updates accepted_count / saves if external)
     this.conceptService.accept({
       term:      suggestion.term,
       summary:   suggestion.summary,
@@ -536,14 +549,77 @@ export class CategoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  private extractCurrentTerm(textarea: HTMLTextAreaElement): string {
-    const pos       = textarea.selectionStart;
-    const textBefore = textarea.value.substring(0, pos);
-    // Work on the text after the last newline to avoid picking up previous lines
-    const lastNewline = textBefore.lastIndexOf('\n');
-    const currentLine = textBefore.substring(lastNewline + 1);
-    // Grab the last non-space token on the current line
-    const match = currentLine.match(/(\S+)$/);
-    return match ? match[1] : '';
+  openManualConceptForm(): void {
+    this.conceptManualTerm    = this.pendingReplacement?.term ?? '';
+    this.conceptManualSummary = '';
+    this.conceptManualError   = '';
+    this.conceptManualMode    = true;
+  }
+
+  cancelManualConcept(): void {
+    this.conceptManualMode  = false;
+    this.conceptNotFound    = false;
+    this.conceptManualError = '';
+  }
+
+  saveManualConcept(): void {
+    const term    = this.conceptManualTerm.trim();
+    const summary = this.conceptManualSummary.trim();
+
+    if (!term)                { this.conceptManualError = 'O termo é obrigatório.'; return; }
+    if (summary.length < 10)  { this.conceptManualError = 'A explicação deve ter pelo menos 10 caracteres.'; return; }
+    if (summary.length > 500) { this.conceptManualError = 'A explicação deve ter no máximo 500 caracteres.'; return; }
+
+    this.isSavingConcept    = true;
+    this.conceptManualError = '';
+
+    this.conceptService.accept({ term, summary, source: 'USER', sourceUrl: null }).subscribe({
+      next: () => {
+        const textarea = this.lastNoteTextarea;
+        if (textarea && this.pendingReplacement) {
+          const { semicolonPos } = this.pendingReplacement;
+          const insertion = ` - ${summary}`;
+          this.noteContent = textarea.value.substring(0, semicolonPos)
+                           + insertion
+                           + textarea.value.substring(semicolonPos + 1);
+          const newCursor = semicolonPos + insertion.length;
+          setTimeout(() => {
+            textarea.setSelectionRange(newCursor, newCursor);
+            textarea.focus();
+          }, 0);
+        }
+        this.isSavingConcept    = false;
+        this.conceptManualMode  = false;
+        this.conceptNotFound    = false;
+        this.pendingReplacement = null;
+      },
+      error: () => {
+        this.isSavingConcept    = false;
+        this.conceptManualError = 'Erro ao salvar. Tente novamente.';
+      },
+    });
+  }
+
+  private extractTermFromSemicolon(value: string, semicolonPos: number): string {
+    const textBefore = value.substring(0, semicolonPos);
+
+    // Find the last strong separator (newline, period, colon, previous semicolon)
+    let lastSepIdx = -1;
+    for (let i = textBefore.length - 1; i >= 0; i--) {
+      const ch = textBefore[i];
+      if (ch === '\n' || ch === '.' || ch === ':' || ch === ';') {
+        lastSepIdx = i;
+        break;
+      }
+    }
+
+    const segment = textBefore.substring(lastSepIdx + 1);
+    // Strip leading whitespace and list markers (-, *, •, –)
+    const term = segment.replace(/^[\s\-\*•–]+/, '').trim();
+
+    if (!term || term.length < 2) return '';
+    if (/^\d+$/.test(term)) return '';
+
+    return term;
   }
 }
