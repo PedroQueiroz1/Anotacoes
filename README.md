@@ -1,13 +1,11 @@
 ## PRÓXIMAS ATUALIZAÇÕES
 
 1. Melhorias de segurança, autenticação e autorização.
-2. Exportação de categoria em arquivo `.txt` para backup manual.
-3. Paginação por cursor para tarefas, anotações e subtarefas.
-4. Identificadores públicos com UUID v7.
 5. Melhorias no aplicativo Android.
 6. Ampliação dos testes automatizados.
 7. Melhorias de observabilidade, logs e tratamento de erros.
 8. Ajustes na funcionalidade de autocomplete
+9. Correções de Bugs
 
 ---
 
