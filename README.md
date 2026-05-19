@@ -6,6 +6,7 @@
 7. Melhorias de observabilidade, logs e tratamento de erros.
 8. Ajustes na funcionalidade de autocomplete
 9. Correções de Bugs
+10. Monolito -> Monolito modular
 
 ---
 
