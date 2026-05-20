@@ -1,0 +1,100 @@
+<div class="admin-users">
+
+  <div class="admin-users__header">
+    <div>
+      <h1 class="admin-users__title">Gerenciar Usuários</h1>
+      <p class="admin-users__subtitle">Crie e gerencie os usuários da aplicação.</p>
+    </div>
+    @if (!showCreateForm()) {
+      <button class="btn btn--primary" (click)="openCreate()">+ Criar usuário</button>
+    }
+  </div>
+
+  @if (showCreateForm()) {
+    <div class="admin-users__form-card">
+      <h2 class="admin-users__form-title">Novo usuário</h2>
+      <div class="admin-users__form-grid">
+        <div class="form-field">
+          <label class="form-field__label" for="fu-username">Usuário</label>
+          <input id="fu-username" class="form-field__input" type="text" [(ngModel)]="form.username"
+            name="username" placeholder="nome.sobrenome" [disabled]="isSaving()" />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="fu-display">Nome exibido</label>
+          <input id="fu-display" class="form-field__input" type="text" [(ngModel)]="form.displayName"
+            name="displayName" placeholder="Nome Sobrenome" [disabled]="isSaving()" />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="fu-email">E-mail</label>
+          <input id="fu-email" class="form-field__input" type="email" [(ngModel)]="form.email"
+            name="email" placeholder="nome@dominio.com" [disabled]="isSaving()" />
+        </div>
+        <div class="form-field">
+          <label class="form-field__label" for="fu-password">Senha inicial</label>
+          <input id="fu-password" class="form-field__input" type="password" [(ngModel)]="form.password"
+            name="password" placeholder="••••••••" [disabled]="isSaving()" />
+        </div>
+      </div>
+      @if (createError()) {
+        <p class="admin-users__form-error">{{ createError() }}</p>
+      }
+      <div class="admin-users__form-actions">
+        <button class="btn btn--ghost" (click)="cancelCreate()" [disabled]="isSaving()">Cancelar</button>
+        <button class="btn btn--primary" (click)="submitCreate()" [disabled]="isSaving()">
+          {{ isSaving() ? 'Criando...' : 'Criar' }}
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <p class="admin-users__state">Carregando...</p>
+  } @else if (loadError()) {
+    <p class="admin-users__state admin-users__state--error">{{ loadError() }}</p>
+  } @else {
+    <div class="admin-users__table-wrap">
+      <table class="admin-users__table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Usuário</th>
+            <th>E-mail</th>
+            <th>Função</th>
+            <th>Criado em</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.uuid) {
+            <tr [class.admin-users__row--disabled]="!user.enabled">
+              <td class="admin-users__cell--name">{{ user.displayName }}</td>
+              <td class="admin-users__cell--mono">{{ user.username }}</td>
+              <td class="admin-users__cell--mono">{{ user.email }}</td>
+              <td>
+                <span class="admin-users__role" [class.admin-users__role--admin]="user.role === 'ADMIN'">
+                  {{ user.role === 'ADMIN' ? 'Admin' : 'Usuário' }}
+                </span>
+              </td>
+              <td>{{ formatDate(user.createdAt) }}</td>
+              <td>
+                <button
+                  class="admin-users__toggle"
+                  [class.admin-users__toggle--active]="user.enabled"
+                  (click)="toggle(user)"
+                  [title]="user.enabled ? 'Desativar usuário' : 'Ativar usuário'"
+                >
+                  {{ user.enabled ? 'Ativo' : 'Inativo' }}
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="admin-users__empty">Nenhum usuário encontrado.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+</div>

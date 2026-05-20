@@ -8,6 +8,7 @@ import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.NoteRepository;
 import com.tasknotes.repository.SubtaskRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,22 +34,26 @@ public class CategoryExportService {
     private final TaskRepository     taskRepository;
     private final NoteRepository     noteRepository;
     private final SubtaskRepository  subtaskRepository;
+    private final SecurityHelper     securityHelper;
 
     public CategoryExportService(CategoryRepository categoryRepository,
                                   TaskRepository taskRepository,
                                   NoteRepository noteRepository,
-                                  SubtaskRepository subtaskRepository) {
+                                  SubtaskRepository subtaskRepository,
+                                  SecurityHelper securityHelper) {
         this.categoryRepository = categoryRepository;
         this.taskRepository     = taskRepository;
         this.noteRepository     = noteRepository;
         this.subtaskRepository  = subtaskRepository;
+        this.securityHelper     = securityHelper;
     }
 
     public String buildTxt(String slug, String correlationId) {
         log.info("category_export_txt_started categorySlug={} correlationId={}", slug, correlationId);
         long start = System.currentTimeMillis();
 
-        Category category = categoryRepository.findBySlug(slug)
+        Long ownerId = securityHelper.currentUserId();
+        Category category = categoryRepository.findBySlugAndOwnerId(slug, ownerId)
                 .orElseThrow(() -> {
                     log.warn("category_export_txt_not_found categoryIdentifier={} correlationId={}", slug, correlationId);
                     return new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada.");
@@ -60,7 +65,6 @@ public class CategoryExportService {
         int subtaskCount = 0;
         StringBuilder sb = new StringBuilder(4096);
 
-        // Header
         sb.append("TASKNOTES — EXPORTAÇÃO DE CATEGORIA\n");
         sb.append(LINE).append("\n\n");
         sb.append("Categoria: ").append(category.getName()).append("\n");
@@ -71,7 +75,6 @@ public class CategoryExportService {
         sb.append("Total de tarefas: ").append(tasks.size()).append("\n");
         sb.append("Total de anotações: ").append(notes.size()).append("\n\n");
 
-        // Tasks section
         sb.append(LINE).append("\n");
         sb.append("TAREFAS\n");
         sb.append(LINE).append("\n");
@@ -111,7 +114,6 @@ public class CategoryExportService {
             }
         }
 
-        // Notes section
         sb.append("\n").append(LINE).append("\n");
         sb.append("ANOTAÇÕES\n");
         sb.append(LINE).append("\n");
@@ -164,11 +166,6 @@ public class CategoryExportService {
         };
     }
 
-    private String format(LocalDateTime dt) {
-        return dt.format(DT_FMT);
-    }
-
-    private String format(LocalDate d) {
-        return d.format(D_FMT);
-    }
+    private String format(LocalDateTime dt) { return dt.format(DT_FMT); }
+    private String format(LocalDate d)       { return d.format(D_FMT); }
 }

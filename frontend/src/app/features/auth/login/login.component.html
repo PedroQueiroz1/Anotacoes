@@ -1,0 +1,65 @@
+<div class="login-page">
+  <div class="login-card">
+
+    <div class="login-card__header">
+      <div class="login-card__logo">TN</div>
+      <h1 class="login-card__title">TaskNotes</h1>
+      <p class="login-card__subtitle">Entre com sua conta</p>
+    </div>
+
+    <form class="login-form" (ngSubmit)="submit()" #f="ngForm" novalidate>
+
+      <div class="login-form__field">
+        <label class="login-form__label" for="username">Usuário</label>
+        <input
+          id="username"
+          class="login-form__input"
+          type="text"
+          autocomplete="username"
+          [(ngModel)]="username"
+          name="username"
+          placeholder="nome de usuário"
+          [disabled]="isLoading()"
+        />
+      </div>
+
+      <div class="login-form__field">
+        <label class="login-form__label" for="password">Senha</label>
+        <input
+          id="password"
+          class="login-form__input"
+          type="password"
+          autocomplete="current-password"
+          [(ngModel)]="password"
+          name="password"
+          placeholder="••••••••"
+          [disabled]="isLoading()"
+        />
+      </div>
+
+      <label class="login-form__remember">
+        <input
+          type="checkbox"
+          [(ngModel)]="rememberMe"
+          name="rememberMe"
+          [disabled]="isLoading()"
+        />
+        <span>Manter conectado</span>
+      </label>
+
+      @if (error()) {
+        <p class="login-form__error">{{ error() }}</p>
+      }
+
+      <button
+        type="submit"
+        class="login-form__submit"
+        [disabled]="isLoading()"
+      >
+        {{ isLoading() ? 'Entrando...' : 'Entrar' }}
+      </button>
+
+    </form>
+
+  </div>
+</div>

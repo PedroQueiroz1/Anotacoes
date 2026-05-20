@@ -4,10 +4,13 @@ import com.tasknotes.dto.NoteRequest;
 import com.tasknotes.dto.NoteResponse;
 import com.tasknotes.exception.BusinessException;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.AppUser;
 import com.tasknotes.model.Category;
 import com.tasknotes.model.Note;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.NoteRepository;
+import com.tasknotes.util.SecurityHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -27,12 +29,18 @@ class NoteServiceTest {
 
     @Mock NoteRepository     noteRepository;
     @Mock CategoryRepository categoryRepository;
+    @Mock SecurityHelper     securityHelper;
 
     @InjectMocks NoteService service;
 
+    private static final Long OWNER_ID = 1L;
+
     private Category stubCategory(Long id) {
+        AppUser owner = mock(AppUser.class);
+        lenient().when(owner.getId()).thenReturn(OWNER_ID);
         Category c = mock(Category.class);
         lenient().when(c.getId()).thenReturn(id);
+        lenient().when(c.getOwner()).thenReturn(owner);
         return c;
     }
 
@@ -49,42 +57,12 @@ class NoteServiceTest {
         return n;
     }
 
-    // ── findById ──────────────────────────────────────────────────────────────
-    // @Test
-    // void findById_returnsResponse_whenExists() {
-    //     when(noteRepository.findById(1L)).thenReturn(Optional.of(stubNote(1L, 1L, "Title", "Body")));
+    @BeforeEach
+    void setup() {
+        lenient().when(securityHelper.currentUserId()).thenReturn(OWNER_ID);
+    }
 
-    //     NoteResponse r = service.findById(1L);
-
-    //     assertThat(r.id()).isEqualTo(1L);
-    //     assertThat(r.title()).isEqualTo("Title");
-    //     assertThat(r.content()).isEqualTo("Body");
-    // }
-
-    // @Test
-    // void findById_throwsResourceNotFoundException_whenNotFound() {
-    //     when(noteRepository.findById(99L)).thenReturn(Optional.empty());
-
-    //     assertThatThrownBy(() -> service.findById(99L))
-    //             .isInstanceOf(ResourceNotFoundException.class);
-    // }
-
-    // // ── findByCategory ────────────────────────────────────────────────────────
-    // @Test
-    // void findByCategory_returnsOrderedList() {
-    //     when(categoryRepository.findById(1L)).thenReturn(Optional.of(stubCategory(1L)));
-    //     when(noteRepository.findByCategoryIdOrderByCreatedAtDesc(1L))
-    //             .thenReturn(List.of(
-    //                     stubNote(2L, 1L, "Recent", null),
-    //                     stubNote(1L, 1L, "Older",  "content")
-    //             ));
-
-    //     List<NoteResponse> result = service.findByCategory(1L);
-
-    //     assertThat(result).hasSize(2);
-    //     assertThat(result.get(0).title()).isEqualTo("Recent");
-    // }
-
+    // ── findByCategory ────────────────────────────────────────────────────────
     @Test
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
         when(categoryRepository.findById(99L)).thenReturn(Optional.empty());

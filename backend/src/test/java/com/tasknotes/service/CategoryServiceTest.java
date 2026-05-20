@@ -4,10 +4,12 @@ import com.tasknotes.dto.CategoryRequest;
 import com.tasknotes.dto.CategoryResponse;
 import com.tasknotes.exception.BusinessException;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.AppUser;
 import com.tasknotes.model.Category;
 import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.SecurityHelper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -28,14 +29,25 @@ class CategoryServiceTest {
 
     @Mock CategoryRepository repository;
     @Mock TaskRepository     taskRepository;
+    @Mock SecurityHelper     securityHelper;
 
     @InjectMocks CategoryService service;
 
+    private static final Long OWNER_ID = 1L;
+
+    private AppUser stubOwner() {
+        AppUser owner = mock(AppUser.class);
+        lenient().when(owner.getId()).thenReturn(OWNER_ID);
+        return owner;
+    }
+
     private Category stub(Long id, String name) {
+        AppUser owner = stubOwner();
         Category c = mock(Category.class);
         lenient().when(c.getId()).thenReturn(id);
         lenient().when(c.getUuid()).thenReturn(null);
         lenient().when(c.getName()).thenReturn(name);
+        lenient().when(c.getOwner()).thenReturn(owner);
         lenient().when(c.getCreatedAt()).thenReturn(LocalDateTime.now());
         lenient().when(c.getUpdatedAt()).thenReturn(LocalDateTime.now());
         return c;
@@ -43,29 +55,12 @@ class CategoryServiceTest {
 
     @BeforeEach
     void setup() {
+        lenient().when(securityHelper.currentUserId()).thenReturn(OWNER_ID);
+        AppUser owner = stubOwner();
+        lenient().when(securityHelper.currentAppUser()).thenReturn(owner);
         lenient().when(taskRepository.countByCategoryIdAndStatusNot(anyLong(), any()))
                  .thenReturn(0L);
     }
-
-    // ── findAll ───────────────────────────────────────────────────────────────
-    // @Test
-    // void findAll_returnsAllCategoriesAsResponses() {
-    //     when(repository.findByCategoryIdOrderByCreatedAtDesc())
-    //             .thenReturn(List.of(stub(1L, "Work"), stub(2L, "Personal")));
-
-    //     List<CategoryResponse> result = service.findAll();
-
-    //     assertThat(result).hasSize(2);
-    //     assertThat(result).extracting(CategoryResponse::name)
-    //                       .containsExactly("Work", "Personal");
-    // }
-
-    // @Test
-    // void findAll_returnsEmpty_whenNoCategoriesExist() {
-    //     when(repository.findAllByOrderByCreatedAtAsc()).thenReturn(List.of());
-
-    //     assertThat(service.findAll()).isEmpty();
-    // }
 
     // ── findById ──────────────────────────────────────────────────────────────
     @Test
@@ -92,7 +87,7 @@ class CategoryServiceTest {
     @Test
     void create_savesAndReturnsResponse_whenUnderLimit() {
         Category saved = stub(4L, "New");
-        when(repository.count()).thenReturn(3L);
+        when(repository.countByOwnerId(OWNER_ID)).thenReturn(3L);
         when(repository.save(any())).thenReturn(saved);
 
         CategoryResponse r = service.create(new CategoryRequest("New"));
@@ -103,7 +98,7 @@ class CategoryServiceTest {
 
     @Test
     void create_throwsBusinessException_whenAtFiveCategories() {
-        when(repository.count()).thenReturn(5L);
+        when(repository.countByOwnerId(OWNER_ID)).thenReturn(5L);
 
         assertThatThrownBy(() -> service.create(new CategoryRequest("Extra")))
                 .isInstanceOf(BusinessException.class)
@@ -114,11 +109,10 @@ class CategoryServiceTest {
 
     @Test
     void create_trimsName_beforeSaving() {
-        when(repository.count()).thenReturn(0L);
+        when(repository.countByOwnerId(OWNER_ID)).thenReturn(0L);
         when(repository.save(any())).thenAnswer(inv -> {
             Category c = inv.getArgument(0);
-            Category saved = stub(1L, c.getName());
-            return saved;
+            return stub(1L, c.getName());
         });
 
         service.create(new CategoryRequest("  Trimmed  "));

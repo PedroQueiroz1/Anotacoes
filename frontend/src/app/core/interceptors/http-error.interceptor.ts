@@ -6,6 +6,11 @@ import { ErrorToastService } from '../services/error-toast.service';
 export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ErrorToastService);
 
+  // Auth endpoints handle their own errors (inline in forms or APP_INITIALIZER)
+  if (req.url.includes('/api/auth/')) {
+    return next(req);
+  }
+
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       const serverMessage: string | undefined = error.error?.message;

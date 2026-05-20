@@ -9,7 +9,14 @@ import java.util.Optional;
 
 public interface ProgrammingConceptRepository extends JpaRepository<ProgrammingConcept, Long> {
 
-    Optional<ProgrammingConcept> findByNormalizedTerm(String normalizedTerm);
+    // ── GLOBAL scope lookups ──────────────────────────────────────────────────
+    Optional<ProgrammingConcept> findByNormalizedTermAndScope(String normalizedTerm, String scope);
 
-    List<ProgrammingConcept> findByNormalizedTermStartingWith(String prefix, Pageable pageable);
+    List<ProgrammingConcept> findByNormalizedTermStartingWithAndScope(String prefix, String scope, Pageable pageable);
+
+    // ── USER scope lookups ────────────────────────────────────────────────────
+    Optional<ProgrammingConcept> findByNormalizedTermAndOwnerUserId(String normalizedTerm, Long ownerUserId);
+
+    // ── Legacy (kept for seedIfEmpty check) ───────────────────────────────────
+    Optional<ProgrammingConcept> findByNormalizedTerm(String normalizedTerm);
 }

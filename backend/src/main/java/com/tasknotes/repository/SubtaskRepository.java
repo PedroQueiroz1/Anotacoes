@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
 
-    // ── Legacy (kept for backfill / internal use) ─────────────────────────────
+    // ── Legacy (kept for backfill / export) ───────────────────────────────────
     List<Subtask> findByTaskIdOrderByCreatedAtAsc(Long taskId);
 
     // ── Cursor pagination — first page ────────────────────────────────────────
@@ -35,7 +35,9 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
 
     long countByTaskIdAndDone(Long taskId, boolean done);
 
-    // ── Search ────────────────────────────────────────────────────────────────
-    @Query("SELECT s FROM Subtask s JOIN FETCH s.task t JOIN FETCH t.category WHERE LOWER(s.text) LIKE LOWER(:pattern)")
-    List<Subtask> searchByText(@Param("pattern") String pattern);
+    // ── Search (user-scoped via task → category → owner) ─────────────────────
+    @Query("SELECT s FROM Subtask s JOIN FETCH s.task t JOIN FETCH t.category c " +
+           "WHERE c.owner.id = :ownerId AND LOWER(s.text) LIKE LOWER(:pattern)")
+    List<Subtask> searchByTextAndOwnerId(@Param("pattern") String pattern,
+                                          @Param("ownerId") Long ownerId);
 }

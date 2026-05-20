@@ -8,6 +8,7 @@ import { Category } from '../../../core/models/category.model';
 import { Task } from '../../../core/models/task.model';
 import { CategoryService } from '../../../core/services/category.service';
 import { TaskService } from '../../../core/services/task.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { GlobalSearchComponent } from '../global-search/global-search.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
@@ -28,7 +29,11 @@ const SIDEBAR_MAX = 420;
 export class SidebarComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
+  private authService     = inject(AuthService);
   private router          = inject(Router);
+
+  readonly currentUser = this.authService.currentUser;
+  readonly isAdmin     = this.authService.isAdmin;
 
   readonly MAX = MAX_CATEGORIES;
   readonly TASKS_PER_CAT = 5;
@@ -81,6 +86,10 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void { this.routerSub?.unsubscribe(); }
+
+  logout(): void {
+    this.authService.logout().subscribe({ complete: () => this.router.navigate(['/login']) });
+  }
 
   private loadSidebarWidth(): void {
     try {

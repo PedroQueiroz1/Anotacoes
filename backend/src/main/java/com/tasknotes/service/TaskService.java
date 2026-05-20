@@ -6,12 +6,14 @@ import com.tasknotes.dto.TaskRequest;
 import com.tasknotes.dto.UpdatePriorityRequest;
 import com.tasknotes.dto.TaskResponse;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.Category;
 import com.tasknotes.model.Priority;
 import com.tasknotes.model.Task;
 import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
 import com.tasknotes.util.CursorCodec;
+import com.tasknotes.util.SecurityHelper;
 import com.tasknotes.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -30,14 +32,18 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;
+    private final SecurityHelper securityHelper;
 
-    public TaskService(TaskRepository taskRepository, CategoryRepository categoryRepository) {
+    public TaskService(TaskRepository taskRepository,
+                       CategoryRepository categoryRepository,
+                       SecurityHelper securityHelper) {
         this.taskRepository = taskRepository;
         this.categoryRepository = categoryRepository;
+        this.securityHelper = securityHelper;
     }
 
     public CursorPageResponse<TaskResponse> findByCategory(Long categoryId, String cursor, TaskStatus statusFilter) {
-        validateCategory(categoryId);
+        validateCategoryOwnership(categoryId);
         int fetch = TASK_LIMIT + 1;
         var pageable = PageRequest.of(0, fetch);
         List<Task> raw;
@@ -64,8 +70,7 @@ public class TaskService {
     }
 
     public TaskResponse create(Long categoryId, TaskRequest request) {
-        var category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + categoryId));
+        Category category = findCategoryWithOwnership(categoryId);
 
         Task task = new Task();
         task.setCategory(category);
@@ -104,7 +109,7 @@ public class TaskService {
 
     @Transactional
     public void reorder(Long categoryId, List<Long> ids) {
-        validateCategory(categoryId);
+        validateCategoryOwnership(categoryId);
         for (int i = 0; i < ids.size(); i++) {
             taskRepository.updatePosition(ids.get(i), i);
         }
@@ -121,14 +126,28 @@ public class TaskService {
     }
 
     private Task findOrThrow(Long id) {
-        return taskRepository.findById(id)
+        Long ownerId = securityHelper.currentUserId();
+        Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + id));
+        Category cat = task.getCategory();
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
+            throw new ResourceNotFoundException("Tarefa não encontrada: " + id);
+        }
+        return task;
     }
 
-    private void validateCategory(Long categoryId) {
-        if (!categoryRepository.existsById(categoryId)) {
+    private void validateCategoryOwnership(Long categoryId) {
+        findCategoryWithOwnership(categoryId);
+    }
+
+    private Category findCategoryWithOwnership(Long categoryId) {
+        Long ownerId = securityHelper.currentUserId();
+        Category cat = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + categoryId));
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
             throw new ResourceNotFoundException("Categoria não encontrada: " + categoryId);
         }
+        return cat;
     }
 
     private TaskResponse toResponse(Task t) {

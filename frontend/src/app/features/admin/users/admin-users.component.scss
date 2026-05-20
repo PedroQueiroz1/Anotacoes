@@ -1,0 +1,209 @@
+.admin-users {
+  padding: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-muted);
+  }
+
+  &__form-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  &__form-title {
+    margin: 0 0 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    @media (max-width: 600px) { grid-template-columns: 1fr; }
+  }
+
+  &__form-error {
+    margin: 0 0 16px;
+    padding: 10px 14px;
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--color-danger);
+  }
+
+  &__form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  &__state {
+    font-size: 14px;
+    color: var(--color-muted);
+    padding: 16px 0;
+
+    &--error { color: var(--color-danger); }
+  }
+
+  &__table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--color-bg-page);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    td {
+      padding: 13px 16px;
+      color: var(--color-text);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--color-btn-ghost); }
+  }
+
+  &__row--disabled td { opacity: 0.45; }
+
+  &__cell--name { font-weight: 500; }
+  &__cell--mono { font-family: monospace; font-size: 13px; color: var(--color-muted); }
+
+  &__role {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--color-btn-ghost);
+    color: var(--color-muted);
+
+    &--admin {
+      background: var(--color-primary-focus);
+      color: var(--color-primary);
+    }
+  }
+
+  &__toggle {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--color-border);
+    background: var(--color-btn-ghost);
+    color: var(--color-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+
+    &:hover { opacity: 0.75; }
+
+    &--active {
+      background: var(--color-primary-focus);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+  }
+
+  &__empty {
+    text-align: center;
+    color: var(--color-muted);
+    padding: 32px !important;
+    font-style: italic;
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__input {
+    padding: 9px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-input);
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus { border-color: var(--color-primary); }
+    &::placeholder { color: var(--color-muted); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+}
+
+.btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &--primary {
+    background: var(--color-primary);
+    color: #fff;
+    &:hover:not(:disabled) { opacity: 0.85; }
+  }
+
+  &--ghost {
+    background: var(--color-btn-ghost);
+    color: var(--color-btn-ghost-text);
+    &:hover:not(:disabled) { opacity: 0.8; }
+  }
+}

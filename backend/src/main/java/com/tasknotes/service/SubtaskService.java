@@ -5,10 +5,13 @@ import com.tasknotes.dto.SubtaskRequest;
 import com.tasknotes.dto.SubtaskResponse;
 import com.tasknotes.exception.BusinessException;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.Category;
 import com.tasknotes.model.Subtask;
+import com.tasknotes.model.Task;
 import com.tasknotes.repository.SubtaskRepository;
 import com.tasknotes.repository.TaskRepository;
 import com.tasknotes.util.CursorCodec;
+import com.tasknotes.util.SecurityHelper;
 import com.tasknotes.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -27,14 +30,18 @@ public class SubtaskService {
 
     private final SubtaskRepository subtaskRepository;
     private final TaskRepository taskRepository;
+    private final SecurityHelper securityHelper;
 
-    public SubtaskService(SubtaskRepository subtaskRepository, TaskRepository taskRepository) {
+    public SubtaskService(SubtaskRepository subtaskRepository,
+                          TaskRepository taskRepository,
+                          SecurityHelper securityHelper) {
         this.subtaskRepository = subtaskRepository;
         this.taskRepository = taskRepository;
+        this.securityHelper = securityHelper;
     }
 
     public SubtaskPageResponse findByTask(Long taskId, String cursor) {
-        validateTask(taskId);
+        findTaskWithOwnership(taskId);
         int fetch = SUBTASK_LIMIT + 1;
         var pageable = PageRequest.of(0, fetch);
         List<Subtask> raw;
@@ -67,8 +74,7 @@ public class SubtaskService {
     }
 
     public SubtaskResponse create(Long taskId, SubtaskRequest request) {
-        var task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + taskId));
+        Task task = findTaskWithOwnership(taskId);
 
         if (subtaskRepository.countByTaskId(taskId) >= MAX_SUBTASKS) {
             throw new BusinessException("Limite máximo de " + MAX_SUBTASKS + " subtarefas por tarefa.");
@@ -107,15 +113,26 @@ public class SubtaskService {
         }
     }
 
-    private Subtask findOrThrow(Long id) {
-        return subtaskRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Subtarefa não encontrada: " + id));
-    }
-
-    private void validateTask(Long taskId) {
-        if (!taskRepository.existsById(taskId)) {
+    private Task findTaskWithOwnership(Long taskId) {
+        Long ownerId = securityHelper.currentUserId();
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + taskId));
+        Category cat = task.getCategory();
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
             throw new ResourceNotFoundException("Tarefa não encontrada: " + taskId);
         }
+        return task;
+    }
+
+    private Subtask findOrThrow(Long id) {
+        Long ownerId = securityHelper.currentUserId();
+        Subtask subtask = subtaskRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Subtarefa não encontrada: " + id));
+        Category cat = subtask.getTask().getCategory();
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
+            throw new ResourceNotFoundException("Subtarefa não encontrada: " + id);
+        }
+        return subtask;
     }
 
     private SubtaskResponse toResponse(Subtask s) {

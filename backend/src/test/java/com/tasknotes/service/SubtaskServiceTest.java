@@ -5,10 +5,14 @@ import com.tasknotes.dto.SubtaskRequest;
 import com.tasknotes.dto.SubtaskResponse;
 import com.tasknotes.exception.BusinessException;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.AppUser;
+import com.tasknotes.model.Category;
 import com.tasknotes.model.Subtask;
 import com.tasknotes.model.Task;
 import com.tasknotes.repository.SubtaskRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.SecurityHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,13 +33,21 @@ class SubtaskServiceTest {
 
     @Mock SubtaskRepository subtaskRepository;
     @Mock TaskRepository    taskRepository;
+    @Mock SecurityHelper    securityHelper;
 
     @InjectMocks SubtaskService service;
 
+    private static final Long OWNER_ID = 1L;
+
     private Task stubTask(Long id) {
+        AppUser owner = mock(AppUser.class);
+        lenient().when(owner.getId()).thenReturn(OWNER_ID);
+        Category cat = mock(Category.class);
+        lenient().when(cat.getOwner()).thenReturn(owner);
         Task t = mock(Task.class);
         lenient().when(t.getId()).thenReturn(id);
         lenient().when(t.getUuid()).thenReturn(null);
+        lenient().when(t.getCategory()).thenReturn(cat);
         return t;
     }
 
@@ -51,12 +63,18 @@ class SubtaskServiceTest {
         return s;
     }
 
+    @BeforeEach
+    void setup() {
+        lenient().when(securityHelper.currentUserId()).thenReturn(OWNER_ID);
+    }
+
     // ── findByTask ────────────────────────────────────────────────────────────
     @Test
     void findByTask_returnsPage_whenTaskExists() {
+        Task task = stubTask(1L);
         Subtask sub1 = stubSubtask(1L, 1L, "Buy milk", false);
         Subtask sub2 = stubSubtask(2L, 1L, "Pay bill", true);
-        when(taskRepository.existsById(1L)).thenReturn(true);
+        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.findByTaskFirstPage(eq(1L), any(Pageable.class)))
                 .thenReturn(List.of(sub1, sub2));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(2L);
@@ -74,7 +92,7 @@ class SubtaskServiceTest {
 
     @Test
     void findByTask_throwsResourceNotFoundException_whenTaskMissing() {
-        when(taskRepository.existsById(99L)).thenReturn(false);
+        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByTask(99L, null))
                 .isInstanceOf(ResourceNotFoundException.class);

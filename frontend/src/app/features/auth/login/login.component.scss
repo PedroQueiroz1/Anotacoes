@@ -1,0 +1,126 @@
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--color-bg-page);
+  padding: 24px 16px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 40px 36px 36px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+
+  &__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  &__logo {
+    width: 48px;
+    height: 48px;
+    background: var(--color-primary);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 14px;
+    color: var(--color-muted);
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  &__input {
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--color-text);
+    background: var(--color-bg-input);
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+
+    &:focus { border-color: var(--color-primary); }
+    &::placeholder { color: var(--color-muted); }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  &__remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--color-text);
+    cursor: pointer;
+
+    input { cursor: pointer; accent-color: var(--color-primary); }
+  }
+
+  &__error {
+    margin: 0;
+    padding: 10px 14px;
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--color-danger);
+  }
+
+  &__submit {
+    margin-top: 4px;
+    padding: 11px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity 0.15s;
+
+    &:hover:not(:disabled) { opacity: 0.85; }
+    &:disabled { opacity: 0.55; cursor: not-allowed; }
+  }
+}

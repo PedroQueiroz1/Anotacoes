@@ -4,12 +4,15 @@ import com.tasknotes.dto.StatusUpdateRequest;
 import com.tasknotes.dto.TaskRequest;
 import com.tasknotes.dto.TaskResponse;
 import com.tasknotes.exception.ResourceNotFoundException;
+import com.tasknotes.model.AppUser;
 import com.tasknotes.model.Category;
 import com.tasknotes.model.Priority;
 import com.tasknotes.model.Task;
 import com.tasknotes.model.TaskStatus;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.SecurityHelper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,7 +20,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -29,18 +31,24 @@ class TaskServiceTest {
 
     @Mock TaskRepository     taskRepository;
     @Mock CategoryRepository categoryRepository;
+    @Mock SecurityHelper     securityHelper;
 
     @InjectMocks TaskService service;
 
+    private static final Long OWNER_ID = 1L;
+
     private Category stubCategory(Long id) {
+        AppUser owner = mock(AppUser.class);
+        lenient().when(owner.getId()).thenReturn(OWNER_ID);
         Category c = mock(Category.class);
         lenient().when(c.getId()).thenReturn(id);
+        lenient().when(c.getOwner()).thenReturn(owner);
         return c;
     }
 
     private Task stubTask(Long id, Priority priority, TaskStatus status) {
-        Task t       = mock(Task.class);
         Category cat = stubCategory(1L);
+        Task t = mock(Task.class);
         lenient().when(t.getId()).thenReturn(id);
         lenient().when(t.getUuid()).thenReturn(null);
         lenient().when(t.getCategory()).thenReturn(cat);
@@ -54,10 +62,15 @@ class TaskServiceTest {
         return t;
     }
 
+    @BeforeEach
+    void setup() {
+        lenient().when(securityHelper.currentUserId()).thenReturn(OWNER_ID);
+    }
+
     // ── findByCategory ────────────────────────────────────────────────────────
     @Test
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
-        when(categoryRepository.existsById(99L)).thenReturn(false);
+        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByCategory(99L, null, null))
                 .isInstanceOf(ResourceNotFoundException.class);

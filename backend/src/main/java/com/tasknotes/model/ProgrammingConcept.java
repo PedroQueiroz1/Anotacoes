@@ -39,6 +39,12 @@ public class ProgrammingConcept {
     @Column(name = "accepted_count", nullable = false)
     private int acceptedCount = 0;
 
+    @Column(nullable = false, length = 10)
+    private String scope = "GLOBAL";
+
+    @Column(name = "owner_user_id")
+    private Long ownerUserId;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,8 +61,6 @@ public class ProgrammingConcept {
         if (uuid == null) uuid = UuidV7Generator.generate();
     }
 
-    // ── Getters / Setters ─────────────────────────────────────────────────────
-
     public Long getId()                         { return id; }
     public String getUuid()                     { return uuid; }
     public String getTerm()                     { return term; }
@@ -71,6 +75,10 @@ public class ProgrammingConcept {
     public void   setSourceUrl(String url)      { this.sourceUrl = url; }
     public int    getAcceptedCount()            { return acceptedCount; }
     public void   setAcceptedCount(int c)       { this.acceptedCount = c; }
+    public String getScope()                    { return scope; }
+    public void   setScope(String scope)        { this.scope = scope; }
+    public Long   getOwnerUserId()              { return ownerUserId; }
+    public void   setOwnerUserId(Long id)       { this.ownerUserId = id; }
     public LocalDateTime getCreatedAt()         { return createdAt; }
     public LocalDateTime getUpdatedAt()         { return updatedAt; }
     public LocalDateTime getLastUsedAt()        { return lastUsedAt; }

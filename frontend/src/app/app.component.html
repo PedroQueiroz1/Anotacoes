@@ -1,5 +1,7 @@
 <div class="app-shell">
-  <app-sidebar />
+  @if (isLoggedIn()) {
+    <app-sidebar />
+  }
   <main class="app-main">
     <router-outlet />
   </main>

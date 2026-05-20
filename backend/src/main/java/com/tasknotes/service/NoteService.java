@@ -10,6 +10,7 @@ import com.tasknotes.model.Note;
 import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.NoteRepository;
 import com.tasknotes.util.CursorCodec;
+import com.tasknotes.util.SecurityHelper;
 import com.tasknotes.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -29,14 +30,18 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
     private final CategoryRepository categoryRepository;
+    private final SecurityHelper securityHelper;
 
-    public NoteService(NoteRepository noteRepository, CategoryRepository categoryRepository) {
+    public NoteService(NoteRepository noteRepository,
+                       CategoryRepository categoryRepository,
+                       SecurityHelper securityHelper) {
         this.noteRepository = noteRepository;
         this.categoryRepository = categoryRepository;
+        this.securityHelper = securityHelper;
     }
 
     public CursorPageResponse<NoteResponse> findByCategory(Long categoryId, String cursor) {
-        findCategoryOrThrow(categoryId);
+        findCategoryWithOwnership(categoryId);
         int fetch = NOTE_LIMIT + 1;
         var pageable = PageRequest.of(0, fetch);
         List<Note> raw;
@@ -59,7 +64,7 @@ public class NoteService {
     }
 
     public NoteResponse create(Long categoryId, NoteRequest request) {
-        Category category = findCategoryOrThrow(categoryId);
+        Category category = findCategoryWithOwnership(categoryId);
         validateContent(request.content());
 
         Note note = new Note();
@@ -85,22 +90,10 @@ public class NoteService {
 
     @Transactional
     public void reorder(Long categoryId, List<Long> ids) {
-        findCategoryOrThrow(categoryId);
+        findCategoryWithOwnership(categoryId);
         for (int i = 0; i < ids.size(); i++) {
             noteRepository.updatePosition(ids.get(i), i);
         }
-    }
-
-    private void validateContent(String content) {
-        if (content != null && content.length() > MAX_CONTENT_LENGTH) {
-            throw new BusinessException("Conteúdo excede o limite de " + MAX_CONTENT_LENGTH + " caracteres.");
-        }
-    }
-
-    private Category findCategoryOrThrow(Long categoryId) {
-        return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Categoria não encontrada: " + categoryId));
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -113,10 +106,31 @@ public class NoteService {
         }
     }
 
+    private void validateContent(String content) {
+        if (content != null && content.length() > MAX_CONTENT_LENGTH) {
+            throw new BusinessException("Conteúdo excede o limite de " + MAX_CONTENT_LENGTH + " caracteres.");
+        }
+    }
+
+    private Category findCategoryWithOwnership(Long categoryId) {
+        Long ownerId = securityHelper.currentUserId();
+        Category cat = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + categoryId));
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
+            throw new ResourceNotFoundException("Categoria não encontrada: " + categoryId);
+        }
+        return cat;
+    }
+
     private Note findOrThrow(Long id) {
-        return noteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Anotação não encontrada: " + id));
+        Long ownerId = securityHelper.currentUserId();
+        Note note = noteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Anotação não encontrada: " + id));
+        Category cat = note.getCategory();
+        if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
+            throw new ResourceNotFoundException("Anotação não encontrada: " + id);
+        }
+        return note;
     }
 
     private NoteResponse toResponse(Note n) {

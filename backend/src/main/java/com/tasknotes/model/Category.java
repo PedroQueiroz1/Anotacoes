@@ -8,7 +8,10 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "category")
+@Table(
+    name = "category",
+    uniqueConstraints = @UniqueConstraint(name = "uk_category_slug_owner", columnNames = {"slug", "owner_id"})
+)
 public class Category {
 
     @Id
@@ -21,11 +24,15 @@ public class Category {
     @Column(nullable = false, length = 50)
     private String name;
 
-    @Column(unique = true, length = 70)
+    @Column(length = 70)
     private String slug;
 
     @Column
     private Integer position;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private AppUser owner;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -40,15 +47,17 @@ public class Category {
         if (this.uuid == null) this.uuid = UuidV7Generator.generate();
     }
 
-    public Long getId() { return id; }
-    public String getUuid() { return uuid; }
-    public void setUuid(String uuid) { this.uuid = uuid; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
-    public Integer getPosition() { return position; }
-    public void setPosition(Integer position) { this.position = position; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public Long getId()                        { return id; }
+    public String getUuid()                    { return uuid; }
+    public void setUuid(String uuid)           { this.uuid = uuid; }
+    public String getName()                    { return name; }
+    public void setName(String name)           { this.name = name; }
+    public String getSlug()                    { return slug; }
+    public void setSlug(String slug)           { this.slug = slug; }
+    public Integer getPosition()               { return position; }
+    public void setPosition(Integer position)  { this.position = position; }
+    public AppUser getOwner()                  { return owner; }
+    public void setOwner(AppUser owner)        { this.owner = owner; }
+    public LocalDateTime getCreatedAt()        { return createdAt; }
+    public LocalDateTime getUpdatedAt()        { return updatedAt; }
 }

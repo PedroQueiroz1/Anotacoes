@@ -4,6 +4,7 @@ import com.tasknotes.dto.AcceptConceptRequest;
 import com.tasknotes.dto.ConceptSuggestionResponse;
 import com.tasknotes.model.ProgrammingConcept;
 import com.tasknotes.repository.ProgrammingConceptRepository;
+import com.tasknotes.util.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -25,14 +26,17 @@ public class ProgrammingConceptService {
     private static final int MIN_TERM_LENGTH = 2;
     private static final int CACHE_MAX_SIZE  = 300;
 
-    // ── In-memory cache: normalizedTerm → response (Optional.empty = not found) ─
-    private final ConcurrentHashMap<String, Optional<ConceptSuggestionResponse>> cache =
+    // Cache covers only GLOBAL concepts (scope-independent for seeds)
+    private final ConcurrentHashMap<String, Optional<ConceptSuggestionResponse>> globalCache =
             new ConcurrentHashMap<>();
 
     private final ProgrammingConceptRepository repository;
+    private final SecurityHelper securityHelper;
 
-    public ProgrammingConceptService(ProgrammingConceptRepository repository) {
+    public ProgrammingConceptService(ProgrammingConceptRepository repository,
+                                     SecurityHelper securityHelper) {
         this.repository = repository;
+        this.securityHelper = securityHelper;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -47,42 +51,54 @@ public class ProgrammingConceptService {
             return ConceptSuggestionResponse.notFound();
         }
 
-        // ── 1. Cache hit ──────────────────────────────────────────────────────
-        if (cache.containsKey(normalized)) {
-            return cache.get(normalized).orElse(ConceptSuggestionResponse.notFound());
-        }
-
         long start = System.currentTimeMillis();
 
-        // ── 2. Exact match in local DB ────────────────────────────────────────
-        Optional<ProgrammingConcept> exact = repository.findByNormalizedTerm(normalized);
+        // ── 1. Global cache hit ───────────────────────────────────────────────
+        if (globalCache.containsKey(normalized)) {
+            return globalCache.get(normalized).orElse(ConceptSuggestionResponse.notFound());
+        }
+
+        // ── 2. Exact match — GLOBAL scope ─────────────────────────────────────
+        Optional<ProgrammingConcept> exact = repository.findByNormalizedTermAndScope(normalized, "GLOBAL");
         if (exact.isPresent()) {
             var resp = ConceptSuggestionResponse.of(exact.get(), "LOCAL");
-            putCache(normalized, Optional.of(resp));
-            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
+            putGlobalCache(normalized, Optional.of(resp));
+            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
                     normalized, System.currentTimeMillis() - start);
             return resp;
         }
 
-        // ── 3. Prefix match in local DB ───────────────────────────────────────
-        var prefixMatches = repository.findByNormalizedTermStartingWith(normalized, PageRequest.of(0, 1));
+        // ── 3. Prefix match — GLOBAL scope ────────────────────────────────────
+        var prefixMatches = repository.findByNormalizedTermStartingWithAndScope(normalized, "GLOBAL", PageRequest.of(0, 1));
         if (!prefixMatches.isEmpty()) {
             var resp = ConceptSuggestionResponse.of(prefixMatches.get(0), "LOCAL");
-            putCache(normalized, Optional.of(resp));
-            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL found=true durationMs={}",
+            putGlobalCache(normalized, Optional.of(resp));
+            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
                     normalized, System.currentTimeMillis() - start);
             return resp;
         }
 
-        // ── 4. Heuristic: reject non-technical terms (skipped for explicit ; trigger) ──
+        // ── 4. Exact match — current user's USER scope ────────────────────────
+        try {
+            Long ownerId = securityHelper.currentUserId();
+            Optional<ProgrammingConcept> userExact = repository.findByNormalizedTermAndOwnerUserId(normalized, ownerId);
+            if (userExact.isPresent()) {
+                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=USER found=true durationMs={}",
+                        normalized, System.currentTimeMillis() - start);
+                return ConceptSuggestionResponse.of(userExact.get(), "LOCAL");
+            }
+        } catch (IllegalStateException ignored) {
+            // unauthenticated context (shouldn't happen with secured endpoints)
+        }
+
+        // ── 5. Heuristic: reject non-technical terms ──────────────────────────
         if (!semicolonTrigger && !isTechnicalTerm(term)) {
-            putCache(normalized, Optional.empty());
+            putGlobalCache(normalized, Optional.empty());
             log.info("concept_suggestion_rejected termNormalized={} reason=not_technical_term", normalized);
             return ConceptSuggestionResponse.notFound();
         }
 
-        // ── 5. External/AI providers would go here (disabled by default) ───────
-        putCache(normalized, Optional.empty());
+        putGlobalCache(normalized, Optional.empty());
         log.info("concept_semicolon_lookup_not_found termNormalized={} durationMs={}",
                 normalized, System.currentTimeMillis() - start);
         return ConceptSuggestionResponse.notFound();
@@ -93,36 +109,52 @@ public class ProgrammingConceptService {
         String normalized = normalize(req.term());
         if (normalized.isBlank() || req.summary().isBlank()) return;
 
-        String source = System.currentTimeMillis() > 0   // always true — avoids unused-import warning
-                ? (req.source() != null ? req.source() : "USER")
-                : "USER";
+        String source = req.source() != null ? req.source() : "USER";
 
-        repository.findByNormalizedTerm(normalized).ifPresentOrElse(
-            existing -> {
-                existing.setAcceptedCount(existing.getAcceptedCount() + 1);
-                existing.setLastUsedAt(LocalDateTime.now());
-                repository.save(existing);
-                log.info("concept_semicolon_lookup_completed termNormalized={} source={} accepted=true persisted=updated",
-                        normalized, source);
-            },
-            () -> {
-                ProgrammingConcept c = new ProgrammingConcept();
-                c.setTerm(req.term().trim());
-                c.setNormalizedTerm(normalized);
-                c.setSummary(req.summary().trim());
-                c.setSource(source);
-                c.setSourceUrl(req.sourceUrl());
-                c.setAcceptedCount(1);
-                repository.save(c);
-                cache.remove(normalized);
-                if ("USER".equals(source)) {
-                    log.info("concept_manual_definition_saved termNormalized={} source=USER", normalized);
-                } else {
-                    log.info("concept_semicolon_lookup_completed termNormalized={} source={} accepted=true persisted=new",
-                            normalized, source);
-                }
-            }
-        );
+        // If a GLOBAL concept exists, increment its counter
+        Optional<ProgrammingConcept> global = repository.findByNormalizedTermAndScope(normalized, "GLOBAL");
+        if (global.isPresent()) {
+            ProgrammingConcept existing = global.get();
+            existing.setAcceptedCount(existing.getAcceptedCount() + 1);
+            existing.setLastUsedAt(LocalDateTime.now());
+            repository.save(existing);
+            log.info("concept_accept_updated termNormalized={} scope=GLOBAL source={}", normalized, source);
+            return;
+        }
+
+        // Create or update USER-scoped concept
+        Long ownerId = null;
+        try {
+            ownerId = securityHelper.currentUserId();
+        } catch (IllegalStateException ignored) {
+            // system context — treat as GLOBAL
+        }
+
+        final Long finalOwnerId = ownerId;
+        Optional<ProgrammingConcept> existing = finalOwnerId != null
+                ? repository.findByNormalizedTermAndOwnerUserId(normalized, finalOwnerId)
+                : Optional.empty();
+
+        if (existing.isPresent()) {
+            ProgrammingConcept c = existing.get();
+            c.setAcceptedCount(c.getAcceptedCount() + 1);
+            c.setLastUsedAt(LocalDateTime.now());
+            repository.save(c);
+            log.info("concept_accept_updated termNormalized={} scope=USER", normalized);
+        } else {
+            ProgrammingConcept c = new ProgrammingConcept();
+            c.setTerm(req.term().trim());
+            c.setNormalizedTerm(normalized);
+            c.setSummary(req.summary().trim());
+            c.setSource(source);
+            c.setSourceUrl(req.sourceUrl());
+            c.setAcceptedCount(1);
+            c.setScope(finalOwnerId != null ? "USER" : "GLOBAL");
+            c.setOwnerUserId(finalOwnerId);
+            repository.save(c);
+            log.info("concept_accept_created termNormalized={} scope={}", normalized,
+                    finalOwnerId != null ? "USER" : "GLOBAL");
+        }
     }
 
     // ── Seed ──────────────────────────────────────────────────────────────────
@@ -138,6 +170,7 @@ public class ProgrammingConceptService {
                 c.setNormalizedTerm(normalize(entry[0]));
                 c.setSummary(entry[1]);
                 c.setSource("SEED");
+                c.setScope("GLOBAL");
                 c.setAcceptedCount(0);
                 repository.save(c);
             } catch (Exception e) {
@@ -154,9 +187,9 @@ public class ProgrammingConceptService {
         return term.toLowerCase(java.util.Locale.ROOT).trim().replaceAll("\\s+", " ");
     }
 
-    private void putCache(String key, Optional<ConceptSuggestionResponse> value) {
-        if (cache.size() >= CACHE_MAX_SIZE) cache.clear();
-        cache.put(key, value);
+    private void putGlobalCache(String key, Optional<ConceptSuggestionResponse> value) {
+        if (globalCache.size() >= CACHE_MAX_SIZE) globalCache.clear();
+        globalCache.put(key, value);
     }
 
     // ── Technical term heuristic ──────────────────────────────────────────────
@@ -211,22 +244,12 @@ public class ProgrammingConceptService {
         if (term.length() < MIN_TERM_LENGTH) return false;
         String lower = term.toLowerCase(java.util.Locale.ROOT);
         if (STOPWORDS.contains(lower)) return false;
-
-        // All-uppercase acronym: JSON, API, UUID, REST, HTTP, CORS
         if (term.matches("[A-Z]{2,}")) return true;
-
-        // Alphanumeric with digit: N8N, K8s, ES6, OAuth2, H2, UUID v7 — single token
         if (!term.contains(" ") && term.matches("[A-Za-z0-9]+") && term.matches(".*\\d.*")) return true;
-
-        // Slash-separated: CI/CD
         if (term.matches("[A-Z]+(/[A-Z]+)+")) return true;
-
-        // Check each space-separated word against keywords
         for (String word : lower.split("[\\s/\\-]+")) {
             if (!word.isEmpty() && TECH_KEYWORDS.contains(word)) return true;
         }
-
-        // Full term is a keyword (e.g. "typescript", "docker")
         return TECH_KEYWORDS.contains(lower);
     }
 

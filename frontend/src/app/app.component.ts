@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { ErrorToastComponent } from './shared/components/error-toast/error-toast.component';
 import { ThemeService } from './core/services/theme.service';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -13,6 +14,9 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 })
 export class AppComponent implements OnInit {
   private theme = inject(ThemeService);
+  protected auth = inject(AuthService);
+
+  readonly isLoggedIn = this.auth.isLoggedIn;
 
   ngOnInit(): void {
     this.theme.init();

@@ -56,9 +56,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // ── Counts ────────────────────────────────────────────────────────────────
     long countByCategoryIdAndStatusNot(Long categoryId, TaskStatus status);
 
-    // ── Search ────────────────────────────────────────────────────────────────
-    @Query("SELECT t FROM Task t JOIN FETCH t.category WHERE LOWER(t.title) LIKE LOWER(:pattern) OR (t.description IS NOT NULL AND LOWER(t.description) LIKE LOWER(:pattern))")
-    List<Task> searchByTitleOrDescription(@Param("pattern") String pattern);
+    // ── Search (user-scoped via category owner) ───────────────────────────────
+    @Query("SELECT t FROM Task t JOIN FETCH t.category c WHERE c.owner.id = :ownerId AND " +
+           "(LOWER(t.title) LIKE LOWER(:pattern) OR (t.description IS NOT NULL AND LOWER(t.description) LIKE LOWER(:pattern)))")
+    List<Task> searchByTitleOrDescriptionAndOwnerId(@Param("pattern") String pattern,
+                                                     @Param("ownerId") Long ownerId);
 
     // ── Reorder ───────────────────────────────────────────────────────────────
     @Modifying

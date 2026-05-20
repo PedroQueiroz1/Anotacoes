@@ -7,10 +7,14 @@ import com.tasknotes.dto.NoteResponse;
 import com.tasknotes.exception.GlobalExceptionHandler;
 import com.tasknotes.exception.ResourceNotFoundException;
 import com.tasknotes.service.NoteService;
+import com.tasknotes.config.SecurityConfig;
+import com.tasknotes.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,8 +27,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(NoteController.class)
-@Import(GlobalExceptionHandler.class)
+@WebMvcTest(value = NoteController.class, excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfig.class)
+})
+@Import({GlobalExceptionHandler.class, TestSecurityConfig.class})
 class NoteControllerTest {
 
     @Autowired MockMvc      mockMvc;

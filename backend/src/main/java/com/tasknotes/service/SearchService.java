@@ -5,6 +5,7 @@ import com.tasknotes.repository.CategoryRepository;
 import com.tasknotes.repository.NoteRepository;
 import com.tasknotes.repository.SubtaskRepository;
 import com.tasknotes.repository.TaskRepository;
+import com.tasknotes.util.SecurityHelper;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,30 +20,34 @@ public class SearchService {
     private final TaskRepository taskRepository;
     private final SubtaskRepository subtaskRepository;
     private final NoteRepository noteRepository;
+    private final SecurityHelper securityHelper;
 
     public SearchService(CategoryRepository categoryRepository,
                          TaskRepository taskRepository,
                          SubtaskRepository subtaskRepository,
-                         NoteRepository noteRepository) {
+                         NoteRepository noteRepository,
+                         SecurityHelper securityHelper) {
         this.categoryRepository = categoryRepository;
         this.taskRepository = taskRepository;
         this.subtaskRepository = subtaskRepository;
         this.noteRepository = noteRepository;
+        this.securityHelper = securityHelper;
     }
 
     public List<SearchResultDTO> search(String query) {
         String trimmed = query == null ? "" : query.trim();
         if (trimmed.length() < 2) return List.of();
 
+        Long ownerId = securityHelper.currentUserId();
         String pattern = "%" + trimmed + "%";
         List<SearchResultDTO> results = new ArrayList<>();
         Set<Long> addedTaskIds = new HashSet<>();
 
-        categoryRepository.findByNameContainingIgnoreCase(trimmed)
+        categoryRepository.findByNameContainingIgnoreCaseAndOwnerId(trimmed, ownerId)
                 .forEach(cat -> results.add(new SearchResultDTO(
                         "CATEGORY", cat.getId(), cat.getName(), null, null, null)));
 
-        taskRepository.searchByTitleOrDescription(pattern)
+        taskRepository.searchByTitleOrDescriptionAndOwnerId(pattern, ownerId)
                 .forEach(task -> {
                     addedTaskIds.add(task.getId());
                     results.add(new SearchResultDTO(
@@ -51,7 +56,7 @@ public class SearchService {
                             truncate(task.getDescription(), 120)));
                 });
 
-        subtaskRepository.searchByText(pattern)
+        subtaskRepository.searchByTextAndOwnerId(pattern, ownerId)
                 .forEach(sub -> {
                     var parent = sub.getTask();
                     if (addedTaskIds.add(parent.getId())) {
@@ -62,7 +67,7 @@ public class SearchService {
                     }
                 });
 
-        noteRepository.searchByTitleOrContent(pattern)
+        noteRepository.searchByTitleOrContentAndOwnerId(pattern, ownerId)
                 .forEach(note -> results.add(new SearchResultDTO(
                         "NOTE", note.getId(), note.getTitle(),
                         note.getCategory().getId(), note.getCategory().getName(),

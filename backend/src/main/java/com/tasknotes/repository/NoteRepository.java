@@ -35,9 +35,11 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
                                          @Param("cursorId") Long cursorId,
                                          Pageable pageable);
 
-    // ── Search ────────────────────────────────────────────────────────────────
-    @Query("SELECT n FROM Note n JOIN FETCH n.category WHERE LOWER(n.title) LIKE LOWER(:pattern) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:pattern))")
-    List<Note> searchByTitleOrContent(@Param("pattern") String pattern);
+    // ── Search (user-scoped via category owner) ───────────────────────────────
+    @Query("SELECT n FROM Note n JOIN FETCH n.category c WHERE c.owner.id = :ownerId AND " +
+           "(LOWER(n.title) LIKE LOWER(:pattern) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:pattern)))")
+    List<Note> searchByTitleOrContentAndOwnerId(@Param("pattern") String pattern,
+                                                 @Param("ownerId") Long ownerId);
 
     // ── Reorder ───────────────────────────────────────────────────────────────
     @Modifying

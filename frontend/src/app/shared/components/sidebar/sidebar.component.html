@@ -148,6 +148,20 @@
     }
   </div>
 
+  <!-- ── Painel do usuário ─────────────────────────────────────────────────── -->
+  <div class="sidebar__user">
+    <div class="sidebar__user-info">
+      <span class="sidebar__user-name">{{ currentUser()?.displayName }}</span>
+      @if (isAdmin()) {
+        <span class="sidebar__user-role">Admin</span>
+      }
+    </div>
+    @if (isAdmin()) {
+      <a class="sidebar__admin-link" [routerLink]="['/admin/users']" title="Gerenciar usuários">Usuários</a>
+    }
+    <button class="sidebar__logout-btn" (click)="logout()" title="Sair">Sair</button>
+  </div>
+
   <!-- ── Handle de resize ─────────────────────────────────────────────────── -->
   <div
     class="sidebar__resize-handle"
