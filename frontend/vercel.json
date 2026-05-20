@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://anotacoes-production.up.railway.app/api/:path*"
+      "destination": "http://129.121.39.215/api/:path*"
     },
     {
       "source": "/(.*)",
