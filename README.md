@@ -6,6 +6,7 @@
 4. Melhorias de observabilidade, logs e tratamento de erros.
 5. Ajustes na funcionalidade de autocomplete.
 6. Correções de bugs e refinamentos de usabilidade.
+7. Melhoria na área de anotações...
 
 ---
 
