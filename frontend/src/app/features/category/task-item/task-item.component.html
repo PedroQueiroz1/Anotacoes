@@ -85,7 +85,7 @@
     <div class="task-item__actions">
 
       <!-- Status rápido -->
-      <select class="status-select" [value]="task.status" (change)="onStatusChange($any($event.target).value)">
+      <select class="status-select" [ngModel]="task.status" (ngModelChange)="onStatusChange($event)">
         @for (s of STATUS_OPTIONS; track s) {
           <option [value]="s">{{ STATUS_LABEL[s] }}</option>
         }
