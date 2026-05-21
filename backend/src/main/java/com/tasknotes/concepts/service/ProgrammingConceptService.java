@@ -171,26 +171,33 @@ public class ProgrammingConceptService {
     // ── Seed ──────────────────────────────────────────────────────────────────
 
     @EventListener(ApplicationReadyEvent.class)
-    @Transactional
     public void seedIfEmpty() {
-        // Only skip if GLOBAL concepts are already present; USER-scope records must not prevent seeding
+        // Only seed if no GLOBAL concepts exist; USER-scope records must not prevent seeding
         if (repository.existsByScope("GLOBAL")) return;
         log.info("concept_seed_started count={}", SEED_DATA.length);
+        int inserted = 0;
         for (String[] entry : SEED_DATA) {
+            String normalized = normalize(entry[0]);
+            // Skip if any concept with this normalizedTerm already exists (avoid unique constraint violation)
+            if (repository.findByNormalizedTerm(normalized).isPresent()) {
+                log.debug("concept_seed_skipped term={} reason=already_exists", entry[0]);
+                continue;
+            }
             try {
                 ProgrammingConcept c = new ProgrammingConcept();
                 c.setTerm(entry[0]);
-                c.setNormalizedTerm(normalize(entry[0]));
+                c.setNormalizedTerm(normalized);
                 c.setSummary(entry[1]);
                 c.setSource("SEED");
                 c.setScope("GLOBAL");
                 c.setAcceptedCount(0);
                 repository.save(c);
+                inserted++;
             } catch (Exception e) {
                 log.warn("concept_seed_entry_failed term={} reason={}", entry[0], e.getMessage());
             }
         }
-        log.info("concept_seed_completed");
+        log.info("concept_seed_completed inserted={}", inserted);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
