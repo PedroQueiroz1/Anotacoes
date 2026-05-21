@@ -127,7 +127,7 @@ public class TaskService {
 
     private Task findOrThrow(Long id) {
         Long ownerId = securityHelper.currentUserId();
-        Task task = taskRepository.findById(id)
+        Task task = taskRepository.findByIdWithCategoryAndOwner(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + id));
         Category cat = task.getCategory();
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
@@ -142,7 +142,7 @@ public class TaskService {
 
     private Category findCategoryWithOwnership(Long categoryId) {
         Long ownerId = securityHelper.currentUserId();
-        Category cat = categoryRepository.findById(categoryId)
+        Category cat = categoryRepository.findByIdWithOwner(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + categoryId));
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
             throw new ResourceNotFoundException("Categoria não encontrada: " + categoryId);

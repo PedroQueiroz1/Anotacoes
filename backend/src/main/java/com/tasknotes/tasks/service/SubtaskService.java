@@ -115,7 +115,7 @@ public class SubtaskService {
 
     private Task findTaskWithOwnership(Long taskId) {
         Long ownerId = securityHelper.currentUserId();
-        Task task = taskRepository.findById(taskId)
+        Task task = taskRepository.findByIdWithCategoryAndOwner(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada: " + taskId));
         Category cat = task.getCategory();
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
@@ -126,7 +126,7 @@ public class SubtaskService {
 
     private Subtask findOrThrow(Long id) {
         Long ownerId = securityHelper.currentUserId();
-        Subtask subtask = subtaskRepository.findById(id)
+        Subtask subtask = subtaskRepository.findByIdWithTaskCategoryAndOwner(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Subtarefa não encontrada: " + id));
         Category cat = subtask.getTask().getCategory();
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {

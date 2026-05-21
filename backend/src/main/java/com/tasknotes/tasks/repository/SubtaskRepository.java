@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
 
@@ -40,5 +41,9 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
            "WHERE c.owner.id = :ownerId AND LOWER(s.text) LIKE LOWER(:pattern)")
     List<Subtask> searchByTextAndOwnerId(@Param("pattern") String pattern,
                                           @Param("ownerId") Long ownerId);
+
+    // ── Ownership-safe lookup (loads task + category + owner in one query) ───
+    @Query("SELECT s FROM Subtask s JOIN FETCH s.task t JOIN FETCH t.category c JOIN FETCH c.owner WHERE s.id = :id")
+    Optional<Subtask> findByIdWithTaskCategoryAndOwner(@Param("id") Long id);
 
 }

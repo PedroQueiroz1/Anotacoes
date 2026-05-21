@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
@@ -45,4 +46,8 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     @Modifying
     @Query("UPDATE Note n SET n.position = :position WHERE n.id = :id")
     void updatePosition(@Param("id") Long id, @Param("position") int position);
+
+    // ── Ownership-safe lookup (loads category + owner in one query) ──────────
+    @Query("SELECT n FROM Note n JOIN FETCH n.category c JOIN FETCH c.owner WHERE n.id = :id")
+    Optional<Note> findByIdWithCategoryAndOwner(@Param("id") Long id);
 }

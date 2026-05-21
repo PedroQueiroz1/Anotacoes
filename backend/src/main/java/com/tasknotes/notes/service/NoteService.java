@@ -114,7 +114,7 @@ public class NoteService {
 
     private Category findCategoryWithOwnership(Long categoryId) {
         Long ownerId = securityHelper.currentUserId();
-        Category cat = categoryRepository.findById(categoryId)
+        Category cat = categoryRepository.findByIdWithOwner(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + categoryId));
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {
             throw new ResourceNotFoundException("Categoria não encontrada: " + categoryId);
@@ -124,7 +124,7 @@ public class NoteService {
 
     private Note findOrThrow(Long id) {
         Long ownerId = securityHelper.currentUserId();
-        Note note = noteRepository.findById(id)
+        Note note = noteRepository.findByIdWithCategoryAndOwner(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Anotação não encontrada: " + id));
         Category cat = note.getCategory();
         if (cat.getOwner() == null || !ownerId.equals(cat.getOwner().getId())) {

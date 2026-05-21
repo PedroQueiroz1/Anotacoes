@@ -43,6 +43,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByNameContainingIgnoreCase(String name);
 
+    // ── Ownership-safe lookup (loads owner in the same query) ────────────────
+    @Query("SELECT c FROM Category c JOIN FETCH c.owner WHERE c.id = :id")
+    Optional<Category> findByIdWithOwner(@Param("id") Long id);
+
     // ── Reorder ───────────────────────────────────────────────────────────────
     @Modifying
     @Query("UPDATE Category c SET c.position = :position WHERE c.id = :id")

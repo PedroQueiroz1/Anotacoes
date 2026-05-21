@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
@@ -61,6 +62,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
            "(LOWER(t.title) LIKE LOWER(:pattern) OR (t.description IS NOT NULL AND LOWER(t.description) LIKE LOWER(:pattern)))")
     List<Task> searchByTitleOrDescriptionAndOwnerId(@Param("pattern") String pattern,
                                                      @Param("ownerId") Long ownerId);
+
+    // ── Ownership-safe lookup (loads category + owner in the same query) ────
+    @Query("SELECT t FROM Task t JOIN FETCH t.category c JOIN FETCH c.owner WHERE t.id = :id")
+    Optional<Task> findByIdWithCategoryAndOwner(@Param("id") Long id);
 
     // ── Reorder ───────────────────────────────────────────────────────────────
     @Modifying

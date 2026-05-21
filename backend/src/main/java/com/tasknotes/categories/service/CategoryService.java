@@ -138,7 +138,7 @@ public class CategoryService {
 
     private Category findOrThrow(Long id) {
         Long ownerId = securityHelper.currentUserId();
-        Category c = repository.findById(id)
+        Category c = repository.findByIdWithOwner(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + id));
         if (c.getOwner() == null || !ownerId.equals(c.getOwner().getId())) {
             throw new ResourceNotFoundException("Categoria não encontrada: " + id);
