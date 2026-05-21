@@ -58,8 +58,10 @@ export class GlobalSearchComponent implements OnDestroy {
   }
 
   navigate(result: SearchResult): void {
-    const categoryId = result.type === 'CATEGORY' ? result.id : result.categoryId;
-    this.router.navigate(['/categories', categoryId]);
+    const slug = result.categorySlug;
+    if (slug) {
+      this.router.navigate(['/categories', slug]);
+    }
     this.close();
   }
 

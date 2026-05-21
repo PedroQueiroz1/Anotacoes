@@ -5,6 +5,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
+import { ProgrammingConceptService } from '../../../core/services/programming-concept.service';
+import { ConceptSuggestion } from '../../../core/models/programming-concept.model';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
@@ -21,7 +23,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
 
   @ViewChild('contentEl') contentEl?: ElementRef<HTMLParagraphElement>;
 
-  private noteService = inject(NoteService);
+  private noteService    = inject(NoteService);
+  private conceptService = inject(ProgrammingConceptService);
 
   isEditing   = false;
   isSaving    = false;
@@ -30,6 +33,28 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   editContent = '';
   isLong      = false;
   isExpanded  = false;
+
+  // ── Autocomplete de conceitos (edição) ────────────────────────────────────
+  conceptSuggestion:       ConceptSuggestion | null = null;
+  conceptSuggestionSource = '';
+  conceptIsLoading         = false;
+  conceptNotFound          = false;
+  conceptManualMode        = false;
+  conceptManualTerm        = '';
+  conceptManualSummary     = '';
+  conceptManualError       = '';
+  isSavingConcept          = false;
+  private pendingReplacement: { semicolonPos: number; term: string } | null = null;
+  private lastEditTextarea: HTMLTextAreaElement | null = null;
+
+  get pendingTerm(): string { return this.pendingReplacement?.term ?? ''; }
+
+  get conceptSourceLabel(): string {
+    if (this.conceptSuggestionSource === 'LOCAL')    return 'base local';
+    if (this.conceptSuggestionSource === 'EXTERNAL') return 'pesquisa';
+    if (this.conceptSuggestionSource === 'AI')       return 'IA';
+    return '';
+  }
 
   ngAfterViewInit(): void {
     this.scheduleMeasure();
@@ -59,11 +84,147 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.editContent = this.note.content ?? '';
     this.editError   = '';
     this.isEditing   = true;
+    this.resetConceptSuggestion();
   }
 
   cancelEdit(): void {
     this.isEditing = false;
     this.editError = '';
+    this.resetConceptSuggestion();
+  }
+
+  private resetConceptSuggestion(): void {
+    this.conceptSuggestion       = null;
+    this.conceptSuggestionSource = '';
+    this.conceptIsLoading        = false;
+    this.conceptNotFound         = false;
+    this.conceptManualMode       = false;
+    this.conceptManualTerm       = '';
+    this.conceptManualSummary    = '';
+    this.conceptManualError      = '';
+    this.isSavingConcept         = false;
+    this.pendingReplacement      = null;
+    this.lastEditTextarea        = null;
+  }
+
+  onEditContentInput(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    this.lastEditTextarea = textarea;
+    const cursor = textarea.selectionStart;
+    const value  = textarea.value;
+    if (cursor === 0 || value[cursor - 1] !== ';') return;
+    const semicolonPos = cursor - 1;
+    const term = this.extractTermFromSemicolon(value, semicolonPos);
+    if (!term) return;
+    this.pendingReplacement      = { semicolonPos, term };
+    this.conceptSuggestion       = null;
+    this.conceptNotFound         = false;
+    this.conceptManualMode       = false;
+    this.conceptManualError      = '';
+    this.conceptIsLoading        = true;
+    this.conceptSuggestionSource = '';
+    this.conceptService.suggest(term).subscribe({
+      next: (resp) => {
+        if (this.pendingReplacement?.term !== term) return;
+        this.conceptIsLoading = false;
+        if (resp.found && resp.concept) {
+          this.conceptSuggestion       = resp.concept;
+          this.conceptSuggestionSource = resp.source ?? 'LOCAL';
+        } else {
+          this.conceptNotFound = true;
+        }
+      },
+      error: () => {
+        if (this.pendingReplacement?.term !== term) return;
+        this.conceptIsLoading = false;
+        this.conceptNotFound  = true;
+      },
+    });
+  }
+
+  onEditContentKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.resetConceptSuggestion();
+      return;
+    }
+    if (event.key === 'Enter' && !event.shiftKey && this.conceptSuggestion) {
+      event.preventDefault();
+      this.acceptConceptSuggestion(event.target as HTMLTextAreaElement);
+    }
+  }
+
+  acceptConceptSuggestion(textareaEl?: HTMLTextAreaElement): void {
+    const suggestion = this.conceptSuggestion;
+    if (!suggestion || !this.pendingReplacement) return;
+    const textarea = textareaEl ?? this.lastEditTextarea;
+    if (!textarea) return;
+    const { semicolonPos } = this.pendingReplacement;
+    const source    = this.conceptSuggestionSource;
+    const insertion = ` - ${suggestion.summary}`;
+    this.editContent = textarea.value.substring(0, semicolonPos)
+                     + insertion
+                     + textarea.value.substring(semicolonPos + 1);
+    const newCursor = semicolonPos + insertion.length;
+    this.conceptSuggestion  = null;
+    this.pendingReplacement = null;
+    setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
+    this.conceptService.accept({ term: suggestion.term, summary: suggestion.summary, source, sourceUrl: null }).subscribe();
+  }
+
+  openManualConceptForm(): void {
+    this.conceptManualTerm    = this.pendingReplacement?.term ?? '';
+    this.conceptManualSummary = '';
+    this.conceptManualError   = '';
+    this.conceptManualMode    = true;
+  }
+
+  cancelManualConcept(): void {
+    this.conceptManualMode = false;
+    this.conceptNotFound   = false;
+    this.conceptManualError = '';
+  }
+
+  saveManualConcept(): void {
+    const term    = this.conceptManualTerm.trim();
+    const summary = this.conceptManualSummary.trim();
+    if (!term)                { this.conceptManualError = 'O termo é obrigatório.'; return; }
+    if (summary.length < 10)  { this.conceptManualError = 'A explicação deve ter pelo menos 10 caracteres.'; return; }
+    if (summary.length > 500) { this.conceptManualError = 'A explicação deve ter no máximo 500 caracteres.'; return; }
+    this.isSavingConcept    = true;
+    this.conceptManualError = '';
+    this.conceptService.accept({ term, summary, source: 'USER', sourceUrl: null }).subscribe({
+      next: () => {
+        const textarea = this.lastEditTextarea;
+        if (textarea && this.pendingReplacement) {
+          const { semicolonPos } = this.pendingReplacement;
+          const insertion = ` - ${summary}`;
+          this.editContent = textarea.value.substring(0, semicolonPos)
+                           + insertion
+                           + textarea.value.substring(semicolonPos + 1);
+          const newCursor = semicolonPos + insertion.length;
+          setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
+        }
+        this.isSavingConcept    = false;
+        this.conceptManualMode  = false;
+        this.conceptNotFound    = false;
+        this.pendingReplacement = null;
+      },
+      error: () => { this.isSavingConcept = false; this.conceptManualError = 'Erro ao salvar. Tente novamente.'; },
+    });
+  }
+
+  private extractTermFromSemicolon(value: string, semicolonPos: number): string {
+    const textBefore = value.substring(0, semicolonPos);
+    let lastSepIdx = -1;
+    for (let i = textBefore.length - 1; i >= 0; i--) {
+      const ch = textBefore[i];
+      if (ch === '\n' || ch === '.' || ch === ':' || ch === ';') { lastSepIdx = i; break; }
+    }
+    const segment = textBefore.substring(lastSepIdx + 1);
+    const term = segment.replace(/^[\s\-\*•–]+/, '').trim();
+    if (!term || term.length < 2) return '';
+    if (/^\d+$/.test(term)) return '';
+    return term;
   }
 
   saveEdit(): void {

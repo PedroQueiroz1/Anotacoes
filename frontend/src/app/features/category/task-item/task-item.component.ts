@@ -17,7 +17,6 @@ import { YoutubePreviewComponent } from '../../../shared/components/youtube-prev
 })
 export class TaskItemComponent implements OnInit {
   @Input({ required: true }) task!: Task;
-  @Output() statusChanged   = new EventEmitter<{ id: number; status: TaskStatus }>();
   @Output() editRequested   = new EventEmitter<Task>();
   @Output() deleteRequested = new EventEmitter<number>();
   @Output() taskUpdated     = new EventEmitter<Task>();
@@ -273,6 +272,12 @@ export class TaskItemComponent implements OnInit {
 
   // ── Status rápido ─────────────────────────────────────────────────────────
   onStatusChange(newStatus: string): void {
-    this.statusChanged.emit({ id: this.task.id, status: newStatus as TaskStatus });
+    const status = newStatus as TaskStatus;
+    const previous = this.task.status;
+    this.task = { ...this.task, status };
+    this.taskService.updateStatus(this.task.id, status).subscribe({
+      next: (updated) => { this.taskUpdated.emit(updated); },
+      error: () => { this.task = { ...this.task, status: previous }; },
+    });
   }
 }

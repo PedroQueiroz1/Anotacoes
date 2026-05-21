@@ -6,5 +6,6 @@ public record SearchResultDTO(
         String title,
         Long categoryId,
         String categoryName,
+        String categorySlug,
         String snippet
 ) {}

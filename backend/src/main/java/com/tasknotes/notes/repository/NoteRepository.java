@@ -36,6 +36,9 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
                                          @Param("cursorId") Long cursorId,
                                          Pageable pageable);
 
+    // ── Count ─────────────────────────────────────────────────────────────────
+    long countByCategoryId(Long categoryId);
+
     // ── Search (user-scoped via category owner) ───────────────────────────────
     @Query("SELECT n FROM Note n JOIN FETCH n.category c WHERE c.owner.id = :ownerId AND " +
            "(LOWER(n.title) LIKE LOWER(:pattern) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:pattern)))")

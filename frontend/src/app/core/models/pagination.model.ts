@@ -3,6 +3,7 @@ export interface CursorPage<T> {
   nextCursor: string | null;
   hasNext: boolean;
   limit: number;
+  totalCount?: number | null;
 }
 
 export interface SubtaskCursorPage<T> {

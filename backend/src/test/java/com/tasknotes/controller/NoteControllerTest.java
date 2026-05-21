@@ -66,7 +66,7 @@ class NoteControllerTest {
     @Test
     void listByCategory_returns200WithList() throws Exception {
         CursorPageResponse<NoteResponse> page = new CursorPageResponse<>(
-                List.of(sample(1L), sample(2L)), null, false, 10);
+                List.of(sample(1L), sample(2L)), null, false, 10, null);
         when(service.findByCategory(eq(1L), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/categories/1/notes"))

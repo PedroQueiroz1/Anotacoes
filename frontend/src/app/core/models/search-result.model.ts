@@ -6,5 +6,6 @@ export interface SearchResult {
   title: string;
   categoryId: number | null;
   categoryName: string | null;
+  categorySlug: string | null;
   snippet: string | null;
 }

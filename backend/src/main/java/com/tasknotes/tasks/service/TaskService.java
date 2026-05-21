@@ -66,7 +66,7 @@ public class TaskService {
                 ? CursorCodec.encode(page.get(page.size() - 1).getCreatedAt(), page.get(page.size() - 1).getId())
                 : null;
 
-        return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, TASK_LIMIT);
+        return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, TASK_LIMIT, null);
     }
 
     public TaskResponse create(Long categoryId, TaskRequest request) {

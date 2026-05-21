@@ -6,5 +6,6 @@ public record CursorPageResponse<T>(
         List<T> items,
         String nextCursor,
         boolean hasNext,
-        int limit
+        int limit,
+        Long totalCount
 ) {}

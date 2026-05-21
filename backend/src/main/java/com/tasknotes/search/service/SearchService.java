@@ -45,7 +45,7 @@ public class SearchService {
 
         categoryRepository.findByNameContainingIgnoreCaseAndOwnerId(trimmed, ownerId)
                 .forEach(cat -> results.add(new SearchResultDTO(
-                        "CATEGORY", cat.getId(), cat.getName(), null, null, null)));
+                        "CATEGORY", cat.getId(), cat.getName(), null, null, cat.getSlug(), null)));
 
         taskRepository.searchByTitleOrDescriptionAndOwnerId(pattern, ownerId)
                 .forEach(task -> {
@@ -53,6 +53,7 @@ public class SearchService {
                     results.add(new SearchResultDTO(
                             "TASK", task.getId(), task.getTitle(),
                             task.getCategory().getId(), task.getCategory().getName(),
+                            task.getCategory().getSlug(),
                             truncate(task.getDescription(), 120)));
                 });
 
@@ -63,6 +64,7 @@ public class SearchService {
                         results.add(new SearchResultDTO(
                                 "TASK", parent.getId(), parent.getTitle(),
                                 parent.getCategory().getId(), parent.getCategory().getName(),
+                                parent.getCategory().getSlug(),
                                 truncate(sub.getText(), 120)));
                     }
                 });
@@ -71,6 +73,7 @@ public class SearchService {
                 .forEach(note -> results.add(new SearchResultDTO(
                         "NOTE", note.getId(), note.getTitle(),
                         note.getCategory().getId(), note.getCategory().getName(),
+                        note.getCategory().getSlug(),
                         truncate(note.getContent(), 120))));
 
         return results;

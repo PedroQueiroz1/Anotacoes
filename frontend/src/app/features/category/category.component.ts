@@ -108,11 +108,13 @@ export class CategoryComponent implements OnInit, OnDestroy {
   }
 
   // ── Estatísticas ──────────────────────────────────────────────────────────
+  totalNoteCount = 0;
+
   get statTotal():    number { return this.tasks.length; }
   get statActive():   number { return this.tasks.filter(t => t.status !== 'DONE').length; }
   get statDone():     number { return this.tasks.filter(t => t.status === 'DONE').length; }
   get statProgress(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
-  get statNotes():    number { return this.notes.length; }
+  get statNotes():    number { return this.totalNoteCount; }
 
   // ── Formulário de tarefa ──────────────────────────────────────────────────
   showForm       = false;
@@ -164,6 +166,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.category = null;
     this.tasks = [];
     this.notes = [];
+    this.totalNoteCount = 0;
     this.activeFilter = 'ALL';
     this.showForm = false;
     this.showNoteForm = false;
@@ -232,8 +235,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   private loadNotes(cursor: string | null): void {
     this.noteService.getByCategory(this.categoryId, cursor).subscribe({
-      next: (page) => { this.notes = page.items; this.noteNextCursor = page.nextCursor; this.noteHasNext = page.hasNext; this.isLoading = false; },
-      error: ()    => { this.errorMessage = 'Erro ao carregar anotações.'; this.isLoading = false; },
+      next: (page) => {
+        this.notes = page.items;
+        this.noteNextCursor = page.nextCursor;
+        this.noteHasNext = page.hasNext;
+        if (page.totalCount != null) this.totalNoteCount = page.totalCount;
+        this.isLoading = false;
+      },
+      error: () => { this.errorMessage = 'Erro ao carregar anotações.'; this.isLoading = false; },
     });
   }
 
@@ -331,14 +340,6 @@ export class CategoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Status rápido ─────────────────────────────────────────────────────────
-  onStatusChanged(event: { id: number; status: TaskStatus }): void {
-    this.taskService.updateStatus(event.id, event.status).subscribe({
-      next: (updated) => { this.replaceTask(updated); },
-      error: ()       => { this.errorMessage = 'Erro ao atualizar status.'; },
-    });
-  }
-
   onTaskUpdated(updated: Task): void { this.replaceTask(updated); }
 
   // ── Exclusão de tarefa ────────────────────────────────────────────────────
@@ -381,6 +382,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
     this.noteService.create(this.categoryId, payload).subscribe({
       next: () => {
+        this.totalNoteCount++;
         this.resetNotePagination();
         this.loadNotes(null);
         this.showNoteForm = false;
@@ -402,6 +404,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.noteService.delete(this.deletingNoteId!).subscribe({
       next: () => {
         this.notes = this.notes.filter(n => n.id !== this.deletingNoteId);
+        this.totalNoteCount = Math.max(0, this.totalNoteCount - 1);
         this.deletingNoteId = null;
         if (this.notes.length === 0 && this.notePageIndex > 0) {
           this.notePrevPage();

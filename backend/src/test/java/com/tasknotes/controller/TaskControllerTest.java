@@ -51,7 +51,7 @@ class TaskControllerTest {
     @Test
     void findByCategory_returns200WithList() throws Exception {
         CursorPageResponse<TaskResponse> page = new CursorPageResponse<>(
-                List.of(sample(1L), sample(2L)), null, false, 10);
+                List.of(sample(1L), sample(2L)), null, false, 10, null);
         when(service.findByCategory(eq(1L), isNull(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/categories/1/tasks"))

@@ -60,7 +60,8 @@ public class NoteService {
                 ? CursorCodec.encode(page.get(page.size() - 1).getCreatedAt(), page.get(page.size() - 1).getId())
                 : null;
 
-        return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, NOTE_LIMIT);
+        long totalCount = noteRepository.countByCategoryId(categoryId);
+        return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, NOTE_LIMIT, totalCount);
     }
 
     public NoteResponse create(Long categoryId, NoteRequest request) {
