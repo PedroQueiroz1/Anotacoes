@@ -1,6 +1,6 @@
 ## PRÓXIMAS ATUALIZAÇÕES
 
-Foco atual: Correções de bugs, refinamentos de usabilidade, apliação de testes de integração.
+Foco atual: Correções de bugs, refinamentos de usabilidade, ampliação de testes de integração.
 
 Importante: Correções na versão android.
 
