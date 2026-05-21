@@ -1,12 +1,8 @@
 ## PRÓXIMAS ATUALIZAÇÕES
 
-1. Aprimoramentos de segurança, autenticação e autorização.
-2. Melhorias no aplicativo Android.
-3. Ampliação dos testes automatizados.
-4. Melhorias de observabilidade, logs e tratamento de erros.
-5. Ajustes na funcionalidade de autocomplete.
-6. Correções de bugs e refinamentos de usabilidade.
-7. Melhoria na área de anotações...
+Foco atual: Correções de bugs, refinamentos de usabilidade, apliação de testes de integração.
+
+Importante: Correções na versão android.
 
 ---
 
