@@ -90,6 +90,7 @@ public class TaskService {
         return toResponse(taskRepository.save(task));
     }
 
+    @Transactional
     public TaskResponse updateStatus(Long id, StatusUpdateRequest request) {
         Task task = findOrThrow(id);
         task.setStatus(request.status());

@@ -40,6 +40,7 @@ public class NoteService {
         this.securityHelper = securityHelper;
     }
 
+    @Transactional(readOnly = true)
     public CursorPageResponse<NoteResponse> findByCategory(Long categoryId, String cursor) {
         findCategoryWithOwnership(categoryId);
         int fetch = NOTE_LIMIT + 1;

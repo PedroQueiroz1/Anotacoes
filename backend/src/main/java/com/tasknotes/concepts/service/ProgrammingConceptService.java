@@ -53,29 +53,42 @@ public class ProgrammingConceptService {
 
         long start = System.currentTimeMillis();
 
-        // ── 1. Global cache hit ───────────────────────────────────────────────
+        // ── 1. Global cache hit (covers GLOBAL scope only) ───────────────────
+        boolean globalAlreadyChecked = false;
         if (globalCache.containsKey(normalized)) {
-            return globalCache.get(normalized).orElse(ConceptSuggestionResponse.notFound());
+            Optional<ConceptSuggestionResponse> cached = globalCache.get(normalized);
+            if (cached.isPresent()) {
+                // Positive hit: found in GLOBAL scope
+                return cached.get();
+            }
+            // Negative hit: not in GLOBAL scope — skip DB queries for GLOBAL,
+            // but still fall through to check USER scope for the current user
+            globalAlreadyChecked = true;
         }
 
-        // ── 2. Exact match — GLOBAL scope ─────────────────────────────────────
-        Optional<ProgrammingConcept> exact = repository.findByNormalizedTermAndScope(normalized, "GLOBAL");
-        if (exact.isPresent()) {
-            var resp = ConceptSuggestionResponse.of(exact.get(), "LOCAL");
-            putGlobalCache(normalized, Optional.of(resp));
-            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
-                    normalized, System.currentTimeMillis() - start);
-            return resp;
-        }
+        if (!globalAlreadyChecked) {
+            // ── 2. Exact match — GLOBAL scope ─────────────────────────────────
+            Optional<ProgrammingConcept> exact = repository.findByNormalizedTermAndScope(normalized, "GLOBAL");
+            if (exact.isPresent()) {
+                var resp = ConceptSuggestionResponse.of(exact.get(), "LOCAL");
+                putGlobalCache(normalized, Optional.of(resp));
+                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
+                        normalized, System.currentTimeMillis() - start);
+                return resp;
+            }
 
-        // ── 3. Prefix match — GLOBAL scope ────────────────────────────────────
-        var prefixMatches = repository.findByNormalizedTermStartingWithAndScope(normalized, "GLOBAL", PageRequest.of(0, 1));
-        if (!prefixMatches.isEmpty()) {
-            var resp = ConceptSuggestionResponse.of(prefixMatches.get(0), "LOCAL");
-            putGlobalCache(normalized, Optional.of(resp));
-            log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
-                    normalized, System.currentTimeMillis() - start);
-            return resp;
+            // ── 3. Prefix match — GLOBAL scope ────────────────────────────────
+            var prefixMatches = repository.findByNormalizedTermStartingWithAndScope(normalized, "GLOBAL", PageRequest.of(0, 1));
+            if (!prefixMatches.isEmpty()) {
+                var resp = ConceptSuggestionResponse.of(prefixMatches.get(0), "LOCAL");
+                putGlobalCache(normalized, Optional.of(resp));
+                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
+                        normalized, System.currentTimeMillis() - start);
+                return resp;
+            }
+
+            // Not in GLOBAL scope — record in cache so next request skips GLOBAL DB queries
+            putGlobalCache(normalized, Optional.empty());
         }
 
         // ── 4. Exact match — current user's USER scope ────────────────────────
@@ -93,12 +106,10 @@ public class ProgrammingConceptService {
 
         // ── 5. Heuristic: reject non-technical terms ──────────────────────────
         if (!semicolonTrigger && !isTechnicalTerm(term)) {
-            putGlobalCache(normalized, Optional.empty());
             log.info("concept_suggestion_rejected termNormalized={} reason=not_technical_term", normalized);
             return ConceptSuggestionResponse.notFound();
         }
 
-        putGlobalCache(normalized, Optional.empty());
         log.info("concept_semicolon_lookup_not_found termNormalized={} durationMs={}",
                 normalized, System.currentTimeMillis() - start);
         return ConceptSuggestionResponse.notFound();
@@ -160,8 +171,10 @@ public class ProgrammingConceptService {
     // ── Seed ──────────────────────────────────────────────────────────────────
 
     @EventListener(ApplicationReadyEvent.class)
+    @Transactional
     public void seedIfEmpty() {
-        if (repository.count() > 0) return;
+        // Only skip if GLOBAL concepts are already present; USER-scope records must not prevent seeding
+        if (repository.existsByScope("GLOBAL")) return;
         log.info("concept_seed_started count={}", SEED_DATA.length);
         for (String[] entry : SEED_DATA) {
             try {

@@ -19,4 +19,7 @@ public interface ProgrammingConceptRepository extends JpaRepository<ProgrammingC
 
     // ── Legacy (kept for seedIfEmpty check) ───────────────────────────────────
     Optional<ProgrammingConcept> findByNormalizedTerm(String normalizedTerm);
+
+    // ── Scope existence check ──────────────────────────────────────────────────
+    boolean existsByScope(String scope);
 }
