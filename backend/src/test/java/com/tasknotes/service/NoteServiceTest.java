@@ -1,15 +1,16 @@
 package com.tasknotes.service;
 
-import com.tasknotes.dto.NoteRequest;
-import com.tasknotes.dto.NoteResponse;
-import com.tasknotes.exception.BusinessException;
-import com.tasknotes.exception.ResourceNotFoundException;
-import com.tasknotes.model.AppUser;
-import com.tasknotes.model.Category;
-import com.tasknotes.model.Note;
-import com.tasknotes.repository.CategoryRepository;
-import com.tasknotes.repository.NoteRepository;
-import com.tasknotes.util.SecurityHelper;
+import com.tasknotes.notes.dto.NoteRequest;
+import com.tasknotes.notes.dto.NoteResponse;
+import com.tasknotes.shared.exception.BusinessException;
+import com.tasknotes.shared.exception.ResourceNotFoundException;
+import com.tasknotes.users.model.AppUser;
+import com.tasknotes.categories.model.Category;
+import com.tasknotes.notes.model.Note;
+import com.tasknotes.categories.repository.CategoryRepository;
+import com.tasknotes.notes.repository.NoteRepository;
+import com.tasknotes.users.service.SecurityHelper;
+import com.tasknotes.notes.service.NoteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,13 +1,14 @@
 package com.tasknotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tasknotes.dto.CategoryRequest;
-import com.tasknotes.dto.CategoryResponse;
-import com.tasknotes.exception.BusinessException;
-import com.tasknotes.exception.GlobalExceptionHandler;
-import com.tasknotes.exception.ResourceNotFoundException;
-import com.tasknotes.service.CategoryService;
-import com.tasknotes.config.SecurityConfig;
+import com.tasknotes.categories.controller.CategoryController;
+import com.tasknotes.categories.dto.CategoryRequest;
+import com.tasknotes.categories.dto.CategoryResponse;
+import com.tasknotes.categories.service.CategoryService;
+import com.tasknotes.shared.exception.BusinessException;
+import com.tasknotes.shared.exception.GlobalExceptionHandler;
+import com.tasknotes.shared.exception.ResourceNotFoundException;
+import com.tasknotes.shared.config.SecurityConfig;
 import com.tasknotes.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

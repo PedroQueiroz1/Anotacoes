@@ -1,16 +1,17 @@
 package com.tasknotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tasknotes.dto.CursorPageResponse;
-import com.tasknotes.dto.StatusUpdateRequest;
-import com.tasknotes.dto.TaskRequest;
-import com.tasknotes.dto.TaskResponse;
-import com.tasknotes.exception.GlobalExceptionHandler;
-import com.tasknotes.exception.ResourceNotFoundException;
-import com.tasknotes.model.Priority;
-import com.tasknotes.model.TaskStatus;
-import com.tasknotes.service.TaskService;
-import com.tasknotes.config.SecurityConfig;
+import com.tasknotes.shared.dto.CursorPageResponse;
+import com.tasknotes.tasks.dto.StatusUpdateRequest;
+import com.tasknotes.tasks.dto.TaskRequest;
+import com.tasknotes.tasks.dto.TaskResponse;
+import com.tasknotes.shared.exception.GlobalExceptionHandler;
+import com.tasknotes.shared.exception.ResourceNotFoundException;
+import com.tasknotes.tasks.model.Priority;
+import com.tasknotes.tasks.model.TaskStatus;
+import com.tasknotes.tasks.service.TaskService;
+import com.tasknotes.tasks.controller.TaskController;
+import com.tasknotes.shared.config.SecurityConfig;
 import com.tasknotes.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,13 +1,14 @@
 package com.tasknotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tasknotes.dto.CursorPageResponse;
-import com.tasknotes.dto.NoteRequest;
-import com.tasknotes.dto.NoteResponse;
-import com.tasknotes.exception.GlobalExceptionHandler;
-import com.tasknotes.exception.ResourceNotFoundException;
-import com.tasknotes.service.NoteService;
-import com.tasknotes.config.SecurityConfig;
+import com.tasknotes.shared.dto.CursorPageResponse;
+import com.tasknotes.notes.dto.NoteRequest;
+import com.tasknotes.notes.dto.NoteResponse;
+import com.tasknotes.shared.exception.GlobalExceptionHandler;
+import com.tasknotes.shared.exception.ResourceNotFoundException;
+import com.tasknotes.notes.service.NoteService;
+import com.tasknotes.notes.controller.NoteController;
+import com.tasknotes.shared.config.SecurityConfig;
 import com.tasknotes.config.TestSecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
