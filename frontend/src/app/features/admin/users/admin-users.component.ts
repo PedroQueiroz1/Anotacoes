@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { CreateUserRequest, UserResponse } from '../../../core/models/auth.model';
 
@@ -11,21 +12,31 @@ import { CreateUserRequest, UserResponse } from '../../../core/models/auth.model
   styleUrl: './admin-users.component.scss',
 })
 export class AdminUsersComponent implements OnInit {
-  private auth = inject(AuthService);
+  private auth   = inject(AuthService);
+  private router = inject(Router);
 
   users     = signal<UserResponse[]>([]);
   isLoading = signal(false);
   loadError = signal('');
 
-  showCreateForm = signal(false);
-  isSaving       = signal(false);
-  createError    = signal('');
+  showCreateForm      = signal(false);
+  isSaving            = signal(false);
+  createError         = signal('');
+  showPassword        = signal(false);
+  showConfirmPassword = signal(false);
 
-  form: CreateUserRequest = { username: '', displayName: '', email: '', password: '' };
+  togglePassword():        void { this.showPassword.update(v => !v); }
+  toggleConfirmPassword(): void { this.showConfirmPassword.update(v => !v); }
+
+  form: CreateUserRequest & { confirmPassword: string } = {
+    username: '', displayName: '', email: '', password: '', confirmPassword: '',
+  };
 
   ngOnInit(): void {
     this.load();
   }
+
+  goBack(): void { this.router.navigate(['/']); }
 
   load(): void {
     this.isLoading.set(true);
@@ -37,12 +48,18 @@ export class AdminUsersComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.form = { username: '', displayName: '', email: '', password: '' };
+    this.form = { username: '', displayName: '', email: '', password: '', confirmPassword: '' };
     this.createError.set('');
+    this.showPassword.set(false);
+    this.showConfirmPassword.set(false);
     this.showCreateForm.set(true);
   }
 
-  cancelCreate(): void { this.showCreateForm.set(false); }
+  cancelCreate(): void {
+    this.showPassword.set(false);
+    this.showConfirmPassword.set(false);
+    this.showCreateForm.set(false);
+  }
 
   submitCreate(): void {
     this.createError.set('');
@@ -50,8 +67,22 @@ export class AdminUsersComponent implements OnInit {
       this.createError.set('Preencha todos os campos.');
       return;
     }
+    if (this.form.password.length < 8) {
+      this.createError.set('A senha deve ter no mínimo 8 caracteres.');
+      return;
+    }
+    if (this.form.password !== this.form.confirmPassword) {
+      this.createError.set('As senhas não coincidem.');
+      return;
+    }
     this.isSaving.set(true);
-    this.auth.createUser({ ...this.form, username: this.form.username.trim(), displayName: this.form.displayName.trim(), email: this.form.email.trim() }).subscribe({
+    const { confirmPassword: _, ...req } = this.form;
+    this.auth.createUser({
+      ...req,
+      username:    req.username.trim(),
+      displayName: req.displayName.trim(),
+      email:       req.email.trim(),
+    }).subscribe({
       next: (user) => {
         this.users.update(list => [...list, user]);
         this.showCreateForm.set(false);

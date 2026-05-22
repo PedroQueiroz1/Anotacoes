@@ -18,7 +18,6 @@ export interface UserInfo {
 }
 
 export interface UserResponse {
-  id:          number;
   uuid:        string;
   username:    string;
   email:       string;

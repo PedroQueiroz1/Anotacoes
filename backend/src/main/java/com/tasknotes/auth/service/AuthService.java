@@ -116,7 +116,7 @@ public class AuthService {
         user.setEmail(req.email());
         user.setPasswordHash(passwordEncoder.encode(req.password()));
         user.setRole("USER");
-        user.setEnabled(req.enabled());
+        user.setEnabled(true);
         userRepository.save(user);
 
         return UserResponse.from(user);

@@ -18,8 +18,11 @@ export class LoginComponent {
   password   = '';
   rememberMe = false;
 
-  isLoading = signal(false);
-  error     = signal('');
+  isLoading    = signal(false);
+  error        = signal('');
+  showPassword = signal(false);
+
+  togglePassword(): void { this.showPassword.update(v => !v); }
 
   submit(): void {
     this.error.set('');
