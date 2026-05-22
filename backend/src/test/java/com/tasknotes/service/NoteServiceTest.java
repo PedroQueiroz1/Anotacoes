@@ -66,7 +66,7 @@ class NoteServiceTest {
     // ── findByCategory ────────────────────────────────────────────────────────
     @Test
     void findByCategory_throwsResourceNotFoundException_whenCategoryMissing() {
-        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
+        when(categoryRepository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByCategory(99L, null))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -77,7 +77,7 @@ class NoteServiceTest {
     void create_savesAndReturnsNote() {
         Category cat  = stubCategory(1L);
         Note     note = stubNote(5L, 1L, "My Note", "Content");
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
+        when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(noteRepository.save(any())).thenReturn(note);
 
         NoteResponse r = service.create(1L, new NoteRequest("My Note", "Content"));
@@ -90,7 +90,7 @@ class NoteServiceTest {
     @Test
     void create_throwsBusinessException_whenContentExceeds2000Chars() {
         Category cat = stubCategory(1L);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
+        when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         String tooLong = "x".repeat(2001);
 
         assertThatThrownBy(() -> service.create(1L, new NoteRequest("Title", tooLong)))
@@ -104,7 +104,7 @@ class NoteServiceTest {
     void create_allowsNullContent() {
         Category cat  = stubCategory(1L);
         Note     note = stubNote(1L, 1L, "Title", null);
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(cat));
+        when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(noteRepository.save(any())).thenReturn(note);
 
         NoteResponse r = service.create(1L, new NoteRequest("Title", null));
@@ -114,7 +114,7 @@ class NoteServiceTest {
 
     @Test
     void create_throwsResourceNotFoundException_whenCategoryMissing() {
-        when(categoryRepository.findById(99L)).thenReturn(Optional.empty());
+        when(categoryRepository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(99L, new NoteRequest("X", null)))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -124,7 +124,7 @@ class NoteServiceTest {
     @Test
     void update_savesChangedFields() {
         Note existing = stubNote(1L, 1L, "Old", "Old content");
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(noteRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(existing));
         when(noteRepository.save(existing)).thenReturn(existing);
 
         service.update(1L, new NoteRequest("New Title", "New content"));
@@ -137,7 +137,7 @@ class NoteServiceTest {
     @Test
     void update_throwsBusinessException_whenContentTooLong() {
         Note note = stubNote(1L, 1L, "X", null);
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(note));
         String tooLong = "y".repeat(2001);
 
         assertThatThrownBy(() -> service.update(1L, new NoteRequest("Title", tooLong)))
@@ -148,7 +148,7 @@ class NoteServiceTest {
 
     @Test
     void update_throwsResourceNotFoundException_whenNotFound() {
-        when(noteRepository.findById(99L)).thenReturn(Optional.empty());
+        when(noteRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(99L, new NoteRequest("X", null)))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -158,7 +158,7 @@ class NoteServiceTest {
     @Test
     void delete_callsDeleteById_whenExists() {
         Note note = stubNote(1L, 1L, "X", null);
-        when(noteRepository.findById(1L)).thenReturn(Optional.of(note));
+        when(noteRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(note));
 
         service.delete(1L);
 
@@ -167,7 +167,7 @@ class NoteServiceTest {
 
     @Test
     void delete_throwsResourceNotFoundException_whenNotFound() {
-        when(noteRepository.findById(99L)).thenReturn(Optional.empty());
+        when(noteRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class);

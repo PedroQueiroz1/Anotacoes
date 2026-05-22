@@ -75,7 +75,7 @@ class SubtaskServiceTest {
         Task task = stubTask(1L);
         Subtask sub1 = stubSubtask(1L, 1L, "Buy milk", false);
         Subtask sub2 = stubSubtask(2L, 1L, "Pay bill", true);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.findByTaskFirstPage(eq(1L), any(Pageable.class)))
                 .thenReturn(List.of(sub1, sub2));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(2L);
@@ -93,7 +93,7 @@ class SubtaskServiceTest {
 
     @Test
     void findByTask_throwsResourceNotFoundException_whenTaskMissing() {
-        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+        when(taskRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findByTask(99L, null))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -104,7 +104,7 @@ class SubtaskServiceTest {
     void create_savesSubtask_whenUnderLimit() {
         Task    task  = stubTask(1L);
         Subtask saved = stubSubtask(10L, 1L, "New sub", false);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(5L);
         when(subtaskRepository.save(any())).thenReturn(saved);
 
@@ -118,7 +118,7 @@ class SubtaskServiceTest {
     @Test
     void create_throwsBusinessException_whenAtTwentySubtasks() {
         Task task = stubTask(1L);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(20L);
 
         assertThatThrownBy(() -> service.create(1L, new SubtaskRequest("Extra")))
@@ -130,7 +130,7 @@ class SubtaskServiceTest {
 
     @Test
     void create_throwsResourceNotFoundException_whenTaskMissing() {
-        when(taskRepository.findById(99L)).thenReturn(Optional.empty());
+        when(taskRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.create(99L, new SubtaskRequest("X")))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -139,7 +139,7 @@ class SubtaskServiceTest {
     @Test
     void create_trimsText_beforeSaving() {
         Task task = stubTask(1L);
-        when(taskRepository.findById(1L)).thenReturn(Optional.of(task));
+        when(taskRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(task));
         when(subtaskRepository.countByTaskId(1L)).thenReturn(0L);
         when(subtaskRepository.save(any())).thenAnswer(inv -> {
             Subtask s = inv.getArgument(0);
@@ -155,7 +155,7 @@ class SubtaskServiceTest {
     @Test
     void toggle_invertsAndSaves_whenFalse() {
         Subtask subtask = stubSubtask(1L, 1L, "Task", false);
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(subtask));
+        when(subtaskRepository.findByIdWithTaskCategoryAndOwner(1L)).thenReturn(Optional.of(subtask));
         when(subtaskRepository.save(subtask)).thenReturn(subtask);
 
         service.toggle(1L);
@@ -167,7 +167,7 @@ class SubtaskServiceTest {
     @Test
     void toggle_invertsAndSaves_whenTrue() {
         Subtask subtask = stubSubtask(1L, 1L, "Task", true);
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(subtask));
+        when(subtaskRepository.findByIdWithTaskCategoryAndOwner(1L)).thenReturn(Optional.of(subtask));
         when(subtaskRepository.save(subtask)).thenReturn(subtask);
 
         service.toggle(1L);
@@ -178,7 +178,7 @@ class SubtaskServiceTest {
 
     @Test
     void toggle_throwsResourceNotFoundException_whenNotFound() {
-        when(subtaskRepository.findById(99L)).thenReturn(Optional.empty());
+        when(subtaskRepository.findByIdWithTaskCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.toggle(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -188,7 +188,7 @@ class SubtaskServiceTest {
     @Test
     void delete_callsDeleteById_whenExists() {
         Subtask existing = stubSubtask(1L, 1L, "X", false);
-        when(subtaskRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(subtaskRepository.findByIdWithTaskCategoryAndOwner(1L)).thenReturn(Optional.of(existing));
 
         service.delete(1L);
 
@@ -197,7 +197,7 @@ class SubtaskServiceTest {
 
     @Test
     void delete_throwsResourceNotFoundException_whenNotFound() {
-        when(subtaskRepository.findById(99L)).thenReturn(Optional.empty());
+        when(subtaskRepository.findByIdWithTaskCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class);

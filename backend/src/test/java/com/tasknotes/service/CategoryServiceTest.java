@@ -67,7 +67,7 @@ class CategoryServiceTest {
     @Test
     void findById_returnsResponse_whenExists() {
         Category cat = stub(1L, "Work");
-        when(repository.findById(1L)).thenReturn(Optional.of(cat));
+        when(repository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
 
         CategoryResponse r = service.findById(1L);
 
@@ -77,7 +77,7 @@ class CategoryServiceTest {
 
     @Test
     void findById_throwsResourceNotFoundException_whenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
+        when(repository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.findById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -125,7 +125,7 @@ class CategoryServiceTest {
     @Test
     void update_changesNameAndSaves() {
         Category existing = stub(1L, "Old");
-        when(repository.findById(1L)).thenReturn(Optional.of(existing));
+        when(repository.findByIdWithOwner(1L)).thenReturn(Optional.of(existing));
         when(repository.save(existing)).thenReturn(existing);
 
         service.update(1L, new CategoryRequest("New Name"));
@@ -136,7 +136,7 @@ class CategoryServiceTest {
 
     @Test
     void update_throwsResourceNotFoundException_whenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
+        when(repository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.update(99L, new CategoryRequest("X")))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -146,7 +146,7 @@ class CategoryServiceTest {
     @Test
     void delete_callsDeleteById_whenExists() {
         Category cat = stub(1L, "X");
-        when(repository.findById(1L)).thenReturn(Optional.of(cat));
+        when(repository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
 
         service.delete(1L);
 
@@ -155,7 +155,7 @@ class CategoryServiceTest {
 
     @Test
     void delete_throwsResourceNotFoundException_whenNotFound() {
-        when(repository.findById(99L)).thenReturn(Optional.empty());
+        when(repository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
@@ -167,7 +167,7 @@ class CategoryServiceTest {
     @Test
     void findById_includesPendingTaskCount() {
         Category cat = stub(1L, "Work");
-        when(repository.findById(1L)).thenReturn(Optional.of(cat));
+        when(repository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(taskRepository.countByCategoryIdAndStatusNot(1L, TaskStatus.DONE)).thenReturn(3L);
 
         CategoryResponse r = service.findById(1L);
