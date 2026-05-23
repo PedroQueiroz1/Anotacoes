@@ -4,6 +4,7 @@ export interface Note {
   categoryId: number;
   title: string;
   content: string | null;
+  position: number | null;
   createdAt: string;
   updatedAt: string;
 }

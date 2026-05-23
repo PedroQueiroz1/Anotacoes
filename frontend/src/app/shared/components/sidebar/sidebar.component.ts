@@ -49,6 +49,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
   profileSaving        = false;
   profileError         = '';
   profileKebabOpen     = false;
+  isCompressing        = false;
+  originalSizeLabel    = '';
+  compressedSizeLabel  = '';
 
   // ── Configurações ─────────────────────────────────────────────────────────
   showSettings       = false;
@@ -129,6 +132,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.profilePhotoError   = '';
     this.profileError        = '';
     this.isDragOver          = false;
+    this.isCompressing       = false;
+    this.originalSizeLabel   = '';
+    this.compressedSizeLabel = '';
     this.showProfileEdit     = true;
   }
 
@@ -151,21 +157,117 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   private handlePhotoFile(file: File): void {
-    this.profilePhotoError = '';
+    this.profilePhotoError   = '';
+    this.originalSizeLabel   = '';
+    this.compressedSizeLabel = '';
+
+    if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+      this.profilePhotoError = 'SVG não é aceito.';
+      return;
+    }
     if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
       this.profilePhotoError = 'Apenas JPEG ou PNG são aceitos.';
       return;
     }
-    if (file.size > 1_048_576) {
-      this.profilePhotoError = 'A foto deve ter no máximo 1 MB.';
+    if (file.size > 12 * 1_048_576) {
+      this.profilePhotoError = 'Arquivo muito grande. Máximo: 12 MB.';
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => { this.profileImagePreview = reader.result as string; };
-    reader.readAsDataURL(file);
+
+    this.originalSizeLabel = this.formatFileSize(file.size);
+    this.isCompressing = true;
+
+    if (file.size <= 1_048_576) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.profileImagePreview = reader.result as string;
+        this.compressedSizeLabel = this.formatFileSize(file.size);
+        this.isCompressing = false;
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      this.compressImage(img).then(result => {
+        if (result) {
+          this.profileImagePreview = result.dataUrl;
+          this.compressedSizeLabel = this.formatFileSize(result.size);
+        } else {
+          this.profilePhotoError = 'Não foi possível comprimir abaixo de 1 MB.';
+        }
+        this.isCompressing = false;
+      });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      this.profilePhotoError = 'Erro ao ler a imagem.';
+      this.isCompressing = false;
+    };
+    img.src = objectUrl;
   }
 
-  removePhoto(): void { this.profileImagePreview = ''; }
+  private async compressImage(img: HTMLImageElement): Promise<{ dataUrl: string; size: number } | null> {
+    const MAX_BYTES = 1_048_576;
+    const MAX_DIM   = 768;
+
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (w > MAX_DIM || h > MAX_DIM) {
+      if (w >= h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+      else         { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+    ctx.drawImage(img, 0, 0, w, h);
+
+    for (let q = 0.9; q >= 0.1; q = Math.round((q - 0.1) * 10) / 10) {
+      const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', q));
+      if (blob && blob.size <= MAX_BYTES) {
+        return { dataUrl: await this.blobToDataUrl(blob), size: blob.size };
+      }
+    }
+
+    for (let scale = 0.75; scale >= 0.25; scale -= 0.25) {
+      const sw = Math.max(64, Math.round(w * scale));
+      const sh = Math.max(64, Math.round(h * scale));
+      canvas.width  = sw;
+      canvas.height = sh;
+      ctx.drawImage(img, 0, 0, sw, sh);
+      const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.6));
+      if (blob && blob.size <= MAX_BYTES) {
+        return { dataUrl: await this.blobToDataUrl(blob), size: blob.size };
+      }
+    }
+
+    return null;
+  }
+
+  private blobToDataUrl(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (bytes >= 1_048_576) return `${(bytes / 1_048_576).toFixed(1)} MB`;
+    return `${Math.round(bytes / 1024)} KB`;
+  }
+
+  removePhoto(): void {
+    this.profileImagePreview = '';
+    this.originalSizeLabel   = '';
+    this.compressedSizeLabel = '';
+  }
 
   saveProfile(): void {
     const name = this.profileName.trim();

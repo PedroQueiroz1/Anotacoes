@@ -10,7 +10,7 @@
     ></div>
   }
 
-  <div class="task-item__main">
+  <div class="task-item__main" [class.task-item__main--raised]="kebabOpen">
 
     <!-- Priority badge + tag -->
     <div class="task-item__header">
@@ -73,11 +73,13 @@
 
       <!-- Kebab menu -->
       <div class="kebab-wrap">
-        <button type="button" class="kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da tarefa">
+        <button #kebabBtn type="button" class="kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da tarefa">
           &#8942;
         </button>
         @if (kebabOpen) {
-          <div class="kebab-dropdown">
+          <div class="kebab-dropdown"
+               [style.top.px]="kebabFixedTop"
+               [style.left.px]="kebabFixedLeft">
             <button type="button" class="kebab-option" (click)="openEdit($event)">
               <span class="kebab-option__icon">✏</span> Editar
             </button>

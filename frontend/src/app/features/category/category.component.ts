@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { CdkDrag, CdkDragDrop, CdkDragStart, CdkDropList, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
@@ -126,6 +126,11 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   get noteHasPrev(): boolean { return this.notePageIndex > 0; }
 
+  // ── Drag de anotações ─────────────────────────────────────────────────────
+  noteDragging = false;
+  private noteDraggingRef: Note | null = null;
+  private pageChangeTimer: ReturnType<typeof setTimeout> | null = null;
+
   showNoteForm   = false;
   noteTitle      = '';
   noteContent    = '';
@@ -149,6 +154,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    this.clearPageChangeTimer();
   }
 
   private resetState(): void {
@@ -429,10 +435,85 @@ export class CategoryComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  onNoteDragStarted(event: CdkDragStart): void {
+    this.noteDragging = true;
+    this.noteDraggingRef = event.source.data as Note;
+  }
+
   dropNotes(event: CdkDragDrop<Note[]>): void {
-    if (this.notePageIndex > 0 || this.noteHasNext) return;
+    this.clearPageChangeTimer();
+    this.noteDragging = false;
+    this.noteDraggingRef = null;
     moveItemInArray(this.notes, event.previousIndex, event.currentIndex);
     this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
+  }
+
+  onNoteDragEnded(): void {
+    this.clearPageChangeTimer();
+    this.noteDragging = false;
+    this.noteDraggingRef = null;
+  }
+
+  onPaginationBtnEnter(direction: 'prev' | 'next'): void {
+    if (!this.noteDragging) return;
+    const canGo = direction === 'next' ? this.noteHasNext : this.noteHasPrev;
+    if (!canGo) return;
+    this.clearPageChangeTimer();
+    this.schedulePageChange(direction);
+  }
+
+  onPaginationBtnLeave(): void {
+    this.clearPageChangeTimer();
+  }
+
+  private schedulePageChange(direction: 'prev' | 'next'): void {
+    this.pageChangeTimer = setTimeout(() => {
+      this.pageChangeTimer = null;
+      const canGo = direction === 'next' ? this.noteHasNext : this.noteHasPrev;
+      if (!this.noteDragging || !canGo) return;
+      const movingNote = this.noteDraggingRef;
+      // Navigate the page
+      if (direction === 'next') {
+        this.notePageIndex++;
+        if (this.noteCursorHistory.length <= this.notePageIndex) {
+          this.noteCursorHistory.push(this.noteNextCursor);
+        }
+        this.loadNotesForDrag(this.noteCursorHistory[this.notePageIndex], movingNote);
+      } else {
+        this.notePageIndex--;
+        this.loadNotesForDrag(this.noteCursorHistory[this.notePageIndex], movingNote);
+      }
+    }, 1000);
+  }
+
+  private loadNotesForDrag(cursor: string | null, movingNote: Note | null): void {
+    this.noteService.getByCategory(this.categoryId, cursor).subscribe({
+      next: (page) => {
+        this.notes = page.items;
+        this.noteNextCursor = page.nextCursor;
+        this.noteHasNext = page.hasNext;
+        if (page.totalCount != null) this.totalNoteCount = page.totalCount;
+        // Insert the moving note at the top of the new page and save
+        if (movingNote) {
+          this.notes = this.notes.filter(n => n.id !== movingNote.id);
+          this.notes.unshift(movingNote);
+          this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
+        }
+        this.noteDragging = false;
+        this.noteDraggingRef = null;
+      },
+      error: () => {
+        this.noteDragging = false;
+        this.noteDraggingRef = null;
+      },
+    });
+  }
+
+  private clearPageChangeTimer(): void {
+    if (this.pageChangeTimer !== null) {
+      clearTimeout(this.pageChangeTimer);
+      this.pageChangeTimer = null;
+    }
   }
 
   replaceTask(updated: Task): void {

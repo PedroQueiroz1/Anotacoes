@@ -9,7 +9,7 @@ import com.tasknotes.categories.model.Category;
 import com.tasknotes.categories.repository.CategoryRepository;
 import com.tasknotes.notes.model.Note;
 import com.tasknotes.notes.repository.NoteRepository;
-import com.tasknotes.shared.util.CursorCodec;
+import com.tasknotes.shared.util.NoteCursorCodec;
 import com.tasknotes.users.service.SecurityHelper;
 import com.tasknotes.shared.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -50,16 +50,25 @@ public class NoteService {
         if (cursor == null) {
             raw = noteRepository.findByCategoryFirstPage(categoryId, pageable);
         } else {
-            CursorCodec.CursorPayload p = CursorCodec.decode(cursor);
+            NoteCursorCodec.Payload p = NoteCursorCodec.decode(cursor);
             if (p == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cursor de paginação inválido.");
-            raw = noteRepository.findByCategoryAfterCursor(categoryId, p.createdAt(), p.id(), pageable);
+            if (p.zone() == 0 && p.position() != null) {
+                raw = noteRepository.findByCategoryAfterPositionedZone(categoryId, p.position(), p.id(), pageable);
+            } else {
+                if (p.createdAt() == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cursor de paginação inválido.");
+                raw = noteRepository.findByCategoryAfterUnpositionedZone(categoryId, p.createdAt(), p.id(), pageable);
+            }
         }
 
         boolean hasNext = raw.size() > NOTE_LIMIT;
         List<Note> page = hasNext ? raw.subList(0, NOTE_LIMIT) : raw;
-        String nextCursor = hasNext
-                ? CursorCodec.encode(page.get(page.size() - 1).getCreatedAt(), page.get(page.size() - 1).getId())
-                : null;
+        String nextCursor = null;
+        if (hasNext) {
+            Note last = page.get(page.size() - 1);
+            nextCursor = last.getPosition() != null
+                    ? NoteCursorCodec.encodePositioned(last.getPosition(), last.getId())
+                    : NoteCursorCodec.encodeUnpositioned(last.getCreatedAt(), last.getId());
+        }
 
         long totalCount = noteRepository.countByCategoryId(categoryId);
         return new CursorPageResponse<>(page.stream().map(this::toResponse).toList(), nextCursor, hasNext, NOTE_LIMIT, totalCount);
@@ -142,6 +151,7 @@ public class NoteService {
                 n.getCategory().getId(),
                 n.getTitle(),
                 n.getContent(),
+                n.getPosition(),
                 n.getCreatedAt(),
                 n.getUpdatedAt()
         );

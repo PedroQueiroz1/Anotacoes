@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { catchError, of } from 'rxjs';
 import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../../core/models/task.model';
@@ -35,12 +35,16 @@ export class TaskItemComponent implements OnInit, OnChanges {
   subtaskTotalCount     = 0;
   subtaskCompletedCount = 0;
 
+  @ViewChild('kebabBtn') private kebabBtnRef!: ElementRef<HTMLButtonElement>;
+
   // Priority dropdown
   priorityDropdownOpen = false;
   priorityError        = '';
 
   // Kebab menu
-  kebabOpen = false;
+  kebabOpen      = false;
+  kebabFixedTop  = 0;
+  kebabFixedLeft = 0;
 
   get isDone(): boolean { return this.task.status === 'DONE'; }
 
@@ -99,6 +103,12 @@ export class TaskItemComponent implements OnInit, OnChanges {
   // ── Kebab menu ────────────────────────────────────────────────────────────
   toggleKebab(event: Event): void {
     event.stopPropagation();
+    if (!this.kebabOpen) {
+      const rect = this.kebabBtnRef.nativeElement.getBoundingClientRect();
+      const menuWidth = 130;
+      this.kebabFixedTop  = rect.bottom + 4;
+      this.kebabFixedLeft = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
+    }
     this.kebabOpen = !this.kebabOpen;
     this.priorityDropdownOpen = false;
   }
@@ -119,6 +129,18 @@ export class TaskItemComponent implements OnInit, OnChanges {
   onDocumentClick(): void {
     this.priorityDropdownOpen = false;
     this.kebabOpen = false;
+  }
+
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  onViewportChange(): void {
+    this.kebabOpen = false;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.kebabOpen = false;
+    this.priorityDropdownOpen = false;
   }
 
   // ── Status quick change ───────────────────────────────────────────────────

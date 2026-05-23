@@ -46,7 +46,7 @@ $radius: 10px;
 
 .cat-header__title {
   flex: 1;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
@@ -54,6 +54,10 @@ $radius: 10px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .cat-header__title { font-size: 24px; }
 }
 
 // ── Section header ─────────────────────────────────────────────────────────
@@ -65,13 +69,17 @@ $radius: 10px;
 }
 
 .section-header__title {
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .section-header__title { font-size: 18px; }
 }
 
 .section-header__count {
@@ -360,20 +368,55 @@ $radius: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
-  column-count: 2;
-  column-gap: 14px;
-
-  @media (max-width: 900px) {
-    column-count: 1;
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 60px;
 }
 
 .form-textarea--tall { min-height: 120px; }
 
 .note-list__item {
-  break-inside: avoid;
-  margin-bottom: 12px;
-  display: block;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+
+  app-note-item { flex: 1; min-width: 0; }
+
+  &.cdk-drag-preview {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-primary);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    opacity: 0.96;
+  }
+}
+
+.note-list__placeholder {
+  height: 60px;
+  border: 2px dashed var(--color-border);
+  border-radius: 10px;
+  width: 100%;
+  background: var(--color-primary-focus);
+}
+
+.note-drag-handle {
+  cursor: grab;
+  color: var(--color-muted);
+  font-size: 16px;
+  padding: 10px 4px;
+  user-select: none;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+
+  .note-list__item:hover & { opacity: 1; }
+  &:active { cursor: grabbing; }
+}
+
+.note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
+  transition: transform 200ms ease;
 }
 
 // ── Kanban CDK Drag & Drop ─────────────────────────────────────────────────
@@ -406,6 +449,18 @@ $radius: 10px;
     font-size: 0.85rem;
     color: var(--color-text-muted);
   }
+
+  &__btn--drag-hover {
+    border-color: var(--color-primary) !important;
+    background: var(--color-primary-focus) !important;
+    color: var(--color-primary) !important;
+    animation: drag-pulse 0.8s ease-in-out infinite;
+  }
+}
+
+@keyframes drag-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
 }
 
 // ── Autocomplete de conceitos ─────────────────────────────────────────────────

@@ -39,7 +39,7 @@ class NoteControllerTest {
     @MockBean  NoteService  service;
 
     private NoteResponse sample(long id) {
-        return new NoteResponse(id, null, 1L, "Meeting notes", "Content here",
+        return new NoteResponse(id, null, 1L, "Meeting notes", "Content here", null,
                 LocalDateTime.now(), LocalDateTime.now());
     }
 
@@ -99,7 +99,7 @@ class NoteControllerTest {
 
     @Test
     void update_returns200WithUpdatedNote() throws Exception {
-        NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content",
+        NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content", null,
                 LocalDateTime.now(), LocalDateTime.now());
         when(service.update(eq(1L), any())).thenReturn(updated);
 

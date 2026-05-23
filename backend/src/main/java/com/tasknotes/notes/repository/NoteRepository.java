@@ -20,21 +20,34 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
            nativeQuery = true)
     List<Note> findByCategoryIdOrdered(@Param("categoryId") Long categoryId);
 
-    // ── Cursor pagination — first page ────────────────────────────────────────
+    // ── Cursor pagination — first page (positioned first, then by created_at) ─
     @Query(value = "SELECT * FROM note WHERE category_id = :categoryId " +
-                   "ORDER BY created_at DESC, id DESC",
+                   "ORDER BY CASE WHEN position IS NULL THEN 1 ELSE 0 END ASC, " +
+                   "position ASC, created_at DESC, id DESC",
            nativeQuery = true)
     List<Note> findByCategoryFirstPage(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    // ── Cursor pagination — after cursor ──────────────────────────────────────
+    // ── Cursor pagination — after a positioned note ────────────────────────────
     @Query(value = "SELECT * FROM note WHERE category_id = :categoryId " +
-                   "AND (created_at < :createdAt OR (created_at = :createdAt AND id < :cursorId)) " +
+                   "AND (position > :lastPos OR (position = :lastPos AND id < :lastId) OR position IS NULL) " +
+                   "ORDER BY CASE WHEN position IS NULL THEN 1 ELSE 0 END ASC, " +
+                   "position ASC, created_at DESC, id DESC",
+           nativeQuery = true)
+    List<Note> findByCategoryAfterPositionedZone(@Param("categoryId") Long categoryId,
+                                                  @Param("lastPos") int lastPos,
+                                                  @Param("lastId") Long lastId,
+                                                  Pageable pageable);
+
+    // ── Cursor pagination — after an unpositioned note ─────────────────────────
+    @Query(value = "SELECT * FROM note WHERE category_id = :categoryId " +
+                   "AND position IS NULL " +
+                   "AND (created_at < :createdAt OR (created_at = :createdAt AND id < :lastId)) " +
                    "ORDER BY created_at DESC, id DESC",
            nativeQuery = true)
-    List<Note> findByCategoryAfterCursor(@Param("categoryId") Long categoryId,
-                                         @Param("createdAt") LocalDateTime createdAt,
-                                         @Param("cursorId") Long cursorId,
-                                         Pageable pageable);
+    List<Note> findByCategoryAfterUnpositionedZone(@Param("categoryId") Long categoryId,
+                                                    @Param("createdAt") LocalDateTime createdAt,
+                                                    @Param("lastId") Long lastId,
+                                                    Pageable pageable);
 
     // ── Count ─────────────────────────────────────────────────────────────────
     long countByCategoryId(Long categoryId);

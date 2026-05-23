@@ -40,6 +40,8 @@
   gap: 5px;
   position: relative;
   z-index: 1;
+
+  &--raised { z-index: 9999; }
 }
 
 // ── Header: badge + tag ───────────────────────────────────────────────────
@@ -209,15 +211,13 @@
 }
 
 .kebab-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  z-index: 150;
+  position: fixed;
+  z-index: 9999;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: 9px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-  min-width: 120px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  min-width: 130px;
   overflow: hidden;
 }
 

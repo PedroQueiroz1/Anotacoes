@@ -292,23 +292,46 @@
           <p>Nenhuma anotação nesta categoria.</p>
         </div>
       } @else {
-        <ul class="note-list">
+        <ul class="note-list"
+            cdkDropList
+            [cdkDropListData]="notes"
+            (cdkDropListDropped)="dropNotes($event)">
           @for (note of notes; track note.id) {
-            <li class="note-list__item">
+            <li class="note-list__item" cdkDrag [cdkDragData]="note"
+                (cdkDragStarted)="onNoteDragStarted($event)"
+                (cdkDragEnded)="onNoteDragEnded()">
+              <div class="note-drag-handle" cdkDragHandle title="Arrastar">⠿</div>
               <app-note-item
                 [note]="note"
                 (noteUpdated)="onNoteUpdated($event)"
                 (deleteRequested)="onNoteDeleteRequested($event)"
               />
+                <ng-template cdkDragPlaceholder>
+                <li class="note-list__placeholder"></li>
+              </ng-template>
             </li>
           }
         </ul>
 
         @if (noteHasPrev || noteHasNext) {
           <div class="pagination-bar">
-            <button class="btn btn--ghost btn--sm" [disabled]="!noteHasPrev" (click)="notePrevPage()">&#8592; Anterior</button>
+            <button class="btn btn--ghost btn--sm"
+                    [disabled]="!noteHasPrev"
+                    [class.pagination-bar__btn--drag-hover]="noteDragging && noteHasPrev"
+                    (click)="!noteDragging && notePrevPage()"
+                    (mouseenter)="onPaginationBtnEnter('prev')"
+                    (mouseleave)="onPaginationBtnLeave()">
+              &#8592; Anterior
+            </button>
             <span class="pagination-bar__page">Página {{ notePageIndex + 1 }}</span>
-            <button class="btn btn--ghost btn--sm" [disabled]="!noteHasNext" (click)="noteNextPage()">Próxima &#8594;</button>
+            <button class="btn btn--ghost btn--sm"
+                    [disabled]="!noteHasNext"
+                    [class.pagination-bar__btn--drag-hover]="noteDragging && noteHasNext"
+                    (click)="!noteDragging && noteNextPage()"
+                    (mouseenter)="onPaginationBtnEnter('next')"
+                    (mouseleave)="onPaginationBtnLeave()">
+              Próxima &#8594;
+            </button>
           </div>
         }
       }
