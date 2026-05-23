@@ -133,7 +133,6 @@ export class TaskItemComponent implements OnInit, OnChanges {
     this.dropdownService.close();
   }
 
-  @HostListener('window:scroll')
   @HostListener('window:resize')
   onViewportChange(): void {
     this.dropdownService.close();

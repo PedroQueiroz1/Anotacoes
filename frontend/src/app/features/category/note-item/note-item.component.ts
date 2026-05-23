@@ -89,7 +89,6 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   @HostListener('document:click')
   onDocumentClick(): void { this.dropdownService.close(); }
 
-  @HostListener('window:scroll')
   @HostListener('window:resize')
   onViewportChange(): void { this.dropdownService.close(); }
 
