@@ -5,6 +5,7 @@ import { Task, TaskStatus, Priority, PRIORITY_LABEL, STATUS_LABEL } from '../../
 import { SubtaskService } from '../../../core/services/subtask.service';
 import { TaskService } from '../../../core/services/task.service';
 import { LinkPreviewService } from '../../../core/services/link-preview.service';
+import { DropdownService } from '../../../core/services/dropdown.service';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
 @Component({
@@ -23,6 +24,7 @@ export class TaskItemComponent implements OnInit, OnChanges {
   private subtaskService     = inject(SubtaskService);
   private taskService        = inject(TaskService);
   private linkPreviewService = inject(LinkPreviewService);
+  readonly dropdownService   = inject(DropdownService);
 
   private readonly YT_ONLY =
     /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?(?:[^"'\s]*&)?v=|shorts\/)|youtu\.be\/)[\w-]+(?:[?&][\w=&%+.-]*)?$/i;
@@ -42,9 +44,9 @@ export class TaskItemComponent implements OnInit, OnChanges {
   priorityError        = '';
 
   // Kebab menu
-  kebabOpen      = false;
   kebabFixedTop  = 0;
   kebabFixedLeft = 0;
+  get kebabOpen(): boolean { return this.dropdownService.isOpen('task-' + this.task?.id); }
 
   get isDone(): boolean { return this.task.status === 'DONE'; }
 
@@ -81,7 +83,7 @@ export class TaskItemComponent implements OnInit, OnChanges {
   togglePriorityDropdown(event: Event): void {
     event.stopPropagation();
     this.priorityDropdownOpen = !this.priorityDropdownOpen;
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.priorityError = '';
   }
 
@@ -103,43 +105,44 @@ export class TaskItemComponent implements OnInit, OnChanges {
   // ── Kebab menu ────────────────────────────────────────────────────────────
   toggleKebab(event: Event): void {
     event.stopPropagation();
-    if (!this.kebabOpen) {
+    const key = 'task-' + this.task.id;
+    if (!this.dropdownService.isOpen(key)) {
       const rect = this.kebabBtnRef.nativeElement.getBoundingClientRect();
       const menuWidth = 130;
       this.kebabFixedTop  = rect.bottom + 4;
       this.kebabFixedLeft = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
     }
-    this.kebabOpen = !this.kebabOpen;
+    this.dropdownService.toggle(key);
     this.priorityDropdownOpen = false;
   }
 
   openEdit(event: Event): void {
     event.stopPropagation();
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.editRequested.emit(this.task);
   }
 
   requestDelete(event: Event): void {
     event.stopPropagation();
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.deleteRequested.emit(this.task.id);
   }
 
   @HostListener('document:click')
   onDocumentClick(): void {
     this.priorityDropdownOpen = false;
-    this.kebabOpen = false;
+    this.dropdownService.close();
   }
 
   @HostListener('window:scroll')
   @HostListener('window:resize')
   onViewportChange(): void {
-    this.kebabOpen = false;
+    this.dropdownService.close();
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.priorityDropdownOpen = false;
   }
 

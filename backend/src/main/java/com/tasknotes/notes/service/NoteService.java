@@ -100,10 +100,10 @@ public class NoteService {
     }
 
     @Transactional
-    public void reorder(Long categoryId, List<Long> ids) {
+    public void reorder(Long categoryId, List<Long> ids, int offset) {
         findCategoryWithOwnership(categoryId);
         for (int i = 0; i < ids.size(); i++) {
-            noteRepository.updatePosition(ids.get(i), i);
+            noteRepository.updatePosition(ids.get(i), offset + i);
         }
     }
 

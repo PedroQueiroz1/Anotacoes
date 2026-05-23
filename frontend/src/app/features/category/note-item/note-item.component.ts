@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
 import { ProgrammingConceptService } from '../../../core/services/programming-concept.service';
+import { DropdownService } from '../../../core/services/dropdown.service';
 import { ConceptSuggestion } from '../../../core/models/programming-concept.model';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
 
@@ -21,12 +22,16 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   @Output() noteUpdated     = new EventEmitter<Note>();
   @Output() deleteRequested = new EventEmitter<number>();
 
-  @ViewChild('contentEl') contentEl?: ElementRef<HTMLParagraphElement>;
+  @ViewChild('contentEl')   contentEl?: ElementRef<HTMLParagraphElement>;
+  @ViewChild('noteKebabBtn') noteKebabBtnRef?: ElementRef<HTMLButtonElement>;
 
-  private noteService    = inject(NoteService);
-  private conceptService = inject(ProgrammingConceptService);
+  private noteService      = inject(NoteService);
+  private conceptService   = inject(ProgrammingConceptService);
+  readonly dropdownService = inject(DropdownService);
 
-  kebabOpen   = false;
+  kebabFixedTop  = 0;
+  kebabFixedLeft = 0;
+  get kebabOpen(): boolean { return this.dropdownService.isOpen('note-' + this.note?.id); }
 
   isEditing   = false;
   isSaving    = false;
@@ -82,22 +87,36 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   }
 
   @HostListener('document:click')
-  onDocumentClick(): void { this.kebabOpen = false; }
+  onDocumentClick(): void { this.dropdownService.close(); }
+
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  onViewportChange(): void { this.dropdownService.close(); }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void { this.dropdownService.close(); }
 
   toggleKebab(event: Event): void {
     event.stopPropagation();
-    this.kebabOpen = !this.kebabOpen;
+    const key = 'note-' + this.note.id;
+    if (!this.dropdownService.isOpen(key) && this.noteKebabBtnRef) {
+      const rect = this.noteKebabBtnRef.nativeElement.getBoundingClientRect();
+      const menuWidth = 130;
+      this.kebabFixedTop  = rect.bottom + 4;
+      this.kebabFixedLeft = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
+    }
+    this.dropdownService.toggle(key);
   }
 
   onEdit(event: Event): void {
     event.stopPropagation();
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.startEdit();
   }
 
   onDelete(event: Event): void {
     event.stopPropagation();
-    this.kebabOpen = false;
+    this.dropdownService.close();
     this.deleteRequested.emit(this.note.id);
   }
 

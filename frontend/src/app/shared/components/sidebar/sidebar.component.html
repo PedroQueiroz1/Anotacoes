@@ -23,6 +23,7 @@
     <!-- Kebab de perfil -->
     <div class="profile-kebab-wrap">
       <button
+        #profileKebabBtn
         type="button"
         class="profile-kebab-btn"
         aria-label="Opções do perfil"
@@ -30,7 +31,7 @@
         (click)="toggleProfileKebab($event)"
       >&#8942;</button>
       @if (profileKebabOpen) {
-        <div class="profile-kebab-dropdown">
+        <div class="profile-kebab-dropdown" [style.top.px]="profileKebabFixedTop" [style.left.px]="profileKebabFixedLeft">
           <button type="button" class="profile-kebab-option" (click)="openProfileEdit()">
             <span>✏</span> Editar Perfil
           </button>

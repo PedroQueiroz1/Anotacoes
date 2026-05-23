@@ -41,8 +41,10 @@ public class NoteController {
 
     @PutMapping("/api/categories/{categoryId}/notes/reorder")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void reorder(@PathVariable Long categoryId, @RequestBody List<Long> ids) {
-        service.reorder(categoryId, ids);
+    public void reorder(@PathVariable Long categoryId,
+                        @RequestParam(defaultValue = "0") int offset,
+                        @RequestBody List<Long> ids) {
+        service.reorder(categoryId, ids, offset);
     }
 
     @DeleteMapping("/api/notes/{id}")

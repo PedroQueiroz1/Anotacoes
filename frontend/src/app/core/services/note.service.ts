@@ -31,7 +31,8 @@ export class NoteService {
     return this.http.delete<void>(`/api/notes/${id}`);
   }
 
-  reorder(categoryId: number, ids: number[]): Observable<void> {
-    return this.http.put<void>(`/api/categories/${categoryId}/notes/reorder`, ids);
+  reorder(categoryId: number, ids: number[], offset = 0): Observable<void> {
+    const params = new HttpParams().set('offset', offset);
+    return this.http.put<void>(`/api/categories/${categoryId}/notes/reorder`, ids, { params });
   }
 }

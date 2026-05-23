@@ -445,7 +445,8 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.noteDragging = false;
     this.noteDraggingRef = null;
     moveItemInArray(this.notes, event.previousIndex, event.currentIndex);
-    this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
+    const offset = this.notePageIndex * 10;
+    this.noteService.reorder(this.categoryId, this.notes.map(n => n.id), offset).subscribe();
   }
 
   onNoteDragEnded(): void {
@@ -493,11 +494,13 @@ export class CategoryComponent implements OnInit, OnDestroy {
         this.noteNextCursor = page.nextCursor;
         this.noteHasNext = page.hasNext;
         if (page.totalCount != null) this.totalNoteCount = page.totalCount;
-        // Insert the moving note at the top of the new page and save
+        // Insert moving note at top, keep at most 10 items, then save order
         if (movingNote) {
           this.notes = this.notes.filter(n => n.id !== movingNote.id);
           this.notes.unshift(movingNote);
-          this.noteService.reorder(this.categoryId, this.notes.map(n => n.id)).subscribe();
+          this.notes = this.notes.slice(0, 10);
+          const offset = this.notePageIndex * 10;
+          this.noteService.reorder(this.categoryId, this.notes.map(n => n.id), offset).subscribe();
         }
         this.noteDragging = false;
         this.noteDraggingRef = null;

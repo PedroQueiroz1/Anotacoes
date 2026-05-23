@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, ElementRef, OnInit, OnDestroy, HostListener, inject, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -13,6 +13,7 @@ import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { GlobalSearchComponent } from '../global-search/global-search.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
 import { CategoryExportService } from '../../../core/services/category-export.service';
+import { DropdownService } from '../../../core/services/dropdown.service';
 
 const MAX_CATEGORIES = 5;
 const SIDEBAR_WIDTH_KEY = 'tasknotes.sidebar.width';
@@ -31,11 +32,14 @@ export class SidebarComponent implements OnInit, OnDestroy {
   @Input() open = false;
   @Output() closed = new EventEmitter<void>();
 
-  private categoryService = inject(CategoryService);
-  private taskService     = inject(TaskService);
-  private authService     = inject(AuthService);
-  private exportService   = inject(CategoryExportService);
-  private router          = inject(Router);
+  private categoryService  = inject(CategoryService);
+  private taskService      = inject(TaskService);
+  private authService      = inject(AuthService);
+  private exportService    = inject(CategoryExportService);
+  private router           = inject(Router);
+  readonly dropdownService = inject(DropdownService);
+
+  @ViewChild('profileKebabBtn') private profileKebabBtnRef?: ElementRef<HTMLButtonElement>;
 
   readonly currentUser = this.authService.currentUser;
   readonly isAdmin     = this.authService.isAdmin;
@@ -46,9 +50,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   profileImagePreview  = '';
   profilePhotoError    = '';
   isDragOver           = false;
-  profileSaving        = false;
-  profileError         = '';
-  profileKebabOpen     = false;
+  profileSaving           = false;
+  profileError            = '';
+  profileKebabFixedTop    = 0;
+  profileKebabFixedLeft   = 0;
+  get profileKebabOpen(): boolean { return this.dropdownService.isOpen('profile-kebab'); }
   isCompressing        = false;
   originalSizeLabel    = '';
   compressedSizeLabel  = '';
@@ -118,14 +124,21 @@ export class SidebarComponent implements OnInit, OnDestroy {
   // ── Perfil ────────────────────────────────────────────────────────────────
   toggleProfileKebab(event: Event): void {
     event.stopPropagation();
-    this.profileKebabOpen = !this.profileKebabOpen;
+    const key = 'profile-kebab';
+    if (!this.dropdownService.isOpen(key) && this.profileKebabBtnRef) {
+      const rect = this.profileKebabBtnRef.nativeElement.getBoundingClientRect();
+      const menuWidth = 160;
+      this.profileKebabFixedTop  = rect.bottom + 4;
+      this.profileKebabFixedLeft = Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
+    }
+    this.dropdownService.toggle(key);
   }
 
   @HostListener('document:click')
-  onDocumentClick(): void { this.profileKebabOpen = false; }
+  onDocumentClick(): void { this.dropdownService.close(); }
 
   openProfileEdit(): void {
-    this.profileKebabOpen    = false;
+    this.dropdownService.close();
     const u = this.currentUser();
     this.profileName         = u?.displayName ?? '';
     this.profileImagePreview = u?.profileImageUrl ?? '';
