@@ -60,6 +60,7 @@ export class AuthService {
       role: res.role,
       profileImageUrl: null,
     });
+    this.getMe().subscribe({ error: () => {} });
   }
 
   // ── Profile ────────────────────────────────────────────────────────────────

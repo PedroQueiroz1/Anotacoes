@@ -38,8 +38,11 @@ public class MeController {
         // profileImageUrl: null means no change, empty string means remove
         if (req.profileImageUrl() != null) {
             String url = req.profileImageUrl().isBlank() ? null : req.profileImageUrl().trim();
-            // Basic safety: only allow http(s) URLs
-            if (url != null && !url.startsWith("http://") && !url.startsWith("https://")) {
+            if (url != null
+                    && !url.startsWith("http://")
+                    && !url.startsWith("https://")
+                    && !url.startsWith("data:image/jpeg;base64,")
+                    && !url.startsWith("data:image/png;base64,")) {
                 return ResponseEntity.badRequest().build();
             }
             user.setProfileImageUrl(url);

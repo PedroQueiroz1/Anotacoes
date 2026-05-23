@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, HostListener, inject, Input, Output, Even
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
-import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
+import { filter, catchError } from 'rxjs/operators';
 import { Category } from '../../../core/models/category.model';
 import { Task } from '../../../core/models/task.model';
 import { CategoryService } from '../../../core/services/category.service';
@@ -12,6 +12,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ThemeToggleComponent } from '../theme-toggle/theme-toggle.component';
 import { GlobalSearchComponent } from '../global-search/global-search.component';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog.component';
+import { CategoryExportService } from '../../../core/services/category-export.service';
 
 const MAX_CATEGORIES = 5;
 const SIDEBAR_WIDTH_KEY = 'tasknotes.sidebar.width';
@@ -33,17 +34,29 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
   private authService     = inject(AuthService);
+  private exportService   = inject(CategoryExportService);
   private router          = inject(Router);
 
   readonly currentUser = this.authService.currentUser;
   readonly isAdmin     = this.authService.isAdmin;
 
   // ── Perfil ────────────────────────────────────────────────────────────────
-  showProfileEdit  = false;
-  profileName      = '';
-  profileImageUrl  = '';
-  profileSaving    = false;
-  profileError     = '';
+  showProfileEdit      = false;
+  profileName          = '';
+  profileImagePreview  = '';
+  profilePhotoError    = '';
+  isDragOver           = false;
+  profileSaving        = false;
+  profileError         = '';
+  profileKebabOpen     = false;
+
+  // ── Configurações ─────────────────────────────────────────────────────────
+  showSettings       = false;
+  showBackupSection  = false;
+  showHelpSection    = false;
+  backupSelectedSlug = '';
+  isExporting        = false;
+  exportError        = '';
 
   readonly MAX = MAX_CATEGORIES;
   readonly TASKS_PER_CAT = 5;
@@ -100,31 +113,132 @@ export class SidebarComponent implements OnInit, OnDestroy {
   closeMenu(): void { this.closed.emit(); }
 
   // ── Perfil ────────────────────────────────────────────────────────────────
-  openProfileEdit(): void {
-    const u = this.currentUser();
-    this.profileName     = u?.displayName ?? '';
-    this.profileImageUrl = u?.profileImageUrl ?? '';
-    this.profileError    = '';
-    this.showProfileEdit = true;
+  toggleProfileKebab(event: Event): void {
+    event.stopPropagation();
+    this.profileKebabOpen = !this.profileKebabOpen;
   }
 
-  cancelProfileEdit(): void { this.showProfileEdit = false; this.profileError = ''; }
+  @HostListener('document:click')
+  onDocumentClick(): void { this.profileKebabOpen = false; }
+
+  openProfileEdit(): void {
+    this.profileKebabOpen    = false;
+    const u = this.currentUser();
+    this.profileName         = u?.displayName ?? '';
+    this.profileImagePreview = u?.profileImageUrl ?? '';
+    this.profilePhotoError   = '';
+    this.profileError        = '';
+    this.isDragOver          = false;
+    this.showProfileEdit     = true;
+  }
+
+  cancelProfileEdit(): void { this.showProfileEdit = false; this.profileError = ''; this.profilePhotoError = ''; }
+
+  onDragOver(event: DragEvent): void { event.preventDefault(); this.isDragOver = true; }
+  onDragLeave(): void { this.isDragOver = false; }
+
+  onFileDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragOver = false;
+    const file = event.dataTransfer?.files[0];
+    if (file) this.handlePhotoFile(file);
+  }
+
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (file) this.handlePhotoFile(file);
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  private handlePhotoFile(file: File): void {
+    this.profilePhotoError = '';
+    if (file.type !== 'image/jpeg' && file.type !== 'image/png') {
+      this.profilePhotoError = 'Apenas JPEG ou PNG são aceitos.';
+      return;
+    }
+    if (file.size > 1_048_576) {
+      this.profilePhotoError = 'A foto deve ter no máximo 1 MB.';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => { this.profileImagePreview = reader.result as string; };
+    reader.readAsDataURL(file);
+  }
+
+  removePhoto(): void { this.profileImagePreview = ''; }
 
   saveProfile(): void {
     const name = this.profileName.trim();
     if (!name) { this.profileError = 'Nome obrigatório.'; return; }
     if (name.length > 100) { this.profileError = 'Máx. 100 caracteres.'; return; }
-    const url = this.profileImageUrl.trim();
-    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-      this.profileError = 'URL de imagem deve começar com http:// ou https://';
-      return;
-    }
     this.profileSaving = true;
     this.profileError  = '';
-    this.authService.updateProfile({ displayName: name, profileImageUrl: url || '' }).subscribe({
+    this.authService.updateProfile({ displayName: name, profileImageUrl: this.profileImagePreview }).subscribe({
       next: () => { this.profileSaving = false; this.showProfileEdit = false; },
       error: () => { this.profileSaving = false; this.profileError = 'Erro ao salvar perfil.'; },
     });
+  }
+
+  // ── Configurações ─────────────────────────────────────────────────────────
+  openSettings(): void { this.showSettings = true; }
+
+  closeSettings(): void {
+    this.showSettings      = false;
+    this.showBackupSection = false;
+    this.showHelpSection   = false;
+    this.exportError       = '';
+  }
+
+  onSettingsOverlayClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).classList.contains('sidebar__profile-overlay')) {
+      this.closeSettings();
+    }
+  }
+
+  toggleBackupSection(): void { this.showBackupSection = !this.showBackupSection; }
+  toggleHelpSection():   void { this.showHelpSection   = !this.showHelpSection; }
+
+  exportCategory(slug: string): void {
+    if (this.isExporting || !slug) return;
+    this.isExporting = true;
+    this.exportError = '';
+    const catName = this.categories.find(c => c.slug === slug)?.name ?? slug;
+    this.exportService.downloadTxt(slug).subscribe({
+      next: (blob) => { this.isExporting = false; this.downloadBlob(blob, `tasknotes-${catName}.txt`); },
+      error: () => { this.isExporting = false; this.exportError = 'Erro ao exportar.'; },
+    });
+  }
+
+  exportAllCategories(): void {
+    if (this.isExporting || this.categories.length === 0) return;
+    this.isExporting = true;
+    this.exportError = '';
+    const entries = this.categories.map((c, i) => ({ slug: c.slug, name: c.name, index: i }));
+    const blobs: (Blob | null)[] = new Array(entries.length).fill(null);
+    let pending = entries.length;
+    for (const { slug, name, index } of entries) {
+      this.exportService.downloadTxt(slug).pipe(catchError(() => of(null))).subscribe(blob => {
+        if (blob) {
+          blobs[index] = new Blob(
+            [new TextEncoder().encode(`\n=== ${name} ===\n`), blob],
+            { type: 'text/plain' }
+          );
+        }
+        if (--pending === 0) {
+          this.isExporting = false;
+          const valid = blobs.filter((b): b is Blob => b !== null);
+          if (!valid.length) { this.exportError = 'Nenhum dado para exportar.'; return; }
+          this.downloadBlob(new Blob(valid, { type: 'text/plain' }), 'tasknotes-backup.txt');
+        }
+      });
+    }
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url  = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename; link.click();
+    URL.revokeObjectURL(url);
   }
 
   logout(): void {

@@ -5,9 +5,18 @@
     <div class="note-item__read">
       <div class="note-item__header">
         <span class="note-item__title">{{ note.title }}</span>
-        <div class="note-item__actions">
-          <button class="btn-icon" title="Editar" (click)="startEdit()">✏️</button>
-          <button class="btn-icon btn-icon--danger" title="Excluir" (click)="deleteRequested.emit(note.id)">🗑️</button>
+        <div class="note-kebab-wrap">
+          <button type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
+          @if (kebabOpen) {
+            <div class="note-kebab-dropdown">
+              <button type="button" class="note-kebab-option" (click)="onEdit($event)">
+                <span class="note-kebab-option__icon">✏</span> Editar
+              </button>
+              <button type="button" class="note-kebab-option note-kebab-option--danger" (click)="onDelete($event)">
+                <span class="note-kebab-option__icon">🗑</span> Excluir
+              </button>
+            </div>
+          }
         </div>
       </div>
       @if (note.content) {

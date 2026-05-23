@@ -2,7 +2,7 @@
 .task-item {
   padding: 14px 14px 12px;
   position: relative;
-  overflow: hidden;
+  // sem overflow:hidden aqui para não cortar o kebab dropdown
 
   &--done .task-item__title {
     text-decoration: line-through;
@@ -18,7 +18,8 @@
   right: auto;           // cresce só da esquerda para a direita
   width: 0%;             // sobrescrito por [style.width.%]
   background: var(--color-progress-fill);
-  border-radius: inherit;
+  // clip-path clipa o fill aos cantos arredondados sem afetar irmãos (dropdown)
+  clip-path: inset(0 round 9px);
   pointer-events: none;
   z-index: 0;
   transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1),

@@ -1,6 +1,6 @@
 import {
   AfterViewInit, Component, ElementRef, EventEmitter,
-  Input, OnChanges, Output, SimpleChanges, ViewChild, inject,
+  HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
@@ -25,6 +25,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
 
   private noteService    = inject(NoteService);
   private conceptService = inject(ProgrammingConceptService);
+
+  kebabOpen   = false;
 
   isEditing   = false;
   isSaving    = false;
@@ -77,6 +79,26 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     const el = this.contentEl?.nativeElement;
     if (!el) { this.isLong = false; return; }
     this.isLong = el.scrollHeight > el.clientHeight;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void { this.kebabOpen = false; }
+
+  toggleKebab(event: Event): void {
+    event.stopPropagation();
+    this.kebabOpen = !this.kebabOpen;
+  }
+
+  onEdit(event: Event): void {
+    event.stopPropagation();
+    this.kebabOpen = false;
+    this.startEdit();
+  }
+
+  onDelete(event: Event): void {
+    event.stopPropagation();
+    this.kebabOpen = false;
+    this.deleteRequested.emit(this.note.id);
   }
 
   startEdit(): void {

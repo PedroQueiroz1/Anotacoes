@@ -55,14 +55,29 @@
         </div>
 
         <div class="m-form-row">
-          <div class="m-form-group">
+          <div class="m-form-group m-tag-combobox-wrap">
             <label class="m-form-label">Tag <span class="m-form-hint">(opcional, máx. 1)</span></label>
-            <input class="m-form-input" [(ngModel)]="tagName" maxlength="50" placeholder="Nome da tag" />
+            <input class="m-form-input" [(ngModel)]="tagName" maxlength="50" placeholder="Nome da tag ou selecione..."
+                   (focus)="onTagFocus()" (blur)="onTagBlur()" (input)="onTagInput()" />
+            @if (showTagSuggestions && filteredTagSuggestions.length > 0) {
+              <div class="m-tag-suggestions" (mousedown)="$event.preventDefault()">
+                @for (s of filteredTagSuggestions; track s.name) {
+                  <button type="button" class="m-tag-suggestion" (click)="selectTagSuggestion(s)">
+                    <span class="m-tag-suggestion__dot" [style.background]="s.color || '#6366f1'"></span>
+                    {{ s.name }}
+                  </button>
+                }
+              </div>
+            }
           </div>
           @if (tagName.trim()) {
             <div class="m-form-group m-form-group--narrow">
               <label class="m-form-label">Cor</label>
               <input class="m-form-input m-form-input--color" type="color" [(ngModel)]="tagColor" />
+            </div>
+            <div class="m-form-group m-form-group--narrow m-form-group--center">
+              <label class="m-form-label">&nbsp;</label>
+              <button type="button" class="m-btn-remove-tag" (click)="removeTag()" title="Remover tag">✕</button>
             </div>
           }
         </div>
@@ -72,7 +87,6 @@
         }
 
         <div class="m-form-actions">
-          <button type="button" class="m-btn m-btn--ghost" (click)="close()">Cancelar</button>
           <button type="button" class="m-btn m-btn--primary" (click)="save()" [disabled]="isSaving">
             {{ isSaving ? 'Salvando...' : 'Salvar' }}
           </button>

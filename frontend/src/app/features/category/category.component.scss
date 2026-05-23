@@ -360,40 +360,23 @@ $radius: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  align-items: start;
+  column-count: 2;
+  column-gap: 14px;
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    column-count: 1;
   }
 }
 
 .form-textarea--tall { min-height: 120px; }
 
-// ── Drag & Drop ────────────────────────────────────────────────────────────
 .note-list__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-
-  app-note-item { flex: 1; min-width: 0; }
+  break-inside: avoid;
+  margin-bottom: 12px;
+  display: block;
 }
 
-.drag-handle {
-  cursor: grab;
-  color: var(--color-muted);
-  font-size: 18px;
-  flex-shrink: 0;
-  user-select: none;
-  padding-top: 2px;
-
-  &:active { cursor: grabbing; }
-
-  &--hidden { visibility: hidden; pointer-events: none; }
-}
-
+// ── Kanban CDK Drag & Drop ─────────────────────────────────────────────────
 .cdk-drag-preview {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -406,8 +389,7 @@ $radius: 10px;
 
 .cdk-drag-animating { transition: transform 200ms ease; }
 
-.kanban-col__list.cdk-drop-list-dragging .kanban-card:not(.cdk-drag-dragging),
-.note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
+.kanban-col__list.cdk-drop-list-dragging .kanban-card:not(.cdk-drag-dragging) {
   transition: transform 200ms ease;
 }
 

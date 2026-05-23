@@ -67,6 +67,11 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT t FROM Task t JOIN FETCH t.category c JOIN FETCH c.owner WHERE t.id = :id")
     Optional<Task> findByIdWithCategoryAndOwner(@Param("id") Long id);
 
+    // ── Tags distintas por dono ───────────────────────────────────────────────
+    @Query("SELECT DISTINCT t.tagName, t.tagColor FROM Task t JOIN t.category c " +
+           "WHERE c.owner.id = :ownerId AND t.tagName IS NOT NULL ORDER BY t.tagName")
+    List<Object[]> findDistinctTagsByOwnerId(@Param("ownerId") Long ownerId);
+
     // ── Reorder ───────────────────────────────────────────────────────────────
     @Modifying
     @Query("UPDATE Task t SET t.position = :position WHERE t.id = :id")

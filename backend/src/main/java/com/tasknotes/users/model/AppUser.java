@@ -53,7 +53,7 @@ public class AppUser {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
-    @Column(name = "profile_image_url", length = 500)
+    @Column(name = "profile_image_url", columnDefinition = "LONGTEXT")
     private String profileImageUrl;
 
     @PrePersist

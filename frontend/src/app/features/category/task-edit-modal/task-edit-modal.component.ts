@@ -45,6 +45,11 @@ export class TaskEditModalComponent implements OnChanges {
   tagName  = '';
   tagColor = '#6366f1';
 
+  // Tag suggestions (combobox)
+  tagSuggestions:         { name: string; color: string }[] = [];
+  filteredTagSuggestions: { name: string; color: string }[] = [];
+  showTagSuggestions = false;
+
   isSaving   = false;
   formError  = '';
 
@@ -76,6 +81,7 @@ export class TaskEditModalComponent implements OnChanges {
       if (this.task) {
         this.initForm();
         this.loadSubtasks();
+        this.loadTagSuggestions();
       } else {
         this.resetSubtaskState();
       }
@@ -106,6 +112,37 @@ export class TaskEditModalComponent implements OnChanges {
     this.tagColor    = this.task.tagColor ?? '#6366f1';
     this.formError   = '';
   }
+
+  // ── Tag combobox ──────────────────────────────────────────────────────────
+  private loadTagSuggestions(): void {
+    this.taskService.getDistinctTags().subscribe({
+      next: (tags) => { this.tagSuggestions = tags; },
+      error: () => { this.tagSuggestions = []; },
+    });
+  }
+
+  onTagFocus(): void { this.filterTagSuggestions(); this.showTagSuggestions = true; }
+  onTagBlur(): void  { setTimeout(() => { this.showTagSuggestions = false; }, 150); }
+
+  onTagInput(): void {
+    this.filterTagSuggestions();
+    this.showTagSuggestions = true;
+  }
+
+  private filterTagSuggestions(): void {
+    const q = this.tagName.trim().toLowerCase();
+    this.filteredTagSuggestions = q
+      ? this.tagSuggestions.filter(t => t.name.toLowerCase().includes(q))
+      : this.tagSuggestions;
+  }
+
+  selectTagSuggestion(s: { name: string; color: string }): void {
+    this.tagName  = s.name;
+    this.tagColor = s.color || '#6366f1';
+    this.showTagSuggestions = false;
+  }
+
+  removeTag(): void { this.tagName = ''; this.tagColor = '#6366f1'; }
 
   save(): void {
     if (!this.task) return;

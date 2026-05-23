@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @Tag(name = "Tarefas", description = "Gerenciamento de tarefas por categoria")
@@ -79,5 +80,11 @@ public class TaskController {
     @Operation(summary = "Excluir uma tarefa e suas subtarefas")
     public void delete(@PathVariable Long id) {
         service.delete(id);
+    }
+
+    @GetMapping("/api/tasks/tags")
+    @Operation(summary = "Listar tags distintas do usuário atual")
+    public List<Map<String, String>> getDistinctTags() {
+        return service.getDistinctTags();
     }
 }

@@ -19,6 +19,28 @@
         <span class="sidebar__user-role">Admin</span>
       }
     </div>
+
+    <!-- Kebab de perfil -->
+    <div class="profile-kebab-wrap">
+      <button
+        type="button"
+        class="profile-kebab-btn"
+        aria-label="Opções do perfil"
+        title="Opções do perfil"
+        (click)="toggleProfileKebab($event)"
+      >&#8942;</button>
+      @if (profileKebabOpen) {
+        <div class="profile-kebab-dropdown">
+          <button type="button" class="profile-kebab-option" (click)="openProfileEdit()">
+            <span>✏</span> Editar Perfil
+          </button>
+          <button type="button" class="profile-kebab-option profile-kebab-option--danger" (click)="logout()">
+            <span>⎋</span> Sair
+          </button>
+        </div>
+      }
+    </div>
+
     <app-theme-toggle />
     <button
       type="button"
@@ -169,30 +191,55 @@
     @if (isAtLimit) {
       <span class="sidebar__limit-badge">Limite atingido</span>
     }
+    <button class="sidebar__settings-btn" (click)="openSettings()" title="Configurações">⚙</button>
   </div>
 
   <!-- ── Rodapé de ações do usuário ───────────────────────────────────────── -->
-  <div class="sidebar__user-actions">
-    <button class="sidebar__icon-btn" title="Editar perfil" (click)="openProfileEdit()">✏ Perfil</button>
-    @if (isAdmin()) {
+  @if (isAdmin()) {
+    <div class="sidebar__user-actions">
       <a class="sidebar__admin-link" [routerLink]="['/admin/users']" title="Gerenciar usuários">Usuários</a>
-    }
-    <button class="sidebar__logout-btn" (click)="logout()" title="Sair">Sair</button>
-  </div>
+    </div>
+  }
 
   <!-- ── Modal de perfil ───────────────────────────────────────────────────── -->
   @if (showProfileEdit) {
     <div class="sidebar__profile-overlay">
       <div class="sidebar__profile-modal">
         <h3 class="sidebar__profile-title">Editar perfil</h3>
+
+        <!-- Foto -->
+        <label class="sidebar__input-label">Foto <span class="sidebar__input-hint">(opcional · JPEG/PNG · máx. 1 MB)</span></label>
+        <div
+          class="profile-drop-zone"
+          [class.profile-drop-zone--dragover]="isDragOver"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onFileDrop($event)"
+          (click)="fileInput.click()"
+          title="Clique ou arraste para trocar a foto"
+        >
+          @if (profileImagePreview) {
+            <img class="profile-drop-zone__preview" [src]="profileImagePreview" alt="Preview" />
+            <span class="profile-drop-zone__hint">Clique ou arraste para trocar</span>
+          } @else {
+            <span class="profile-drop-zone__placeholder">Clique ou arraste a foto aqui</span>
+          }
+        </div>
+        <input #fileInput type="file" accept="image/jpeg,image/png" style="display:none"
+               (change)="onFileSelected($event)" />
+        @if (profilePhotoError) {
+          <p class="sidebar__error">{{ profilePhotoError }}</p>
+        }
+        @if (profileImagePreview) {
+          <button type="button" class="sidebar__btn sidebar__btn--ghost sidebar__btn--sm" (click)="removePhoto()">Remover foto</button>
+        }
+
+        <!-- Nome -->
         <div class="sidebar__profile-field">
           <label class="sidebar__input-label">Nome de exibição</label>
           <input class="sidebar__input" [(ngModel)]="profileName" maxlength="100" placeholder="Seu nome" />
         </div>
-        <div class="sidebar__profile-field">
-          <label class="sidebar__input-label">URL do avatar <span class="sidebar__input-hint">(opcional)</span></label>
-          <input class="sidebar__input" [(ngModel)]="profileImageUrl" placeholder="https://..." />
-        </div>
+
         @if (profileError) {
           <p class="sidebar__error">{{ profileError }}</p>
         }
@@ -201,6 +248,84 @@
           <button class="sidebar__btn sidebar__btn--primary" (click)="saveProfile()" [disabled]="profileSaving">
             {{ profileSaving ? 'Salvando...' : 'Salvar' }}
           </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Modal de configurações ──────────────────────────────────────────── -->
+  @if (showSettings) {
+    <div class="sidebar__profile-overlay" (click)="onSettingsOverlayClick($event)">
+      <div class="sidebar__profile-modal settings-modal">
+        <h3 class="sidebar__profile-title">Configurações</h3>
+
+        <!-- Tema -->
+        <div class="settings-row">
+          <span class="settings-row__label">Tema</span>
+          <app-theme-toggle />
+        </div>
+
+        <!-- Backup -->
+        <div class="settings-section">
+          <button type="button" class="settings-section__header" (click)="toggleBackupSection()">
+            <span>Backup</span>
+            <span class="settings-section__chevron">{{ showBackupSection ? '▲' : '▼' }}</span>
+          </button>
+          @if (showBackupSection) {
+            <div class="settings-section__body">
+              @if (exportError) {
+                <p class="sidebar__error">{{ exportError }}</p>
+              }
+              @if (activeCategorySlug) {
+                <div class="backup-row">
+                  <span class="backup-row__label">Categoria atual</span>
+                  <button class="sidebar__btn sidebar__btn--ghost sidebar__btn--sm"
+                          [disabled]="isExporting"
+                          (click)="exportCategory(activeCategorySlug!)">
+                    {{ isExporting ? '...' : '⬇ Exportar' }}
+                  </button>
+                </div>
+              }
+              <div class="backup-row">
+                <select class="sidebar__input sidebar__input--sm" [(ngModel)]="backupSelectedSlug">
+                  <option value="">Selecionar categoria...</option>
+                  @for (cat of categories; track cat.id) {
+                    <option [value]="cat.slug">{{ cat.name }}</option>
+                  }
+                </select>
+                <button class="sidebar__btn sidebar__btn--ghost sidebar__btn--sm"
+                        [disabled]="isExporting || !backupSelectedSlug"
+                        (click)="exportCategory(backupSelectedSlug)">
+                  {{ isExporting ? '...' : '⬇' }}
+                </button>
+              </div>
+              <div class="backup-row">
+                <span class="backup-row__label">Todas as categorias</span>
+                <button class="sidebar__btn sidebar__btn--ghost sidebar__btn--sm"
+                        [disabled]="isExporting || categories.length === 0"
+                        (click)="exportAllCategories()">
+                  {{ isExporting ? '...' : '⬇ Exportar tudo' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Ajuda -->
+        <div class="settings-section">
+          <button type="button" class="settings-section__header" (click)="toggleHelpSection()">
+            <span>Ajuda</span>
+            <span class="settings-section__chevron">{{ showHelpSection ? '▲' : '▼' }}</span>
+          </button>
+          @if (showHelpSection) {
+            <div class="settings-section__body">
+              <p class="settings-help-text">Falar com suporte — Em breve.</p>
+            </div>
+          }
+        </div>
+
+        <div class="sidebar__form-actions">
+          <button class="sidebar__btn sidebar__btn--ghost" (click)="closeSettings()">Fechar</button>
         </div>
       </div>
     </div>

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class TaskService {
@@ -110,6 +111,13 @@ public class TaskService {
     public void delete(Long id) {
         findOrThrow(id);
         taskRepository.deleteById(id);
+    }
+
+    public List<Map<String, String>> getDistinctTags() {
+        Long ownerId = securityHelper.currentUserId();
+        return taskRepository.findDistinctTagsByOwnerId(ownerId).stream()
+                .map(row -> Map.of("name", (String) row[0], "color", row[1] != null ? (String) row[1] : ""))
+                .toList();
     }
 
     @Transactional

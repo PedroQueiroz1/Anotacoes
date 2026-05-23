@@ -47,4 +47,8 @@ export class TaskService {
   reorder(categoryId: number, ids: number[]): Observable<void> {
     return this.http.put<void>(`/api/categories/${categoryId}/tasks/reorder`, ids);
   }
+
+  getDistinctTags(): Observable<{ name: string; color: string }[]> {
+    return this.http.get<{ name: string; color: string }[]>('/api/tasks/tags');
+  }
 }
