@@ -293,13 +293,12 @@ $radius: 10px;
   border: 1px solid var(--color-border);
   border-radius: 9px;
   cursor: grab;
-  transition: box-shadow 0.16s ease, border-color 0.16s ease, transform 0.1s ease;
+  transition: box-shadow 0.16s ease, border-color 0.16s ease;
   box-shadow: var(--color-card-shadow);
 
   &:hover {
     box-shadow: var(--color-card-shadow-hover);
     border-color: var(--color-primary);
-    transform: translateY(-1px);
   }
 
   &:active { cursor: grabbing; }
