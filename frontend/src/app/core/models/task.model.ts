@@ -12,6 +12,8 @@ export interface Task {
   status: TaskStatus;
   createdAt: string;
   updatedAt: string;
+  tagName:  string | null;
+  tagColor: string | null;
 }
 
 export const PRIORITY_LABEL: Record<Priority, string> = {

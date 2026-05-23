@@ -12,19 +12,21 @@ export interface LoginResponse {
 }
 
 export interface UserInfo {
-  username:    string;
-  displayName: string;
-  role:        string;
+  username:        string;
+  displayName:     string;
+  role:            string;
+  profileImageUrl: string | null;
 }
 
 export interface UserResponse {
-  uuid:        string;
-  username:    string;
-  email:       string;
-  displayName: string;
-  role:        string;
-  enabled:     boolean;
-  createdAt:   string;
+  uuid:            string;
+  username:        string;
+  email:           string;
+  displayName:     string;
+  role:            string;
+  enabled:         boolean;
+  createdAt:       string;
+  profileImageUrl: string | null;
 }
 
 export interface CreateUserRequest {
@@ -32,4 +34,9 @@ export interface CreateUserRequest {
   displayName: string;
   email:       string;
   password:    string;
+}
+
+export interface UpdateProfileRequest {
+  displayName?:    string;
+  profileImageUrl?: string;
 }

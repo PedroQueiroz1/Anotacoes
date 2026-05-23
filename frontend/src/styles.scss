@@ -18,8 +18,9 @@ a      { text-decoration: none; }
   --color-text:             #1a1a2e;
   --color-muted:            #6b7280;
   --color-border:           #e5e7eb;
-  --color-bg-page:          #f8f9fc;
+  --color-bg-page:          #f5f6fa;
   --color-bg-card:          #ffffff;
+  --color-bg-card-hover:    #f8f8ff;
   --color-bg-input:         #fafafa;
   --color-btn-ghost:        #f0f0f0;
   --color-btn-ghost-text:   #444444;
@@ -29,13 +30,18 @@ a      { text-decoration: none; }
   --color-badge-med-text:   #92400e;
   --color-badge-low-bg:     #f0fdf4;
   --color-badge-low-text:   #166534;
+  --color-kanban-col-bg:    #f1f2f7;
+  --color-success:          #16a34a;
+  --color-warning:          #d97706;
+  --color-card-shadow:      0 1px 4px rgba(0,0,0,0.07);
+  --color-card-shadow-hover: 0 4px 14px rgba(0,0,0,0.12);
 }
 
 // ── Tema escuro ────────────────────────────────────────────────────────────
 body.dark-theme {
-  --color-sidebar-bg:          #111827;
-  --color-sidebar-border:      #1f2937;
-  --color-sidebar-active-bg:   rgba(129, 140, 248, 0.12);
+  --color-sidebar-bg:          #1a2236;
+  --color-sidebar-border:      #263047;
+  --color-sidebar-active-bg:   rgba(129, 140, 248, 0.14);
   --color-sidebar-active-text: #818cf8;
   --color-primary:          #818cf8;
   --color-primary-focus:    rgba(129, 140, 248, 0.2);
@@ -43,20 +49,26 @@ body.dark-theme {
   --color-danger-bg:        #2d1515;
   --color-danger-border:    #7f1d1d;
   --color-danger-hover:     #3b0e0e;
-  --color-text:             #f1f5f9;
-  --color-muted:            #94a3b8;
-  --color-border:           #334155;
-  --color-bg-page:          #0f172a;
-  --color-bg-card:          #1e293b;
-  --color-bg-input:         #1e293b;
-  --color-btn-ghost:        #334155;
-  --color-btn-ghost-text:   #e2e8f0;
+  --color-text:             #e8eaf0;
+  --color-muted:            #8a97b0;
+  --color-border:           #2e3a52;
+  --color-bg-page:          #141c2e;
+  --color-bg-card:          #1e2a40;
+  --color-bg-card-hover:    #243148;
+  --color-bg-input:         #1a2236;
+  --color-btn-ghost:        #2e3a52;
+  --color-btn-ghost-text:   #dde3f0;
   --color-badge-high-bg:    #450a0a;
   --color-badge-high-text:  #fca5a5;
   --color-badge-med-bg:     #451a03;
   --color-badge-med-text:   #fcd34d;
   --color-badge-low-bg:     #052e16;
   --color-badge-low-text:   #86efac;
+  --color-kanban-col-bg:    #182030;
+  --color-success:          #4ade80;
+  --color-warning:          #fbbf24;
+  --color-card-shadow:      0 1px 4px rgba(0,0,0,0.3);
+  --color-card-shadow-hover: 0 4px 16px rgba(0,0,0,0.45);
 }
 
 body {
@@ -64,5 +76,5 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: var(--color-bg-page);
   color: var(--color-text);
-  transition: background 0.2s ease, color 0.2s ease;
+  transition: background 0.25s ease, color 0.25s ease;
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, Input, Output, EventEmitter } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -27,6 +27,9 @@ const SIDEBAR_MAX = 420;
   styleUrl: './sidebar.component.scss',
 })
 export class SidebarComponent implements OnInit, OnDestroy {
+  @Input() open = false;
+  @Output() closed = new EventEmitter<void>();
+
   private categoryService = inject(CategoryService);
   private taskService     = inject(TaskService);
   private authService     = inject(AuthService);
@@ -34,6 +37,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
   readonly currentUser = this.authService.currentUser;
   readonly isAdmin     = this.authService.isAdmin;
+
+  // ── Perfil ────────────────────────────────────────────────────────────────
+  showProfileEdit  = false;
+  profileName      = '';
+  profileImageUrl  = '';
+  profileSaving    = false;
+  profileError     = '';
 
   readonly MAX = MAX_CATEGORIES;
   readonly TASKS_PER_CAT = 5;
@@ -86,6 +96,36 @@ export class SidebarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void { this.routerSub?.unsubscribe(); }
+
+  closeMenu(): void { this.closed.emit(); }
+
+  // ── Perfil ────────────────────────────────────────────────────────────────
+  openProfileEdit(): void {
+    const u = this.currentUser();
+    this.profileName     = u?.displayName ?? '';
+    this.profileImageUrl = u?.profileImageUrl ?? '';
+    this.profileError    = '';
+    this.showProfileEdit = true;
+  }
+
+  cancelProfileEdit(): void { this.showProfileEdit = false; this.profileError = ''; }
+
+  saveProfile(): void {
+    const name = this.profileName.trim();
+    if (!name) { this.profileError = 'Nome obrigatório.'; return; }
+    if (name.length > 100) { this.profileError = 'Máx. 100 caracteres.'; return; }
+    const url = this.profileImageUrl.trim();
+    if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+      this.profileError = 'URL de imagem deve começar com http:// ou https://';
+      return;
+    }
+    this.profileSaving = true;
+    this.profileError  = '';
+    this.authService.updateProfile({ displayName: name, profileImageUrl: url || '' }).subscribe({
+      next: () => { this.profileSaving = false; this.showProfileEdit = false; },
+      error: () => { this.profileSaving = false; this.profileError = 'Erro ao salvar perfil.'; },
+    });
+  }
 
   logout(): void {
     this.authService.logout().subscribe({ complete: () => this.router.navigate(['/login']) });

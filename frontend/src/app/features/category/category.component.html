@@ -3,7 +3,7 @@
   <!-- ── Breadcrumb ─────────────────────────────────────────────────────────── -->
   <nav class="breadcrumb">
     <a class="breadcrumb__link" routerLink="/">Início</a>
-    <span class="breadcrumb__sep">/</span>
+    <span class="breadcrumb__sep">›</span>
     <span class="breadcrumb__current">{{ category?.name ?? '...' }}</span>
   </nav>
 
@@ -29,26 +29,6 @@
   @if (isLoading) {
     <div class="loading">Carregando...</div>
   } @else {
-
-    <!-- ── Cards de estatísticas ──────────────────────────────────────────── -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <span class="stat-card__value">{{ statActive }}</span>
-        <span class="stat-card__label">Ativas</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__value">{{ statProgress }}</span>
-        <span class="stat-card__label">Em Andamento</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__value">{{ statDone }}</span>
-        <span class="stat-card__label">Concluídas</span>
-      </div>
-      <div class="stat-card">
-        <span class="stat-card__value">{{ statNotes }}</span>
-        <span class="stat-card__label">Anotações</span>
-      </div>
-    </div>
 
     <!-- ── Formulário de criação / edição de tarefa ────────────────────────── -->
     @if (showForm) {
@@ -95,6 +75,19 @@
           }
         </div>
 
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tag <span class="form-hint">(opcional)</span></label>
+            <input class="form-input" [(ngModel)]="form.tagName" maxlength="50" placeholder="Nome da tag" />
+          </div>
+          @if (form.tagName.trim()) {
+            <div class="form-group form-group--narrow">
+              <label class="form-label">Cor da tag</label>
+              <input class="form-input form-input--color" type="color" [(ngModel)]="form.tagColor" />
+            </div>
+          }
+        </div>
+
         @if (formError) {
           <p class="form-error">{{ formError }}</p>
         }
@@ -106,7 +99,7 @@
       </div>
     }
 
-    <!-- ── Lista de tarefas ────────────────────────────────────────────────── -->
+    <!-- ── Kanban de tarefas ─────────────────────────────────────────────── -->
     <section class="tasks-section">
       <div class="section-header">
         <h2 class="section-header__title">Tarefas</h2>
@@ -115,46 +108,99 @@
         }
       </div>
 
-      <!-- Filtro por status -->
-      @if (tasks.length > 0 || activeFilter !== 'ALL') {
-        <div class="filter-bar">
-          @for (opt of filterOptions; track opt.value) {
-            <button
-              class="filter-chip"
-              [class.filter-chip--active]="activeFilter === opt.value"
-              (click)="setFilter(opt.value)"
-            >{{ opt.label }}</button>
-          }
-        </div>
-      }
-
-      @if (tasks.length === 0 && !showForm) {
+      @if (allTasks.length === 0 && !showForm) {
         <div class="empty-state">
           <p>Nenhuma tarefa nesta categoria.</p>
           <button class="btn btn--primary" (click)="openCreate()">Criar primeira tarefa</button>
         </div>
       } @else {
-        <ul class="task-list"
-            cdkDropList
-            [cdkDropListDisabled]="taskDragDisabled"
-            (cdkDropListDropped)="dropTasks($event)">
-          @for (task of tasks; track task.id) {
-            <li class="task-list__item" cdkDrag [cdkDragDisabled]="taskDragDisabled">
-              <span
-                class="drag-handle"
-                [class.drag-handle--hidden]="taskDragDisabled"
-                cdkDragHandle
-                title="Arrastar para reordenar"
-              >⠿</span>
-              <app-task-item
-                [task]="task"
-                (editRequested)="openEdit($event)"
-                (deleteRequested)="onDeleteRequested($event)"
-                (taskUpdated)="onTaskUpdated($event)"
-              />
-            </li>
-          }
-        </ul>
+        <div class="kanban-board" cdkDropListGroup>
+
+          <!-- ── A fazer ───────────────────────────────────────────────────── -->
+          <div class="kanban-col">
+            <h3 class="kanban-col__title">
+              A fazer
+              <span class="kanban-col__count">{{ todoCount }}</span>
+            </h3>
+            <ul class="kanban-col__list"
+                id="kanban-todo"
+                cdkDropList
+                [cdkDropListData]="todoTasks"
+                [cdkDropListDisabled]="taskDragDisabled"
+                (cdkDropListDropped)="onKanbanDrop($event)">
+              @for (task of todoTasks; track task.id) {
+                <li class="kanban-card" cdkDrag [cdkDragDisabled]="taskDragDisabled">
+                  <app-task-item
+                    [task]="task"
+                    (editRequested)="openEdit($event)"
+                    (deleteRequested)="onDeleteRequested($event)"
+                    (taskUpdated)="onTaskUpdated($event)"
+                  />
+                </li>
+              }
+              @if (todoTasks.length === 0) {
+                <li class="kanban-col__empty">Sem tarefas</li>
+              }
+            </ul>
+          </div>
+
+          <!-- ── Em andamento ──────────────────────────────────────────────── -->
+          <div class="kanban-col">
+            <h3 class="kanban-col__title">
+              Em andamento
+              <span class="kanban-col__count">{{ progressCount }}</span>
+            </h3>
+            <ul class="kanban-col__list"
+                id="kanban-progress"
+                cdkDropList
+                [cdkDropListData]="progressTasks"
+                [cdkDropListDisabled]="taskDragDisabled"
+                (cdkDropListDropped)="onKanbanDrop($event)">
+              @for (task of progressTasks; track task.id) {
+                <li class="kanban-card" cdkDrag [cdkDragDisabled]="taskDragDisabled">
+                  <app-task-item
+                    [task]="task"
+                    (editRequested)="openEdit($event)"
+                    (deleteRequested)="onDeleteRequested($event)"
+                    (taskUpdated)="onTaskUpdated($event)"
+                  />
+                </li>
+              }
+              @if (progressTasks.length === 0) {
+                <li class="kanban-col__empty">Sem tarefas</li>
+              }
+            </ul>
+          </div>
+
+          <!-- ── Concluídas ─────────────────────────────────────────────────── -->
+          <div class="kanban-col">
+            <h3 class="kanban-col__title">
+              Concluídas
+              <span class="kanban-col__count">{{ doneCount }}</span>
+            </h3>
+            <ul class="kanban-col__list"
+                id="kanban-done"
+                cdkDropList
+                [cdkDropListData]="doneTasks"
+                [cdkDropListDisabled]="taskDragDisabled"
+                (cdkDropListDropped)="onKanbanDrop($event)">
+              @for (task of doneTasks; track task.id) {
+                <li class="kanban-card" cdkDrag [cdkDragDisabled]="taskDragDisabled">
+                  <app-task-item
+                    [task]="task"
+                    (editRequested)="openEdit($event)"
+                    (deleteRequested)="onDeleteRequested($event)"
+                    (taskUpdated)="onTaskUpdated($event)"
+                  />
+                </li>
+              }
+              @if (doneTasks.length === 0) {
+                <li class="kanban-col__empty">Sem tarefas</li>
+              }
+            </ul>
+          </div>
+
+        </div>
 
         @if (taskHasPrev || taskHasNext) {
           <div class="pagination-bar">
@@ -169,7 +215,12 @@
     <!-- ── Seção de anotações ──────────────────────────────────────────────── -->
     <section class="notes-section">
       <div class="section-header">
-        <h2 class="section-header__title">Anotações</h2>
+        <h2 class="section-header__title">
+          Anotações
+          @if (statNotes > 0) {
+            <span class="section-header__count">{{ statNotes }}</span>
+          }
+        </h2>
         @if (!showNoteForm) {
           <button class="btn btn--primary" (click)="openNoteCreate()">+ Nova Anotação</button>
         }

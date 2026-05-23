@@ -9,6 +9,8 @@ export interface TaskPayload {
   description?: string | null;
   dueDate?: string | null;
   priority?: Priority;
+  tagName?:  string | null;
+  tagColor?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

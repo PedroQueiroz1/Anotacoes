@@ -1,4 +1,4 @@
-<aside class="sidebar" [class.sidebar--resizing]="isResizing" [style]="sidebarStyle">
+<aside class="sidebar" [class.sidebar--open]="open" [class.sidebar--resizing]="isResizing">
 
   <!-- ── Brand ───────────────────────────────────────────────────────────── -->
   <div class="sidebar__brand">
@@ -7,6 +7,16 @@
       <span class="sidebar__app-name">TaskNotes</span>
     </div>
     <app-theme-toggle />
+    <button
+      type="button"
+      class="sidebar__close-btn"
+      aria-label="Fechar menu"
+      (click)="closeMenu()"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
   </div>
 
   <!-- ── Busca global ─────────────────────────────────────────────────────── -->
@@ -150,17 +160,55 @@
 
   <!-- ── Painel do usuário ─────────────────────────────────────────────────── -->
   <div class="sidebar__user">
+    @if (currentUser()?.profileImageUrl) {
+      <img
+        class="sidebar__avatar"
+        [src]="currentUser()!.profileImageUrl!"
+        [alt]="currentUser()!.displayName"
+      />
+    } @else {
+      <div class="sidebar__avatar sidebar__avatar--initials">
+        {{ (currentUser()?.displayName ?? '?')[0].toUpperCase() }}
+      </div>
+    }
     <div class="sidebar__user-info">
       <span class="sidebar__user-name">{{ currentUser()?.displayName }}</span>
       @if (isAdmin()) {
         <span class="sidebar__user-role">Admin</span>
       }
     </div>
+    <button class="sidebar__icon-btn" title="Editar perfil" (click)="openProfileEdit()">✏</button>
     @if (isAdmin()) {
       <a class="sidebar__admin-link" [routerLink]="['/admin/users']" title="Gerenciar usuários">Usuários</a>
     }
     <button class="sidebar__logout-btn" (click)="logout()" title="Sair">Sair</button>
   </div>
+
+  <!-- ── Modal de perfil ───────────────────────────────────────────────────── -->
+  @if (showProfileEdit) {
+    <div class="sidebar__profile-overlay">
+      <div class="sidebar__profile-modal">
+        <h3 class="sidebar__profile-title">Editar perfil</h3>
+        <div class="sidebar__profile-field">
+          <label class="sidebar__input-label">Nome de exibição</label>
+          <input class="sidebar__input" [(ngModel)]="profileName" maxlength="100" placeholder="Seu nome" />
+        </div>
+        <div class="sidebar__profile-field">
+          <label class="sidebar__input-label">URL do avatar <span class="sidebar__input-hint">(opcional)</span></label>
+          <input class="sidebar__input" [(ngModel)]="profileImageUrl" placeholder="https://..." />
+        </div>
+        @if (profileError) {
+          <p class="sidebar__error">{{ profileError }}</p>
+        }
+        <div class="sidebar__form-actions">
+          <button class="sidebar__btn sidebar__btn--ghost" (click)="cancelProfileEdit()">Cancelar</button>
+          <button class="sidebar__btn sidebar__btn--primary" (click)="saveProfile()" [disabled]="profileSaving">
+            {{ profileSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 
   <!-- ── Handle de resize ─────────────────────────────────────────────────── -->
   <div

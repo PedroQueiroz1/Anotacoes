@@ -16,5 +16,7 @@ public record TaskResponse(
         Priority priority,
         TaskStatus status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String tagName,
+        String tagColor
 ) {}

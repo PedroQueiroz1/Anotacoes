@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, EMPTY, catchError, finalize, map, shareReplay, tap } from 'rxjs';
-import { CreateUserRequest, LoginRequest, LoginResponse, UserInfo, UserResponse } from '../models/auth.model';
+import { CreateUserRequest, LoginRequest, LoginResponse, UpdateProfileRequest, UserInfo, UserResponse } from '../models/auth.model';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -54,7 +54,36 @@ export class AuthService {
 
   private applySession(res: LoginResponse): void {
     this._accessToken = res.accessToken;
-    this._currentUser.set({ username: res.username, displayName: res.displayName, role: res.role });
+    this._currentUser.set({
+      username: res.username,
+      displayName: res.displayName,
+      role: res.role,
+      profileImageUrl: null,
+    });
+  }
+
+  // ── Profile ────────────────────────────────────────────────────────────────
+
+  getMe(): Observable<UserResponse> {
+    return this.http.get<UserResponse>('/api/me').pipe(
+      tap(u => {
+        const cur = this._currentUser();
+        if (cur) {
+          this._currentUser.set({ ...cur, displayName: u.displayName, profileImageUrl: u.profileImageUrl });
+        }
+      }),
+    );
+  }
+
+  updateProfile(req: UpdateProfileRequest): Observable<UserResponse> {
+    return this.http.patch<UserResponse>('/api/me/profile', req).pipe(
+      tap(u => {
+        const cur = this._currentUser();
+        if (cur) {
+          this._currentUser.set({ ...cur, displayName: u.displayName, profileImageUrl: u.profileImageUrl });
+        }
+      }),
+    );
   }
 
   // ── Admin ──────────────────────────────────────────────────────────────────

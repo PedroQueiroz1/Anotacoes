@@ -53,6 +53,9 @@ public class AppUser {
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @PrePersist
     private void prePersist() {
         if (uuid == null) uuid = UuidV7Generator.generate();
@@ -76,4 +79,6 @@ public class AppUser {
     public LocalDateTime getUpdatedAt()            { return updatedAt; }
     public LocalDateTime getLastLoginAt()          { return lastLoginAt; }
     public void   setLastLoginAt(LocalDateTime t)  { this.lastLoginAt = t; }
+    public String getProfileImageUrl()             { return profileImageUrl; }
+    public void   setProfileImageUrl(String url)   { this.profileImageUrl = url; }
 }

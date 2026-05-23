@@ -1,15 +1,21 @@
 .sidebar {
   display: flex;
   flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300px;
   height: 100vh;
   background: var(--color-sidebar-bg);
   border-right: 1px solid var(--color-sidebar-border);
   overflow-y: auto;
   overflow-x: hidden;
-  flex-shrink: 0;
-  transition: background 0.2s ease;
-  position: relative;
+  z-index: 200;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease, background 0.25s ease;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 
+  &--open { transform: translateX(0); }
   &--resizing { user-select: none; }
 }
 
@@ -46,6 +52,25 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+// ── Botão fechar ───────────────────────────────────────────────────────────
+.sidebar__close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--color-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+
+  body:not(.dark-theme) &:hover { background: rgba(0, 0, 0, 0.08); color: var(--color-text); }
+  body.dark-theme &:hover       { background: rgba(255, 255, 255, 0.1); color: var(--color-text); }
 }
 
 // ── Busca ──────────────────────────────────────────────────────────────────
@@ -378,6 +403,25 @@
   flex-shrink: 0;
 }
 
+.sidebar__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+
+  &--initials {
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+}
+
 .sidebar__user-info {
   flex: 1;
   min-width: 0;
@@ -432,29 +476,56 @@
   &:hover { background: var(--color-danger-hover); color: var(--color-danger); }
 }
 
-// ── Handle de resize ───────────────────────────────────────────────────────
-.sidebar__resize-handle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 6px;
-  height: 100%;
-  cursor: ew-resize;
-  z-index: 10;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 2px;
-    height: 100%;
-    background: transparent;
-    transition: background 0.15s;
-  }
-
-  &:hover::after { background: var(--color-primary); opacity: 0.4; }
+// ── Modal de perfil ────────────────────────────────────────────────────────
+.sidebar__profile-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
+
+.sidebar__profile-modal {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sidebar__profile-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.sidebar__profile-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sidebar__input-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.sidebar__input-hint {
+  font-weight: 400;
+  font-size: 11px;
+}
+
+// ── Handle de resize (mantido mas oculto — sidebar agora é overlay) ────────
+.sidebar__resize-handle { display: none; }
 
 // ── Drag preview ───────────────────────────────────────────────────────────
 .cdk-drag-preview {
@@ -475,14 +546,9 @@
 }
 
 // ── Responsivo ─────────────────────────────────────────────────────────────
-@media (max-width: 767px) {
+@media (max-width: 480px) {
   .sidebar {
-    width: 100% !important;
-    height: auto;
-    max-height: 260px;
-    flex-direction: column;
-    border-right: none;
-    border-bottom: 1px solid var(--color-sidebar-border);
+    width: 100%;
   }
 }
 

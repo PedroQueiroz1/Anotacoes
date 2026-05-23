@@ -47,6 +47,12 @@ public class Task {
     @Column
     private Integer position;
 
+    @Column(name = "tag_name", length = 50)
+    private String tagName;
+
+    @Column(name = "tag_color", length = 9)
+    private String tagColor;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -79,4 +85,8 @@ public class Task {
     public void setPosition(Integer p)   { this.position = p; }
     public LocalDateTime getCreatedAt()  { return createdAt; }
     public LocalDateTime getUpdatedAt()  { return updatedAt; }
+    public String getTagName()           { return tagName; }
+    public void setTagName(String n)     { this.tagName = n; }
+    public String getTagColor()          { return tagColor; }
+    public void setTagColor(String c)    { this.tagColor = c; }
 }

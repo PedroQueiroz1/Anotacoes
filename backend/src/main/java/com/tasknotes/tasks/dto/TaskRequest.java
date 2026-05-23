@@ -17,5 +17,11 @@ public record TaskRequest(
 
         LocalDate dueDate,
 
-        Priority priority
+        Priority priority,
+
+        @Size(max = 50, message = "Nome da tag deve ter no máximo 50 caracteres")
+        String tagName,
+
+        @Size(max = 9, message = "Cor da tag inválida")
+        String tagColor
 ) {}

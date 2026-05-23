@@ -60,6 +60,8 @@ class TaskServiceTest {
         lenient().when(t.getStatus()).thenReturn(status);
         lenient().when(t.getCreatedAt()).thenReturn(LocalDateTime.now());
         lenient().when(t.getUpdatedAt()).thenReturn(LocalDateTime.now());
+        lenient().when(t.getTagName()).thenReturn(null);
+        lenient().when(t.getTagColor()).thenReturn(null);
         return t;
     }
 
@@ -85,7 +87,7 @@ class TaskServiceTest {
         when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(taskRepository.save(any())).thenReturn(saved);
 
-        TaskResponse r = service.create(1L, new TaskRequest("Buy milk", null, null, Priority.MEDIUM));
+        TaskResponse r = service.create(1L, new TaskRequest("Buy milk", null, null, Priority.MEDIUM, null, null));
 
         assertThat(r.id()).isEqualTo(10L);
         verify(taskRepository).save(any(Task.class));
@@ -100,7 +102,7 @@ class TaskServiceTest {
             return stubTask(1L, t.getPriority(), TaskStatus.TODO);
         });
 
-        TaskResponse r = service.create(1L, new TaskRequest("Task", null, null, null));
+        TaskResponse r = service.create(1L, new TaskRequest("Task", null, null, null, null, null));
 
         assertThat(r.priority()).isEqualTo(Priority.LOW);
     }
@@ -109,7 +111,7 @@ class TaskServiceTest {
     void create_throwsResourceNotFoundException_whenCategoryMissing() {
         when(categoryRepository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(99L, new TaskRequest("X", null, null, Priority.LOW)))
+        assertThatThrownBy(() -> service.create(99L, new TaskRequest("X", null, null, Priority.LOW, null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -120,7 +122,7 @@ class TaskServiceTest {
         when(taskRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(existing));
         when(taskRepository.save(existing)).thenReturn(existing);
 
-        service.update(1L, new TaskRequest("Updated Title", "Desc", null, Priority.HIGH));
+        service.update(1L, new TaskRequest("Updated Title", "Desc", null, Priority.HIGH, null, null));
 
         verify(existing).setTitle("Updated Title");
         verify(existing).setDescription("Desc");
@@ -132,7 +134,7 @@ class TaskServiceTest {
     void update_throwsResourceNotFoundException_whenNotFound() {
         when(taskRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(99L, new TaskRequest("X", null, null, null)))
+        assertThatThrownBy(() -> service.update(99L, new TaskRequest("X", null, null, null, null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

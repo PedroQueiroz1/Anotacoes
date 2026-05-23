@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
@@ -23,10 +23,12 @@ interface TaskForm {
   dueDate: string;
   priority: Priority;
   status: TaskStatus;
+  tagName:  string;
+  tagColor: string;
 }
 
 function emptyTaskForm(): TaskForm {
-  return { title: '', description: '', dueDate: '', priority: 'LOW', status: 'TODO' };
+  return { title: '', description: '', dueDate: '', priority: 'LOW', status: 'TODO', tagName: '', tagColor: '#6366f1' };
 }
 
 @Component({
@@ -78,8 +80,15 @@ export class CategoryComponent implements OnInit, OnDestroy {
   isLoading    = false;
   errorMessage = '';
 
-  // ── Tarefas ───────────────────────────────────────────────────────────────
-  tasks: Task[] = [];
+  // ── Tarefas — Kanban ──────────────────────────────────────────────────────
+  todoTasks:     Task[] = [];
+  progressTasks: Task[] = [];
+  doneTasks:     Task[] = [];
+
+  get allTasks():      Task[]  { return [...this.todoTasks, ...this.progressTasks, ...this.doneTasks]; }
+  get todoCount():     number  { return this.todoTasks.length; }
+  get progressCount(): number  { return this.progressTasks.length; }
+  get doneCount():     number  { return this.doneTasks.length; }
 
   // ── Paginação de tarefas ──────────────────────────────────────────────────
   taskCursorHistory: (string | null)[] = [null];
@@ -87,34 +96,12 @@ export class CategoryComponent implements OnInit, OnDestroy {
   taskNextCursor: string | null = null;
   taskHasNext = false;
 
-  get taskHasPrev(): boolean { return this.taskPageIndex > 0; }
-  get taskDragDisabled(): boolean { return this.activeFilter !== 'ALL' || this.taskHasNext || this.taskPageIndex > 0; }
-
-  // ── Filtro por status ─────────────────────────────────────────────────────
-  activeFilter: 'ALL' | TaskStatus = 'ALL';
-
-  readonly filterOptions: { value: 'ALL' | TaskStatus; label: string }[] = [
-    { value: 'ALL',         label: 'Todas' },
-    { value: 'TODO',        label: 'A fazer' },
-    { value: 'IN_PROGRESS', label: 'Em andamento' },
-    { value: 'DONE',        label: 'Concluídas' },
-  ];
-
-  setFilter(value: 'ALL' | TaskStatus): void {
-    if (this.activeFilter === value) return;
-    this.activeFilter = value;
-    this.resetTaskPagination();
-    this.loadTasks(null);
-  }
+  get taskHasPrev():     boolean { return this.taskPageIndex > 0; }
+  get taskDragDisabled(): boolean { return this.taskHasNext || this.taskPageIndex > 0; }
 
   // ── Estatísticas ──────────────────────────────────────────────────────────
   totalNoteCount = 0;
-
-  get statTotal():    number { return this.tasks.length; }
-  get statActive():   number { return this.tasks.filter(t => t.status !== 'DONE').length; }
-  get statDone():     number { return this.tasks.filter(t => t.status === 'DONE').length; }
-  get statProgress(): number { return this.tasks.filter(t => t.status === 'IN_PROGRESS').length; }
-  get statNotes():    number { return this.totalNoteCount; }
+  get statNotes(): number { return this.totalNoteCount; }
 
   // ── Formulário de tarefa ──────────────────────────────────────────────────
   showForm       = false;
@@ -164,10 +151,11 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   private resetState(): void {
     this.category = null;
-    this.tasks = [];
+    this.todoTasks     = [];
+    this.progressTasks = [];
+    this.doneTasks     = [];
     this.notes = [];
     this.totalNoteCount = 0;
-    this.activeFilter = 'ALL';
     this.showForm = false;
     this.showNoteForm = false;
     this.errorMessage = '';
@@ -221,10 +209,11 @@ export class CategoryComponent implements OnInit, OnDestroy {
   }
 
   private loadTasks(cursor: string | null): void {
-    const status = this.activeFilter === 'ALL' ? null : this.activeFilter;
-    this.taskService.getByCategory(this.categoryId, cursor, status).subscribe({
+    this.taskService.getByCategory(this.categoryId, cursor, null).subscribe({
       next: (page) => {
-        this.tasks = page.items;
+        this.todoTasks     = page.items.filter(t => t.status === 'TODO');
+        this.progressTasks = page.items.filter(t => t.status === 'IN_PROGRESS');
+        this.doneTasks     = page.items.filter(t => t.status === 'DONE');
         this.taskNextCursor = page.nextCursor;
         this.taskHasNext = page.hasNext;
         this.loadNotes(null);
@@ -295,6 +284,8 @@ export class CategoryComponent implements OnInit, OnDestroy {
       dueDate:     task.dueDate ?? '',
       priority:    task.priority,
       status:      task.status,
+      tagName:     task.tagName  ?? '',
+      tagColor:    task.tagColor ?? '#6366f1',
     };
     this.formError = '';
     this.formMode = 'edit';
@@ -316,6 +307,8 @@ export class CategoryComponent implements OnInit, OnDestroy {
       description: this.form.description || null,
       dueDate:     this.form.dueDate || null,
       priority:    this.form.priority,
+      tagName:     this.form.tagName.trim() || null,
+      tagColor:    this.form.tagName.trim() ? (this.form.tagColor || null) : null,
     };
 
     this.isSaving = true;
@@ -347,11 +340,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
   cancelDelete(): void                    { this.deletingTaskId = null; }
 
   confirmDelete(): void {
-    this.taskService.delete(this.deletingTaskId!).subscribe({
+    const id = this.deletingTaskId!;
+    this.taskService.delete(id).subscribe({
       next: () => {
-        this.tasks = this.tasks.filter(t => t.id !== this.deletingTaskId);
+        this.todoTasks     = this.todoTasks.filter(t => t.id !== id);
+        this.progressTasks = this.progressTasks.filter(t => t.id !== id);
+        this.doneTasks     = this.doneTasks.filter(t => t.id !== id);
         this.deletingTaskId = null;
-        if (this.tasks.length === 0 && this.taskPageIndex > 0) {
+        if (this.allTasks.length === 0 && this.taskPageIndex > 0) {
           this.taskPrevPage();
         }
       },
@@ -414,10 +410,36 @@ export class CategoryComponent implements OnInit, OnDestroy {
     });
   }
 
-  dropTasks(event: CdkDragDrop<Task[]>): void {
-    if (this.taskDragDisabled) return;
-    moveItemInArray(this.tasks, event.previousIndex, event.currentIndex);
-    this.taskService.reorder(this.categoryId, this.tasks.map(t => t.id)).subscribe();
+  onKanbanDrop(event: CdkDragDrop<Task[]>): void {
+    if (event.previousContainer === event.container) {
+      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
+      this.taskService.reorder(this.categoryId, this.allTasks.map(t => t.id)).subscribe();
+    } else {
+      const task = event.previousContainer.data[event.previousIndex];
+      transferArrayItem(event.previousContainer.data, event.container.data, event.previousIndex, event.currentIndex);
+      const newStatus = this.getStatusFromContainerId(event.container.id);
+      if (newStatus) {
+        task.status = newStatus;
+        this.taskService.updateStatus(task.id, newStatus).subscribe({
+          next: (updated) => {
+            const arr = event.container.data;
+            const idx = arr.findIndex(t => t.id === updated.id);
+            if (idx !== -1) arr[idx] = updated;
+          },
+          error: () => {
+            transferArrayItem(event.container.data, event.previousContainer.data, event.currentIndex, event.previousIndex);
+            this.errorMessage = 'Erro ao atualizar status da tarefa.';
+          },
+        });
+      }
+    }
+  }
+
+  private getStatusFromContainerId(id: string): TaskStatus | null {
+    if (id === 'kanban-todo')     return 'TODO';
+    if (id === 'kanban-progress') return 'IN_PROGRESS';
+    if (id === 'kanban-done')     return 'DONE';
+    return null;
   }
 
   dropNotes(event: CdkDragDrop<Note[]>): void {
@@ -427,8 +449,12 @@ export class CategoryComponent implements OnInit, OnDestroy {
   }
 
   replaceTask(updated: Task): void {
-    const idx = this.tasks.findIndex(t => t.id === updated.id);
-    if (idx !== -1) this.tasks[idx] = updated;
+    this.todoTasks     = this.todoTasks.filter(t => t.id !== updated.id);
+    this.progressTasks = this.progressTasks.filter(t => t.id !== updated.id);
+    this.doneTasks     = this.doneTasks.filter(t => t.id !== updated.id);
+    if (updated.status === 'TODO')        this.todoTasks.push(updated);
+    else if (updated.status === 'IN_PROGRESS') this.progressTasks.push(updated);
+    else if (updated.status === 'DONE')   this.doneTasks.push(updated);
   }
 
   // ── Autocomplete handlers ─────────────────────────────────────────────────

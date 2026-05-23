@@ -22,6 +22,14 @@
         <span class="priority-error">{{ priorityError }}</span>
       }
 
+      @if (task.tagName) {
+        <span
+          class="task-tag"
+          [style.background-color]="task.tagColor ?? '#6366f1'"
+          [title]="task.tagName"
+        >{{ task.tagName }}</span>
+      }
+
       @if (editingField === 'title') {
         <div class="inline-edit inline-edit--title">
           <input

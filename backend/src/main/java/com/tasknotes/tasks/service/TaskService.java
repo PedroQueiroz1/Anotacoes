@@ -78,6 +78,8 @@ public class TaskService {
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
         task.setPriority(request.priority() != null ? request.priority() : Priority.LOW);
+        task.setTagName(sanitizeTag(request.tagName()));
+        task.setTagColor(sanitizeColor(request.tagColor()));
         return toResponse(taskRepository.save(task));
     }
 
@@ -87,6 +89,8 @@ public class TaskService {
         task.setDescription(request.description());
         task.setDueDate(request.dueDate());
         if (request.priority() != null) task.setPriority(request.priority());
+        task.setTagName(sanitizeTag(request.tagName()));
+        task.setTagColor(sanitizeColor(request.tagColor()));
         return toResponse(taskRepository.save(task));
     }
 
@@ -151,6 +155,18 @@ public class TaskService {
         return cat;
     }
 
+    private String sanitizeTag(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        return raw.trim().substring(0, Math.min(raw.trim().length(), 50));
+    }
+
+    private String sanitizeColor(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String c = raw.trim();
+        if (c.matches("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")) return c;
+        return null;
+    }
+
     private TaskResponse toResponse(Task t) {
         return new TaskResponse(
                 t.getId(),
@@ -162,7 +178,9 @@ public class TaskService {
                 t.getPriority(),
                 t.getStatus(),
                 t.getCreatedAt(),
-                t.getUpdatedAt()
+                t.getUpdatedAt(),
+                t.getTagName(),
+                t.getTagColor()
         );
     }
 }

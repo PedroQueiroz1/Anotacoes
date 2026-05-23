@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
   selector: 'app-login',
@@ -13,6 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class LoginComponent {
   private auth   = inject(AuthService);
   private router = inject(Router);
+  readonly theme = inject(ThemeService);
 
   username   = '';
   password   = '';
@@ -23,6 +25,7 @@ export class LoginComponent {
   showPassword = signal(false);
 
   togglePassword(): void { this.showPassword.update(v => !v); }
+  toggleTheme(): void { this.theme.toggle(); }
 
   submit(): void {
     this.error.set('');

@@ -44,7 +44,8 @@ class TaskControllerTest {
         return new TaskResponse(
                 id, null, 1L, "Buy milk", null, null,
                 Priority.MEDIUM, TaskStatus.TODO,
-                LocalDateTime.now(), LocalDateTime.now()
+                LocalDateTime.now(), LocalDateTime.now(),
+                null, null
         );
     }
 
@@ -77,7 +78,7 @@ class TaskControllerTest {
         mockMvc.perform(post("/api/categories/1/tasks")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new TaskRequest("Buy milk", null, null, Priority.MEDIUM))))
+                               new TaskRequest("Buy milk", null, null, Priority.MEDIUM, null, null))))
                .andExpect(status().isCreated())
                .andExpect(jsonPath("$.id").value(10))
                .andExpect(jsonPath("$.priority").value("MEDIUM"));
@@ -88,7 +89,7 @@ class TaskControllerTest {
         mockMvc.perform(post("/api/categories/1/tasks")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new TaskRequest("", null, null, Priority.LOW))))
+                               new TaskRequest("", null, null, Priority.LOW, null, null))))
                .andExpect(status().isBadRequest());
     }
 
@@ -97,14 +98,15 @@ class TaskControllerTest {
         TaskResponse updated = new TaskResponse(
                 1L, null, 1L, "Updated", "desc", null,
                 Priority.HIGH, TaskStatus.IN_PROGRESS,
-                LocalDateTime.now(), LocalDateTime.now()
+                LocalDateTime.now(), LocalDateTime.now(),
+                null, null
         );
         when(service.update(eq(1L), any())).thenReturn(updated);
 
         mockMvc.perform(put("/api/tasks/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new TaskRequest("Updated", "desc", null, Priority.HIGH))))
+                               new TaskRequest("Updated", "desc", null, Priority.HIGH, null, null))))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.title").value("Updated"))
                .andExpect(jsonPath("$.priority").value("HIGH"));
@@ -115,7 +117,8 @@ class TaskControllerTest {
         TaskResponse done = new TaskResponse(
                 1L, null, 1L, "Task", null, null,
                 Priority.MEDIUM, TaskStatus.DONE,
-                LocalDateTime.now(), LocalDateTime.now()
+                LocalDateTime.now(), LocalDateTime.now(),
+                null, null
         );
         when(service.updateStatus(eq(1L), any())).thenReturn(done);
 

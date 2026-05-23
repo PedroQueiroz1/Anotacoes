@@ -3,9 +3,10 @@ $radius: 10px;
 // ── Layout ─────────────────────────────────────────────────────────────────
 .category-page {
   width: 100%;
-  max-width: 860px;
+  max-width: 1160px;
   margin: 0 auto;
   padding: 28px 32px 80px;
+  padding-top: 68px;
   min-height: 100vh;
   background: var(--color-bg-page);
   box-sizing: border-box;
@@ -55,39 +56,6 @@ $radius: 10px;
   text-overflow: ellipsis;
 }
 
-// ── Cards de estatísticas ──────────────────────────────────────────────────
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-bottom: 28px;
-}
-
-.stat-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  padding: 16px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-card__value {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-primary);
-  line-height: 1;
-}
-
-.stat-card__label {
-  font-size: 12px;
-  color: var(--color-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 // ── Section header ─────────────────────────────────────────────────────────
 .section-header {
   display: flex;
@@ -101,11 +69,26 @@ $radius: 10px;
   font-weight: 700;
   color: var(--color-text);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  line-height: 1.6;
 }
 
 @media (max-width: 767px) {
-  .category-page { padding: 20px 16px 60px; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .category-page { padding: 60px 12px 60px; }
 }
 
 // ── Formulário de tarefa ───────────────────────────────────────────────────
@@ -166,6 +149,19 @@ $radius: 10px;
   flex-wrap: wrap;
 
   .form-group { flex: 1; min-width: 140px; }
+  .form-group--narrow { flex: 0 0 80px; min-width: 0; }
+}
+
+.form-hint {
+  font-size: 11px;
+  color: var(--color-muted);
+  font-weight: 400;
+}
+
+.form-input--color {
+  padding: 3px 6px;
+  height: 38px;
+  cursor: pointer;
 }
 
 .form-error {
@@ -205,45 +201,90 @@ $radius: 10px;
 }
 .btn--export { font-size: 13px; padding: 7px 14px; }
 
-// ── Filtro por status ──────────────────────────────────────────────────────
-.filter-bar {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.filter-chip {
-  padding: 5px 14px;
-  border-radius: 20px;
-  border: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  color: var(--color-muted);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  font-family: inherit;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-
-  &:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-  &--active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #fff;
-  }
-}
-
-// ── Lista de tarefas ───────────────────────────────────────────────────────
+// ── Kanban board ───────────────────────────────────────────────────────────
 .tasks-section { margin-top: 4px; }
 
-.task-list {
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.kanban-col {
+  background: var(--color-kanban-col-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px 12px 12px;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kanban-col__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-col__count {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.kanban-col__list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  flex: 1;
+  min-height: 60px;
+}
+
+.kanban-col__empty {
+  font-size: 12px;
+  color: var(--color-muted);
+  text-align: center;
+  padding: 16px 0;
+  font-style: italic;
+}
+
+.kanban-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  cursor: grab;
+  transition: box-shadow 0.16s ease, border-color 0.16s ease, transform 0.1s ease;
+  box-shadow: var(--color-card-shadow);
+
+  &:hover {
+    box-shadow: var(--color-card-shadow-hover);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+  }
+
+  &:active { cursor: grabbing; }
+
+  app-task-item { display: block; }
+}
+
+@media (max-width: 860px) {
+  .kanban-board { grid-template-columns: 1fr; }
 }
 
 // ── Feedback ───────────────────────────────────────────────────────────────
@@ -292,13 +333,11 @@ $radius: 10px;
 .form-textarea--tall { min-height: 120px; }
 
 // ── Drag & Drop ────────────────────────────────────────────────────────────
-.task-list__item,
 .note-list__item {
   display: flex;
   align-items: flex-start;
   gap: 8px;
 
-  app-task-item,
   app-note-item { flex: 1; min-width: 0; }
 }
 
@@ -319,21 +358,20 @@ $radius: 10px;
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: $radius;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
   list-style: none;
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
 }
 
-.cdk-drag-placeholder { opacity: 0; }
+.cdk-drag-placeholder { opacity: 0.3; }
 
 .cdk-drag-animating { transition: transform 200ms ease; }
 
-.task-list.cdk-drop-list-dragging .task-list__item:not(.cdk-drag-dragging),
+.kanban-col__list.cdk-drop-list-dragging .kanban-card:not(.cdk-drag-dragging),
 .note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
   transition: transform 200ms ease;
 }
+
+.cdk-drop-list-dragging { min-height: 80px; }
 
 .pagination-bar {
   display: flex;

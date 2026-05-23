@@ -11,10 +11,12 @@ public record UserResponse(
         String displayName,
         String role,
         boolean enabled,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String profileImageUrl
 ) {
     public static UserResponse from(AppUser u) {
         return new UserResponse(u.getUuid(), u.getUsername(), u.getEmail(),
-                u.getDisplayName(), u.getRole(), u.isEnabled(), u.getCreatedAt());
+                u.getDisplayName(), u.getRole(), u.isEnabled(), u.getCreatedAt(),
+                u.getProfileImageUrl());
     }
 }
