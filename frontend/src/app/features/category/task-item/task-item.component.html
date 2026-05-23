@@ -1,5 +1,15 @@
 <div class="task-item" [class.task-item--done]="isDone">
 
+  <!-- Camada de progresso (preenche da esquerda para direita) -->
+  @if (subtaskTotalCount > 0) {
+    <div
+      class="task-item__fill"
+      [class.task-item__fill--complete]="progress === 100"
+      [style.width.%]="progress"
+      aria-hidden="true"
+    ></div>
+  }
+
   <div class="task-item__main">
 
     <!-- Priority badge + tag -->
@@ -43,14 +53,12 @@
       <p class="task-item__due">Prazo: {{ task.dueDate }}</p>
     }
 
-    <!-- Progress bar -->
+    <!-- Contador de checklist (texto discreto) -->
     @if (subtaskTotalCount > 0) {
-      <div class="progress-wrapper">
-        <span class="progress-label">Checklist {{ subtaskCompletedCount }}/{{ subtaskTotalCount }}</span>
-        <div class="progress-bar">
-          <div class="progress-bar__fill" [style.width.%]="progress"></div>
-        </div>
-      </div>
+      <span class="task-item__checklist-count"
+            [class.task-item__checklist-count--done]="progress === 100">
+        {{ subtaskCompletedCount }}/{{ subtaskTotalCount }}
+      </span>
     }
 
     <!-- Actions bar -->

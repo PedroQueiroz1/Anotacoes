@@ -1,6 +1,8 @@
 // ── Card ───────────────────────────────────────────────────────────────────
 .task-item {
   padding: 14px 14px 12px;
+  position: relative;
+  overflow: hidden;
 
   &--done .task-item__title {
     text-decoration: line-through;
@@ -9,7 +11,35 @@
   }
 }
 
-.task-item__main { display: flex; flex-direction: column; gap: 5px; }
+// ── Camada de progresso (fundo líquido) ────────────────────────────────────
+.task-item__fill {
+  position: absolute;
+  inset: 0;
+  right: auto;           // cresce só da esquerda para a direita
+  width: 0%;             // sobrescrito por [style.width.%]
+  background: var(--color-progress-fill);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.4s ease;
+
+  &--complete {
+    background: var(--color-progress-fill-done);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-item__fill { transition: none; }
+}
+
+.task-item__main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+  z-index: 1;
+}
 
 // ── Header: badge + tag ───────────────────────────────────────────────────
 .task-item__header {
@@ -119,34 +149,16 @@
   color: var(--color-muted);
 }
 
-// ── Progress bar ───────────────────────────────────────────────────────────
-.progress-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 4px;
-}
-
-.progress-label {
-  font-size: 11px;
+// ── Contador de checklist ──────────────────────────────────────────────────
+.task-item__checklist-count {
+  font-size: 10px;
+  font-weight: 600;
   color: var(--color-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+  letter-spacing: 0.03em;
+  align-self: flex-start;
+  transition: color 0.3s ease;
 
-.progress-bar {
-  flex: 1;
-  height: 5px;
-  background: var(--color-border);
-  border-radius: 3px;
-  overflow: hidden;
-
-  &__fill {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-  }
+  &--done { color: var(--color-success); }
 }
 
 // ── Actions bar ────────────────────────────────────────────────────────────

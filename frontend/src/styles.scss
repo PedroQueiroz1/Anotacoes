@@ -35,6 +35,8 @@ a      { text-decoration: none; }
   --color-warning:          #d97706;
   --color-card-shadow:      0 1px 4px rgba(28,30,45,0.07);
   --color-card-shadow-hover: 0 4px 16px rgba(28,30,45,0.13);
+  --color-progress-fill:      rgba(88, 79, 218, 0.09);
+  --color-progress-fill-done: rgba(22, 163, 74,  0.13);
 }
 
 // ── Tema escuro (grafite ardósia + lavanda) ────────────────────────────────
@@ -69,6 +71,8 @@ body.dark-theme {
   --color-warning:          #fbbf24;
   --color-card-shadow:      0 1px 5px rgba(0,0,0,0.36);
   --color-card-shadow-hover: 0 4px 20px rgba(0,0,0,0.52);
+  --color-progress-fill:      rgba(149, 136, 255, 0.11);
+  --color-progress-fill-done: rgba(74,  222, 128, 0.16);
 }
 
 body {
