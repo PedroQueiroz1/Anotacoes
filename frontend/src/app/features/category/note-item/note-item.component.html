@@ -8,7 +8,7 @@
         <div class="note-kebab-wrap">
           <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
           @if (kebabOpen) {
-            <div class="note-kebab-dropdown" [style.top.px]="kebabFixedTop" [style.left.px]="kebabFixedLeft">
+            <div class="note-kebab-dropdown" [style.top.px]="kebabFixedTop" [style.right.px]="kebabFixedRight">
               <button type="button" class="note-kebab-option" (click)="onEdit($event)">
                 <span class="note-kebab-option__icon">✏</span> Editar
               </button>

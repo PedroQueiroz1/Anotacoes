@@ -54,6 +54,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
   profileError            = '';
   profileKebabFixedTop    = 0;
   profileKebabFixedLeft   = 0;
+  profileKebabFixedRight  = 0;
   get profileKebabOpen(): boolean { return this.dropdownService.isOpen('profile-kebab'); }
   isCompressing        = false;
   originalSizeLabel    = '';
@@ -127,9 +128,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
     const key = 'profile-kebab';
     if (!this.dropdownService.isOpen(key) && this.profileKebabBtnRef) {
       const rect = this.profileKebabBtnRef.nativeElement.getBoundingClientRect();
-      const menuWidth = 160;
-      this.profileKebabFixedTop  = rect.bottom + 4;
-      this.profileKebabFixedLeft = Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
+      this.profileKebabFixedTop   = rect.bottom + 4;
+      this.profileKebabFixedLeft  = Math.max(8, rect.left);
+      this.profileKebabFixedRight = 0;
     }
     this.dropdownService.toggle(key);
   }

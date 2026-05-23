@@ -44,8 +44,8 @@ export class TaskItemComponent implements OnInit, OnChanges {
   priorityError        = '';
 
   // Kebab menu
-  kebabFixedTop  = 0;
-  kebabFixedLeft = 0;
+  kebabFixedTop   = 0;
+  kebabFixedRight = 0;
   get kebabOpen(): boolean { return this.dropdownService.isOpen('task-' + this.task?.id); }
 
   get isDone(): boolean { return this.task.status === 'DONE'; }
@@ -108,9 +108,8 @@ export class TaskItemComponent implements OnInit, OnChanges {
     const key = 'task-' + this.task.id;
     if (!this.dropdownService.isOpen(key)) {
       const rect = this.kebabBtnRef.nativeElement.getBoundingClientRect();
-      const menuWidth = 130;
-      this.kebabFixedTop  = rect.bottom + 4;
-      this.kebabFixedLeft = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
+      this.kebabFixedTop   = rect.bottom + 4;
+      this.kebabFixedRight = Math.max(8, window.innerWidth - rect.right);
     }
     this.dropdownService.toggle(key);
     this.priorityDropdownOpen = false;

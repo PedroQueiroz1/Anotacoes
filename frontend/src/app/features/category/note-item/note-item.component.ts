@@ -29,8 +29,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   private conceptService   = inject(ProgrammingConceptService);
   readonly dropdownService = inject(DropdownService);
 
-  kebabFixedTop  = 0;
-  kebabFixedLeft = 0;
+  kebabFixedTop   = 0;
+  kebabFixedRight = 0;
   get kebabOpen(): boolean { return this.dropdownService.isOpen('note-' + this.note?.id); }
 
   isEditing   = false;
@@ -101,9 +101,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     const key = 'note-' + this.note.id;
     if (!this.dropdownService.isOpen(key) && this.noteKebabBtnRef) {
       const rect = this.noteKebabBtnRef.nativeElement.getBoundingClientRect();
-      const menuWidth = 130;
-      this.kebabFixedTop  = rect.bottom + 4;
-      this.kebabFixedLeft = Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8);
+      this.kebabFixedTop   = rect.bottom + 4;
+      this.kebabFixedRight = Math.max(8, window.innerWidth - rect.right);
     }
     this.dropdownService.toggle(key);
   }
