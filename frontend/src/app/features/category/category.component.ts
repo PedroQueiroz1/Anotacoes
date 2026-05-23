@@ -15,6 +15,7 @@ import { ProgrammingConceptService } from '../../core/services/programming-conce
 import { CategoryExportService } from '../../core/services/category-export.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TaskItemComponent } from './task-item/task-item.component';
+import { TaskEditModalComponent } from './task-edit-modal/task-edit-modal.component';
 import { NoteItemComponent } from './note-item/note-item.component';
 
 interface TaskForm {
@@ -34,7 +35,7 @@ function emptyTaskForm(): TaskForm {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, NoteItemComponent, DragDropModule],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, TaskEditModalComponent, NoteItemComponent, DragDropModule],
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
@@ -104,12 +105,13 @@ export class CategoryComponent implements OnInit, OnDestroy {
   get statNotes(): number { return this.totalNoteCount; }
 
   // ── Formulário de tarefa ──────────────────────────────────────────────────
-  showForm       = false;
-  formMode: 'create' | 'edit' = 'create';
-  editingTaskId: number | null = null;
+  showForm  = false;
   form: TaskForm = emptyTaskForm();
-  formError      = '';
-  isSaving       = false;
+  formError = '';
+  isSaving  = false;
+
+  // ── Modal de edição ───────────────────────────────────────────────────────
+  editingTask: Task | null = null;
 
   deletingTaskId: number | null = null;
 
@@ -158,6 +160,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.totalNoteCount = 0;
     this.showForm = false;
     this.showNoteForm = false;
+    this.editingTask = null;
     this.errorMessage = '';
     this.deletingTaskId = null;
     this.deletingNoteId = null;
@@ -271,27 +274,21 @@ export class CategoryComponent implements OnInit, OnDestroy {
   openCreate(): void {
     this.form = emptyTaskForm();
     this.formError = '';
-    this.formMode = 'create';
-    this.editingTaskId = null;
     this.showForm = true;
     this.showNoteForm = false;
   }
 
   openEdit(task: Task): void {
-    this.form = {
-      title:       task.title,
-      description: task.description ?? '',
-      dueDate:     task.dueDate ?? '',
-      priority:    task.priority,
-      status:      task.status,
-      tagName:     task.tagName  ?? '',
-      tagColor:    task.tagColor ?? '#6366f1',
-    };
-    this.formError = '';
-    this.formMode = 'edit';
-    this.editingTaskId = task.id;
-    this.showForm = true;
+    this.editingTask = task;
+    this.showForm = false;
     this.showNoteForm = false;
+  }
+
+  closeEditModal(): void { this.editingTask = null; }
+
+  onModalTaskSaved(updated: Task): void {
+    this.replaceTask(updated);
+    this.editingTask = null;
   }
 
   cancelForm(): void { this.showForm = false; this.formError = ''; }
@@ -307,30 +304,20 @@ export class CategoryComponent implements OnInit, OnDestroy {
       description: this.form.description || null,
       dueDate:     this.form.dueDate || null,
       priority:    this.form.priority,
-      tagName:     this.form.tagName.trim() || null,
-      tagColor:    this.form.tagName.trim() ? (this.form.tagColor || null) : null,
     };
 
     this.isSaving = true;
     this.formError = '';
 
-    if (this.formMode === 'create') {
-      this.taskService.create(this.categoryId, payload).subscribe({
-        next: (task) => {
-          this.resetTaskPagination();
-          this.loadTasks(null);
-          this.showForm = false;
-          this.isSaving = false;
-        },
-        error: (err)  => { this.formError = err.error?.message ?? 'Erro ao criar tarefa.'; this.isSaving = false; },
-      });
-    } else {
-      const editPayload = { ...payload, status: this.form.status };
-      this.taskService.update(this.editingTaskId!, editPayload as any).subscribe({
-        next: (updated) => { this.replaceTask(updated); this.showForm = false; this.isSaving = false; },
-        error: (err)    => { this.formError = err.error?.message ?? 'Erro ao atualizar tarefa.'; this.isSaving = false; },
-      });
-    }
+    this.taskService.create(this.categoryId, payload).subscribe({
+      next: () => {
+        this.resetTaskPagination();
+        this.loadTasks(null);
+        this.showForm = false;
+        this.isSaving = false;
+      },
+      error: (err) => { this.formError = err.error?.message ?? 'Erro ao criar tarefa.'; this.isSaving = false; },
+    });
   }
 
   onTaskUpdated(updated: Task): void { this.replaceTask(updated); }

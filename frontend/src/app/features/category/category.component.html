@@ -30,12 +30,10 @@
     <div class="loading">Carregando...</div>
   } @else {
 
-    <!-- ── Formulário de criação / edição de tarefa ────────────────────────── -->
+    <!-- ── Formulário de criação de tarefa ────────────────────────────────── -->
     @if (showForm) {
       <div class="task-form-card">
-        <h2 class="task-form-card__title">
-          {{ formMode === 'create' ? 'Nova Tarefa' : 'Editar Tarefa' }}
-        </h2>
+        <h2 class="task-form-card__title">Nova Tarefa</h2>
 
         <div class="form-group">
           <label class="form-label">Título *</label>
@@ -62,30 +60,6 @@
               <option value="LOW">Baixa</option>
             </select>
           </div>
-
-          @if (formMode === 'edit') {
-            <div class="form-group">
-              <label class="form-label">Status</label>
-              <select class="form-input" [(ngModel)]="form.status">
-                <option value="TODO">A Fazer</option>
-                <option value="IN_PROGRESS">Em Progresso</option>
-                <option value="DONE">Concluída</option>
-              </select>
-            </div>
-          }
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Tag <span class="form-hint">(opcional)</span></label>
-            <input class="form-input" [(ngModel)]="form.tagName" maxlength="50" placeholder="Nome da tag" />
-          </div>
-          @if (form.tagName.trim()) {
-            <div class="form-group form-group--narrow">
-              <label class="form-label">Cor da tag</label>
-              <input class="form-input form-input--color" type="color" [(ngModel)]="form.tagColor" />
-            </div>
-          }
         </div>
 
         @if (formError) {
@@ -119,7 +93,8 @@
           <!-- ── A fazer ───────────────────────────────────────────────────── -->
           <div class="kanban-col">
             <h3 class="kanban-col__title">
-              A fazer
+              <span class="kanban-col__dot kanban-col__dot--todo"></span>
+              <span class="kanban-col__title-text">A fazer</span>
               <span class="kanban-col__count">{{ todoCount }}</span>
             </h3>
             <ul class="kanban-col__list"
@@ -147,7 +122,8 @@
           <!-- ── Em andamento ──────────────────────────────────────────────── -->
           <div class="kanban-col">
             <h3 class="kanban-col__title">
-              Em andamento
+              <span class="kanban-col__dot kanban-col__dot--progress"></span>
+              <span class="kanban-col__title-text">Em andamento</span>
               <span class="kanban-col__count">{{ progressCount }}</span>
             </h3>
             <ul class="kanban-col__list"
@@ -175,7 +151,8 @@
           <!-- ── Concluídas ─────────────────────────────────────────────────── -->
           <div class="kanban-col">
             <h3 class="kanban-col__title">
-              Concluídas
+              <span class="kanban-col__dot kanban-col__dot--done"></span>
+              <span class="kanban-col__title-text">Concluídas</span>
               <span class="kanban-col__count">{{ doneCount }}</span>
             </h3>
             <ul class="kanban-col__list"
@@ -351,6 +328,14 @@
   }
 
 </div>
+
+<!-- ── Modal de edição de tarefa ──────────────────────────────────────────── -->
+<app-task-edit-modal
+  [task]="editingTask"
+  (closed)="closeEditModal()"
+  (taskSaved)="onModalTaskSaved($event)"
+  (taskDeleted)="onDeleteRequested($event)"
+/>
 
 <!-- ── Confirmação de exclusão de tarefa ──────────────────────────────────── -->
 @if (deletingTaskId !== null) {

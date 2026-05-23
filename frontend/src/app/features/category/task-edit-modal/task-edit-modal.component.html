@@ -1,0 +1,157 @@
+@if (isOpen && task) {
+  <div class="task-modal__backdrop" (click)="onBackdropClick($event)" role="dialog" aria-modal="true">
+    <div class="task-modal__panel">
+
+      <!-- Header -->
+      <div class="task-modal__header">
+        <h2 class="task-modal__heading">Editar Tarefa</h2>
+        <button type="button" class="task-modal__close" aria-label="Fechar" (click)="close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Form fields -->
+      <div class="task-modal__body">
+
+        <div class="m-form-group">
+          <label class="m-form-label">Título *</label>
+          <input class="m-form-input" [(ngModel)]="title" maxlength="100" placeholder="Título da tarefa" />
+        </div>
+
+        <div class="m-form-group">
+          <label class="m-form-label">Descrição</label>
+          <textarea class="m-form-input m-form-textarea" [(ngModel)]="description"
+            maxlength="500" placeholder="Descrição opcional"></textarea>
+          @if (description.trim()) {
+            <app-youtube-preview [text]="description" />
+          }
+        </div>
+
+        <div class="m-form-row">
+          <div class="m-form-group">
+            <label class="m-form-label">Status</label>
+            <select class="m-form-input" [(ngModel)]="status">
+              @for (s of STATUS_OPTIONS; track s) {
+                <option [value]="s">{{ STATUS_LABEL[s] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="m-form-group">
+            <label class="m-form-label">Prioridade</label>
+            <select class="m-form-input" [(ngModel)]="priority">
+              @for (p of PRIORITY_OPTIONS; track p) {
+                <option [value]="p">{{ PRIORITY_LABEL[p] }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="m-form-group">
+            <label class="m-form-label">Prazo</label>
+            <input class="m-form-input" type="date" [(ngModel)]="dueDate" />
+          </div>
+        </div>
+
+        <div class="m-form-row">
+          <div class="m-form-group">
+            <label class="m-form-label">Tag <span class="m-form-hint">(opcional, máx. 1)</span></label>
+            <input class="m-form-input" [(ngModel)]="tagName" maxlength="50" placeholder="Nome da tag" />
+          </div>
+          @if (tagName.trim()) {
+            <div class="m-form-group m-form-group--narrow">
+              <label class="m-form-label">Cor</label>
+              <input class="m-form-input m-form-input--color" type="color" [(ngModel)]="tagColor" />
+            </div>
+          }
+        </div>
+
+        @if (formError) {
+          <p class="m-form-error">{{ formError }}</p>
+        }
+
+        <div class="m-form-actions">
+          <button type="button" class="m-btn m-btn--ghost" (click)="close()">Cancelar</button>
+          <button type="button" class="m-btn m-btn--primary" (click)="save()" [disabled]="isSaving">
+            {{ isSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+
+        <!-- Checklist section -->
+        <div class="m-checklist">
+          <div class="m-checklist__header">
+            <span class="m-checklist__title">Checklist</span>
+            @if (subtaskTotalCount > 0) {
+              <span class="m-checklist__count">{{ subtaskCompletedCount }}/{{ subtaskTotalCount }}</span>
+              <div class="m-progress">
+                <div class="m-progress__fill" [style.width.%]="progress"></div>
+              </div>
+            }
+          </div>
+
+          @if (isLoadingSubtasks) {
+            <p class="m-checklist__loading">Carregando...</p>
+          } @else {
+            <ul class="m-subtask-list">
+              @for (s of subtasks; track s.id) {
+                <li class="m-subtask-item" [class.m-subtask-item--done]="s.done && editingSubtaskId !== s.id">
+
+                  @if (editingSubtaskId === s.id) {
+                    <div class="m-subtask-edit">
+                      <input class="m-subtask-edit__input" [(ngModel)]="editingSubtaskText"
+                        maxlength="200" (keyup.enter)="saveSubtaskEdit()" (keyup.escape)="cancelSubtaskEdit()" autofocus />
+                      <button class="m-subtask-edit__btn m-subtask-edit__btn--save" (click)="saveSubtaskEdit()" [disabled]="isSavingSubtask">✓</button>
+                      <button class="m-subtask-edit__btn m-subtask-edit__btn--cancel" (click)="cancelSubtaskEdit()">✕</button>
+                    </div>
+                    @if (subtaskEditError) {
+                      <p class="m-subtask-error">{{ subtaskEditError }}</p>
+                    }
+                  } @else if (isOnlyYoutubeUrl(s.text)) {
+                    <div class="m-subtask-item__row">
+                      <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
+                      <a class="m-subtask-yt" [class.m-subtask-yt--done]="s.done"
+                        [href]="s.text.trim()" target="_blank" rel="noopener noreferrer">
+                        <span>▶</span>
+                        <span>{{ subtaskPreviews[s.id] != null ? subtaskPreviews[s.id] : s.text.trim() }}</span>
+                      </a>
+                      <button class="m-subtask-action" (click)="startSubtaskEdit(s, $event)" title="Editar">✏</button>
+                      <button class="m-subtask-action m-subtask-action--del" (click)="deleteSubtask(s.id)" title="Excluir">✕</button>
+                    </div>
+                  } @else {
+                    <div class="m-subtask-item__row">
+                      <label class="m-subtask-label">
+                        <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
+                        <span>{{ s.text }}</span>
+                      </label>
+                      <button class="m-subtask-action" (click)="startSubtaskEdit(s, $event)" title="Editar">✏</button>
+                      <button class="m-subtask-action m-subtask-action--del" (click)="deleteSubtask(s.id)" title="Excluir">✕</button>
+                    </div>
+                    <app-youtube-preview [text]="s.text" />
+                  }
+
+                </li>
+              }
+              @if (subtasks.length === 0) {
+                <li class="m-subtask-empty">Nenhuma subtarefa ainda.</li>
+              }
+            </ul>
+
+            @if (subtaskTotalCount < 20) {
+              <div class="m-subtask-add">
+                <input class="m-subtask-add__input" [(ngModel)]="newSubtaskText"
+                  maxlength="200" placeholder="Nova subtarefa..."
+                  (keyup.enter)="addSubtask()" />
+                <button class="m-btn m-btn--ghost m-btn--sm" (click)="addSubtask()" [disabled]="isAddingSubtask">+</button>
+              </div>
+            }
+            @if (subtaskError) {
+              <p class="m-subtask-error">{{ subtaskError }}</p>
+            }
+          }
+        </div>
+
+      </div>
+    </div>
+  </div>
+}

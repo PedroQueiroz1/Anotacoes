@@ -3,72 +3,72 @@ button { font-family: inherit; }
 input  { font-family: inherit; }
 a      { text-decoration: none; }
 
-// ── Tema claro (padrão) ────────────────────────────────────────────────────
+// ── Tema claro (areia fria + índigo profundo) ──────────────────────────────
 :root {
-  --color-sidebar-bg:          #f0f0f6;
-  --color-sidebar-border:      #e0e0ea;
-  --color-sidebar-active-bg:   rgba(79, 70, 229, 0.09);
-  --color-sidebar-active-text: #4f46e5;
-  --color-primary:          #4f46e5;
-  --color-primary-focus:    rgba(79, 70, 229, 0.15);
-  --color-danger:           #e53e3e;
-  --color-danger-bg:        #fff5f5;
-  --color-danger-border:    #fed7d7;
+  --color-sidebar-bg:          #f4f5fb;
+  --color-sidebar-border:      #e4e6f2;
+  --color-sidebar-active-bg:   rgba(88, 79, 218, 0.10);
+  --color-sidebar-active-text: #584fda;
+  --color-primary:          #584fda;
+  --color-primary-focus:    rgba(88, 79, 218, 0.16);
+  --color-danger:           #dc2626;
+  --color-danger-bg:        #fef2f2;
+  --color-danger-border:    #fecaca;
   --color-danger-hover:     #fee2e2;
-  --color-text:             #1a1a2e;
-  --color-muted:            #6b7280;
-  --color-border:           #e5e7eb;
-  --color-bg-page:          #f5f6fa;
+  --color-text:             #1c1e2d;
+  --color-muted:            #606880;
+  --color-border:           #e2e4ef;
+  --color-bg-page:          #f0f2f8;
   --color-bg-card:          #ffffff;
-  --color-bg-card-hover:    #f8f8ff;
-  --color-bg-input:         #fafafa;
-  --color-btn-ghost:        #f0f0f0;
-  --color-btn-ghost-text:   #444444;
+  --color-bg-card-hover:    #f7f8fe;
+  --color-bg-input:         #fafbff;
+  --color-btn-ghost:        #eceef8;
+  --color-btn-ghost-text:   #3a3f52;
   --color-badge-high-bg:    #fef2f2;
   --color-badge-high-text:  #b91c1c;
   --color-badge-med-bg:     #fffbeb;
   --color-badge-med-text:   #92400e;
   --color-badge-low-bg:     #f0fdf4;
   --color-badge-low-text:   #166534;
-  --color-kanban-col-bg:    #f1f2f7;
+  --color-kanban-col-bg:    #eaecf6;
   --color-success:          #16a34a;
   --color-warning:          #d97706;
-  --color-card-shadow:      0 1px 4px rgba(0,0,0,0.07);
-  --color-card-shadow-hover: 0 4px 14px rgba(0,0,0,0.12);
+  --color-card-shadow:      0 1px 4px rgba(28,30,45,0.07);
+  --color-card-shadow-hover: 0 4px 16px rgba(28,30,45,0.13);
 }
 
-// ── Tema escuro ────────────────────────────────────────────────────────────
+// ── Tema escuro (grafite ardósia + lavanda) ────────────────────────────────
 body.dark-theme {
-  --color-sidebar-bg:          #1a2236;
-  --color-sidebar-border:      #263047;
-  --color-sidebar-active-bg:   rgba(129, 140, 248, 0.14);
-  --color-sidebar-active-text: #818cf8;
-  --color-primary:          #818cf8;
-  --color-primary-focus:    rgba(129, 140, 248, 0.2);
+  --color-sidebar-bg:          #1b2540;
+  --color-sidebar-border:      #283552;
+  --color-sidebar-active-bg:   rgba(149, 136, 255, 0.14);
+  --color-sidebar-active-text: #a498ff;
+  --color-primary:          #9588ff;
+  --color-primary-focus:    rgba(149, 136, 255, 0.22);
   --color-danger:           #f87171;
   --color-danger-bg:        #2d1515;
   --color-danger-border:    #7f1d1d;
-  --color-danger-hover:     #3b0e0e;
-  --color-text:             #e8eaf0;
-  --color-muted:            #8a97b0;
-  --color-border:           #2e3a52;
-  --color-bg-page:          #141c2e;
-  --color-bg-card:          #1e2a40;
-  --color-bg-card-hover:    #243148;
-  --color-bg-input:         #1a2236;
-  --color-btn-ghost:        #2e3a52;
-  --color-btn-ghost-text:   #dde3f0;
+  --color-danger-hover:     #3b1010;
+  --color-text:             #dde5f4;
+  --color-muted:            #7e8fa8;
+  --color-border:           #2c3a54;
+  --color-bg-page:          #141d2f;
+  --color-bg-card:          #1e2b42;
+  --color-bg-card-hover:    #253450;
+  --color-bg-input:         #1b2540;
+  --color-btn-ghost:        #253450;
+  --color-btn-ghost-text:   #c4d0e8;
   --color-badge-high-bg:    #450a0a;
   --color-badge-high-text:  #fca5a5;
   --color-badge-med-bg:     #451a03;
   --color-badge-med-text:   #fcd34d;
   --color-badge-low-bg:     #052e16;
   --color-badge-low-text:   #86efac;
-  --color-kanban-col-bg:    #182030;
+  --color-kanban-col-bg:    #18253c;
   --color-success:          #4ade80;
   --color-warning:          #fbbf24;
-  --color-card-shadow:      0 1px 4px rgba(0,0,0,0.3);
-  --color-card-shadow-hover: 0 4px 16px rgba(0,0,0,0.45);
+  --color-card-shadow:      0 1px 5px rgba(0,0,0,0.36);
+  --color-card-shadow-hover: 0 4px 20px rgba(0,0,0,0.52);
 }
 
 body {

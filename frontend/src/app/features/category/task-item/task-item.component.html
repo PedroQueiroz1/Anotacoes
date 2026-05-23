@@ -2,221 +2,85 @@
 
   <div class="task-item__main">
 
-    <!-- Prioridade + Título -->
+    <!-- Priority badge + tag -->
     <div class="task-item__header">
       <div class="priority-wrapper" (click)="togglePriorityDropdown($event)">
-        <span class="badge badge--clickable" [class]="priorityClass" title="Clique para alterar prioridade">{{ PRIORITY_LABEL[task.priority] }}</span>
+        <span class="badge badge--clickable" [class]="priorityClass" title="Clique para alterar prioridade">
+          {{ PRIORITY_LABEL[task.priority] }}
+        </span>
         @if (priorityDropdownOpen) {
           <div class="priority-dropdown">
             @for (p of PRIORITY_OPTIONS; track p) {
-              <button
-                class="priority-option"
-                [class.priority-option--active]="p === task.priority"
-                (click)="selectPriority(p, $event)"
-              >{{ PRIORITY_LABEL[p] }}</button>
+              <button class="priority-option" [class.priority-option--active]="p === task.priority"
+                (click)="selectPriority(p, $event)">{{ PRIORITY_LABEL[p] }}</button>
             }
           </div>
         }
       </div>
+
       @if (priorityError) {
         <span class="priority-error">{{ priorityError }}</span>
       }
 
       @if (task.tagName) {
-        <span
-          class="task-tag"
-          [style.background-color]="task.tagColor ?? '#6366f1'"
-          [title]="task.tagName"
-        >{{ task.tagName }}</span>
-      }
-
-      @if (editingField === 'title') {
-        <div class="inline-edit inline-edit--title">
-          <input
-            class="inline-input"
-            [(ngModel)]="inlineValue"
-            maxlength="100"
-            (keyup.enter)="saveInlineEdit()"
-            (keyup.escape)="cancelInlineEdit()"
-            autofocus
-          />
-          <button class="inline-btn inline-btn--save" (click)="saveInlineEdit()" [disabled]="isSavingInline">✓</button>
-          <button class="inline-btn inline-btn--cancel" (click)="cancelInlineEdit()">✕</button>
-        </div>
-      } @else {
-        <div class="inline-edit-wrapper">
-          <span class="task-item__title">{{ task.title }}</span>
-          <button class="inline-pencil" title="Editar título" (click)="startInlineEdit('title', $event)">✏</button>
-        </div>
+        <span class="task-tag" [style.background-color]="task.tagColor ?? '#6366f1'" [title]="task.tagName">
+          {{ task.tagName }}
+        </span>
       }
     </div>
 
-    @if (inlineError && editingField === 'title') {
-      <p class="inline-error">{{ inlineError }}</p>
+    <!-- Title -->
+    <p class="task-item__title">{{ task.title }}</p>
+
+    <!-- Description -->
+    @if (task.description) {
+      <p class="task-item__desc">{{ task.description }}</p>
+      <app-youtube-preview [text]="task.description" />
     }
 
-    <!-- Metadados: prazo e descrição -->
+    <!-- Due date -->
     @if (task.dueDate) {
       <p class="task-item__due">Prazo: {{ task.dueDate }}</p>
     }
 
-    @if (editingField === 'description') {
-      <div class="inline-edit inline-edit--desc">
-        <textarea
-          class="inline-textarea"
-          [(ngModel)]="inlineValue"
-          maxlength="500"
-          rows="3"
-          (keyup.escape)="cancelInlineEdit()"
-        ></textarea>
-        <div class="inline-edit__actions">
-          @if (inlineError) { <span class="inline-error">{{ inlineError }}</span> }
-          <button class="inline-btn inline-btn--save" (click)="saveInlineEdit()" [disabled]="isSavingInline">Salvar</button>
-          <button class="inline-btn inline-btn--cancel" (click)="cancelInlineEdit()">Cancelar</button>
+    <!-- Progress bar -->
+    @if (subtaskTotalCount > 0) {
+      <div class="progress-wrapper">
+        <span class="progress-label">Checklist {{ subtaskCompletedCount }}/{{ subtaskTotalCount }}</span>
+        <div class="progress-bar">
+          <div class="progress-bar__fill" [style.width.%]="progress"></div>
         </div>
       </div>
-    } @else {
-      <div class="inline-edit-wrapper inline-edit-wrapper--desc">
-        @if (task.description) {
-          <p class="task-item__desc">{{ task.description }}</p>
-        } @else {
-          <span class="task-item__desc task-item__desc--placeholder">Sem descrição</span>
-        }
-        <button class="inline-pencil" title="Editar descrição" (click)="startInlineEdit('description', $event)">✏</button>
-      </div>
-      @if (task.description) {
-        <app-youtube-preview [text]="task.description" />
-      }
     }
 
-    <!-- Linha de ações -->
+    <!-- Actions bar -->
     <div class="task-item__actions">
-
-      <!-- Status rápido -->
       <select class="status-select" [ngModel]="task.status" (ngModelChange)="onStatusChange($event)">
         @for (s of STATUS_OPTIONS; track s) {
           <option [value]="s">{{ STATUS_LABEL[s] }}</option>
         }
       </select>
 
-      <!-- Botão subtarefas -->
-      <button class="btn-text" (click)="toggleExpand()">
-        {{ isExpanded ? '▲ Checklist' : '▼ Checklist' }}
-        @if (subtaskTotalCount > 0) {
-          <span class="subtask-count">({{ subtaskTotalCount }})</span>
-        }
-      </button>
-
       <div class="task-item__spacer"></div>
 
-      <button class="btn-icon btn-icon--danger" title="Excluir" (click)="deleteRequested.emit(task.id)">🗑️</button>
+      <!-- Kebab menu -->
+      <div class="kebab-wrap">
+        <button type="button" class="kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da tarefa">
+          &#8942;
+        </button>
+        @if (kebabOpen) {
+          <div class="kebab-dropdown">
+            <button type="button" class="kebab-option" (click)="openEdit($event)">
+              <span class="kebab-option__icon">✏</span> Editar
+            </button>
+            <button type="button" class="kebab-option kebab-option--danger" (click)="requestDelete($event)">
+              <span class="kebab-option__icon">🗑</span> Excluir
+            </button>
+          </div>
+        }
+      </div>
     </div>
 
   </div>
-
-  <!-- Barra de progresso -->
-  @if (subtaskTotalCount > 0) {
-    <div class="progress-wrapper">
-      <div class="progress-bar">
-        <div class="progress-bar__fill" [style.width.%]="progress"></div>
-      </div>
-      <span class="progress-label">{{ subtaskCompletedCount }}/{{ subtaskTotalCount }}</span>
-    </div>
-  }
-
-  <!-- Checklist de subtarefas -->
-  @if (isExpanded) {
-    <div class="subtask-section">
-
-      @if (isLoadingSubtasks) {
-        <p class="subtask-loading">Carregando...</p>
-      } @else {
-        <ul class="subtask-list">
-          @for (s of subtasks; track s.id) {
-            <li class="subtask-item" [class.subtask-item--done]="s.done && editingSubtaskId !== s.id">
-
-              @if (editingSubtaskId === s.id) {
-                <!-- Modo edição inline da subtarefa -->
-                <div class="subtask-edit">
-                  <input
-                    class="subtask-edit__input"
-                    [(ngModel)]="editingSubtaskText"
-                    maxlength="200"
-                    (keyup.enter)="saveSubtaskEdit()"
-                    (keyup.escape)="cancelSubtaskEdit()"
-                    autofocus
-                  />
-                  <button class="subtask-edit__btn subtask-edit__btn--save" (click)="saveSubtaskEdit()" [disabled]="isSavingSubtask">✓</button>
-                  <button class="subtask-edit__btn subtask-edit__btn--cancel" (click)="cancelSubtaskEdit()">✕</button>
-                </div>
-                @if (subtaskEditError) {
-                  <p class="subtask-edit__error">{{ subtaskEditError }}</p>
-                }
-              } @else if (isOnlyYoutubeUrl(s.text)) {
-                <!-- YouTube-only: link inline substituindo URL bruta -->
-                <div class="subtask-item__row">
-                  <input
-                    class="subtask-item__checkbox"
-                    type="checkbox"
-                    [checked]="s.done"
-                    (change)="toggleSubtask(s)"
-                  />
-                  <a
-                    class="subtask-yt-link"
-                    [class.subtask-yt-link--done]="s.done"
-                    [href]="s.text.trim()"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <span class="subtask-yt-icon">▶</span>
-                    <span class="subtask-yt-title">{{
-                      subtaskPreviews[s.id] != null
-                        ? subtaskPreviews[s.id]
-                        : s.text.trim()
-                    }}</span>
-                  </a>
-                  <button class="subtask-item__pencil" title="Editar" (click)="startSubtaskEdit(s, $event)">✏</button>
-                  <button class="btn-icon btn-icon--danger subtask-item__del" (click)="deleteSubtask(s.id)">✕</button>
-                </div>
-              } @else {
-                <!-- Modo normal: checkbox+texto com label, lápis, lixeira, preview abaixo -->
-                <div class="subtask-item__row">
-                  <label class="subtask-item__label">
-                    <input type="checkbox" [checked]="s.done" (change)="toggleSubtask(s)" />
-                    <span>{{ s.text }}</span>
-                  </label>
-                  <button class="subtask-item__pencil" title="Editar" (click)="startSubtaskEdit(s, $event)">✏</button>
-                  <button class="btn-icon btn-icon--danger subtask-item__del" (click)="deleteSubtask(s.id)">✕</button>
-                </div>
-                <app-youtube-preview [text]="s.text" />
-              }
-
-            </li>
-          }
-          @if (subtasks.length === 0) {
-            <li class="subtask-empty">Nenhuma subtarefa ainda.</li>
-          }
-        </ul>
-
-        <!-- Adicionar subtarefa -->
-        @if (subtaskTotalCount < 20) {
-          <div class="subtask-add">
-            <input
-              class="subtask-input"
-              [(ngModel)]="newSubtaskText"
-              maxlength="200"
-              placeholder="Nova subtarefa..."
-              (keyup.enter)="addSubtask()"
-            />
-            <button class="btn btn--sm" (click)="addSubtask()" [disabled]="isAddingSubtask">+</button>
-          </div>
-        }
-        @if (subtaskError) {
-          <p class="subtask-error">{{ subtaskError }}</p>
-        }
-      }
-
-    </div>
-  }
 
 </div>

@@ -1,10 +1,23 @@
 <aside class="sidebar" [class.sidebar--open]="open" [class.sidebar--resizing]="isResizing">
 
-  <!-- ── Brand ───────────────────────────────────────────────────────────── -->
+  <!-- ── Topo: usuário + ações ────────────────────────────────────────────── -->
   <div class="sidebar__brand">
-    <div class="sidebar__logo">TN</div>
+    @if (currentUser()?.profileImageUrl) {
+      <img
+        class="sidebar__avatar"
+        [src]="currentUser()!.profileImageUrl!"
+        [alt]="currentUser()!.displayName"
+      />
+    } @else {
+      <div class="sidebar__avatar sidebar__avatar--initials">
+        {{ (currentUser()?.displayName ?? '?')[0].toUpperCase() }}
+      </div>
+    }
     <div class="sidebar__brand-text">
-      <span class="sidebar__app-name">TaskNotes</span>
+      <span class="sidebar__user-name">{{ currentUser()?.displayName ?? 'Usuário' }}</span>
+      @if (isAdmin()) {
+        <span class="sidebar__user-role">Admin</span>
+      }
     </div>
     <app-theme-toggle />
     <button
@@ -158,26 +171,9 @@
     }
   </div>
 
-  <!-- ── Painel do usuário ─────────────────────────────────────────────────── -->
-  <div class="sidebar__user">
-    @if (currentUser()?.profileImageUrl) {
-      <img
-        class="sidebar__avatar"
-        [src]="currentUser()!.profileImageUrl!"
-        [alt]="currentUser()!.displayName"
-      />
-    } @else {
-      <div class="sidebar__avatar sidebar__avatar--initials">
-        {{ (currentUser()?.displayName ?? '?')[0].toUpperCase() }}
-      </div>
-    }
-    <div class="sidebar__user-info">
-      <span class="sidebar__user-name">{{ currentUser()?.displayName }}</span>
-      @if (isAdmin()) {
-        <span class="sidebar__user-role">Admin</span>
-      }
-    </div>
-    <button class="sidebar__icon-btn" title="Editar perfil" (click)="openProfileEdit()">✏</button>
+  <!-- ── Rodapé de ações do usuário ───────────────────────────────────────── -->
+  <div class="sidebar__user-actions">
+    <button class="sidebar__icon-btn" title="Editar perfil" (click)="openProfileEdit()">✏ Perfil</button>
     @if (isAdmin()) {
       <a class="sidebar__admin-link" [routerLink]="['/admin/users']" title="Gerenciar usuários">Usuários</a>
     }
