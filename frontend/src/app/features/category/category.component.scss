@@ -370,52 +370,133 @@ $radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  min-height: 60px;
 }
 
 .form-textarea--tall { min-height: 120px; }
 
 .note-list__item {
+  display: block;
+
+  app-note-item { display: block; }
+}
+
+// ── Controles de busca e ordenação ─────────────────────────────────────────
+.note-controls {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  position: relative;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
 
-  app-note-item { flex: 1; min-width: 0; }
+.note-search__input {
+  flex: 1;
+  min-width: 160px;
+}
 
-  &.cdk-drag-preview {
-    background: var(--color-bg-card);
-    border: 1px solid var(--color-primary);
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-    opacity: 0.96;
+.note-sort__select {
+  flex: 0 0 auto;
+  min-width: 160px;
+}
+
+// ── Filtro por tag ─────────────────────────────────────────────────────────
+.note-tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.note-tag-chip {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: var(--color-btn-ghost);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.13s, border-color 0.13s, color 0.13s;
+
+  &:hover {
+    border-color: var(--chip-color, var(--color-primary));
+    color: var(--chip-color, var(--color-primary));
+  }
+
+  &--active {
+    background: var(--chip-color, var(--color-primary));
+    border-color: var(--chip-color, var(--color-primary));
+    color: #fff;
   }
 }
 
-.note-list__placeholder {
-  height: 60px;
-  border: 2px dashed var(--color-border);
-  border-radius: 10px;
-  width: 100%;
-  background: var(--color-primary-focus);
+// ── Infinite scroll ─────────────────────────────────────────────────────────
+.note-sentinel {
+  height: 1px;
+  margin-top: 8px;
 }
 
-.note-drag-handle {
-  cursor: grab;
+.note-loading {
+  text-align: center;
   color: var(--color-muted);
-  font-size: 16px;
-  padding: 10px 4px;
-  user-select: none;
-  flex-shrink: 0;
-  opacity: 0.4;
-  transition: opacity 0.15s;
-
-  .note-list__item:hover & { opacity: 1; }
-  &:active { cursor: grabbing; }
+  font-size: 13px;
+  padding: 14px 0 4px;
 }
 
-.note-list.cdk-drop-list-dragging .note-list__item:not(.cdk-drag-dragging) {
-  transition: transform 200ms ease;
+.note-end {
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 12px;
+  padding: 10px 0 4px;
+  opacity: 0.7;
+}
+
+// ── Mover para posição ─────────────────────────────────────────────────────
+.move-position-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-position-dialog {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 280px;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  &__title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+  }
+
+  &__note {
+    font-size: 13px;
+    color: var(--color-muted);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
 }
 
 // ── Kanban CDK Drag & Drop ─────────────────────────────────────────────────

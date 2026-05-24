@@ -1,16 +1,34 @@
-<div class="note-item">
+<div class="note-item" [class.note-item--pinned]="note.pinned">
 
   @if (!isEditing) {
     <!-- Modo leitura -->
     <div class="note-item__read">
       <div class="note-item__header">
-        <span class="note-item__title">{{ note.title }}</span>
+        <div class="note-item__title-row">
+          @if (note.pinned) {
+            <span class="note-pin-icon" title="Fixada">📌</span>
+          }
+          <span class="note-item__title">{{ note.title }}</span>
+        </div>
         <div class="note-kebab-wrap">
           <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
           @if (kebabOpen) {
             <div class="note-kebab-dropdown" [style.top.px]="kebabFixedTop" [style.right.px]="kebabFixedRight">
               <button type="button" class="note-kebab-option" (click)="onEdit($event)">
                 <span class="note-kebab-option__icon">✏</span> Editar
+              </button>
+              <button type="button" class="note-kebab-option" (click)="onTogglePin($event)">
+                <span class="note-kebab-option__icon">{{ note.pinned ? '📌' : '📍' }}</span>
+                {{ note.pinned ? 'Desafixar' : 'Fixar no topo' }}
+              </button>
+              <button type="button" class="note-kebab-option" (click)="onMoveTop($event)">
+                <span class="note-kebab-option__icon">⬆</span> Mover para o topo
+              </button>
+              <button type="button" class="note-kebab-option" (click)="onMoveBottom($event)">
+                <span class="note-kebab-option__icon">⬇</span> Mover para o final
+              </button>
+              <button type="button" class="note-kebab-option" (click)="onMoveToPosition($event)">
+                <span class="note-kebab-option__icon">↕</span> Mover para posição...
               </button>
               <button type="button" class="note-kebab-option note-kebab-option--danger" (click)="onDelete($event)">
                 <span class="note-kebab-option__icon">🗑</span> Excluir
@@ -19,6 +37,17 @@
           }
         </div>
       </div>
+
+      @if (note.tags && note.tags.length > 0) {
+        <div class="note-tags">
+          @for (tag of note.tags; track tag.id) {
+            <span class="note-tag-badge" [style.background]="tag.color + '22'" [style.color]="tag.color" [style.border-color]="tag.color + '55'">
+              {{ tag.name }}
+            </span>
+          }
+        </div>
+      }
+
       @if (note.content) {
         <p #contentEl class="note-item__content" [class.note-item__content--collapsed]="!isExpanded">{{ note.content }}</p>
         @if (isLong) {

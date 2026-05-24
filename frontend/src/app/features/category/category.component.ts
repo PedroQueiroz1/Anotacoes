@@ -1,12 +1,14 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { CdkDrag, CdkDragDrop, CdkDragStart, CdkDropList, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { CdkDrag, CdkDragDrop, CdkDropList, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { Category } from '../../core/models/category.model';
 import { Task, Priority, TaskStatus, PRIORITY_LABEL, STATUS_LABEL } from '../../core/models/task.model';
 import { Note } from '../../core/models/note.model';
+import { NoteTag } from '../../core/models/note-tag.model';
 import { ConceptSuggestion } from '../../core/models/programming-concept.model';
 import { CategoryService } from '../../core/services/category.service';
 import { TaskService, TaskPayload } from '../../core/services/task.service';
@@ -39,7 +41,9 @@ function emptyTaskForm(): TaskForm {
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
-export class CategoryComponent implements OnInit, OnDestroy {
+export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
+  @ViewChild('noteSentinel') noteSentinelRef?: ElementRef<HTMLDivElement>;
+
   // paramMap subscription ensures data reloads when navigating between categories
   private route           = inject(ActivatedRoute);
   private titleService    = inject(Title);
@@ -50,6 +54,9 @@ export class CategoryComponent implements OnInit, OnDestroy {
   private exportService   = inject(CategoryExportService);
 
   private routeSub?: Subscription;
+  private noteObserver?: IntersectionObserver;
+  private noteQuerySubject = new Subject<string>();
+  private noteQuerySub?: Subscription;
 
   // ── Autocomplete de conceitos ─────────────────────────────────────────────
   conceptSuggestion: ConceptSuggestion | null = null;
@@ -101,8 +108,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
   get taskDragDisabled(): boolean { return this.taskHasNext || this.taskPageIndex > 0; }
 
   // ── Estatísticas ──────────────────────────────────────────────────────────
-  totalNoteCount = 0;
-  get statNotes(): number { return this.totalNoteCount; }
+  get statNotes(): number { return this.noteTotalCount; }
 
   // ── Formulário de tarefa ──────────────────────────────────────────────────
   showForm  = false;
@@ -112,31 +118,34 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
   // ── Modal de edição ───────────────────────────────────────────────────────
   editingTask: Task | null = null;
-
   deletingTaskId: number | null = null;
 
-  // ── Anotações ─────────────────────────────────────────────────────────────
+  // ── Anotações — Infinite Scroll ───────────────────────────────────────────
   notes: Note[] = [];
-
-  // ── Paginação de anotações ────────────────────────────────────────────────
-  noteCursorHistory: (string | null)[] = [null];
-  notePageIndex = 0;
   noteNextCursor: string | null = null;
-  noteHasNext = false;
+  noteHasMore = false;
+  noteLoadingMore = false;
+  noteTotalCount = 0;
 
-  get noteHasPrev(): boolean { return this.notePageIndex > 0; }
+  // Filtros
+  noteQuery = '';
+  noteSort = 'recent';
+  noteTagFilter: number | null = null;
 
-  // ── Drag de anotações ─────────────────────────────────────────────────────
-  noteDragging = false;
-  private noteDraggingRef: Note | null = null;
-  private pageChangeTimer: ReturnType<typeof setTimeout> | null = null;
+  // Tags disponíveis
+  availableTags: NoteTag[] = [];
 
+  // Mover para posição
+  movingNote: Note | null = null;
+  moveToPositionValue = 1;
+  showMovePositionDialog = false;
+
+  // Formulário de nova anotação
   showNoteForm   = false;
   noteTitle      = '';
   noteContent    = '';
   noteFormError  = '';
   isSavingNote   = false;
-
   deletingNoteId: number | null = null;
 
   // ── Exportação TXT ────────────────────────────────────────────────────────
@@ -144,17 +153,41 @@ export class CategoryComponent implements OnInit, OnDestroy {
   exportError   = '';
 
   ngOnInit(): void {
+    // Debounce da busca de notas
+    this.noteQuerySub = this.noteQuerySubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+    ).subscribe(q => {
+      this.noteQuery = q;
+      this.loadNotes(true);
+    });
+
     this.routeSub = this.route.paramMap.subscribe(params => {
       const slug = params.get('slug') ?? '';
       this.resetState();
       this.load(slug);
     });
+  }
 
+  ngAfterViewInit(): void {
+    this.setupNoteObserver();
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
-    this.clearPageChangeTimer();
+    this.noteQuerySub?.unsubscribe();
+    this.noteObserver?.disconnect();
+  }
+
+  private setupNoteObserver(): void {
+    if (!this.noteSentinelRef) return;
+    this.noteObserver?.disconnect();
+    this.noteObserver = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !this.noteLoadingMore && this.noteHasMore) {
+        this.loadNotes();
+      }
+    }, { threshold: 0.1 });
+    this.noteObserver.observe(this.noteSentinelRef.nativeElement);
   }
 
   private resetState(): void {
@@ -163,7 +196,16 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.progressTasks = [];
     this.doneTasks     = [];
     this.notes = [];
-    this.totalNoteCount = 0;
+    this.noteTotalCount = 0;
+    this.noteNextCursor = null;
+    this.noteHasMore = false;
+    this.noteLoadingMore = false;
+    this.noteQuery = '';
+    this.noteSort = 'recent';
+    this.noteTagFilter = null;
+    this.availableTags = [];
+    this.showMovePositionDialog = false;
+    this.movingNote = null;
     this.showForm = false;
     this.showNoteForm = false;
     this.editingTask = null;
@@ -171,7 +213,6 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.deletingTaskId = null;
     this.deletingNoteId = null;
     this.resetTaskPagination();
-    this.resetNotePagination();
     this.resetConceptSuggestion();
   }
 
@@ -196,13 +237,6 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.taskHasNext = false;
   }
 
-  private resetNotePagination(): void {
-    this.noteCursorHistory = [null];
-    this.notePageIndex = 0;
-    this.noteNextCursor = null;
-    this.noteHasNext = false;
-  }
-
   load(slug: string): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -212,6 +246,7 @@ export class CategoryComponent implements OnInit, OnDestroy {
         this.categoryId = cat.id;
         this.titleService.setTitle(`TaskNotes — ${cat.name}`);
         this.loadTasks(null);
+        this.loadAvailableTags();
       },
       error: () => { this.errorMessage = 'Categoria não encontrada.'; this.isLoading = false; },
     });
@@ -225,22 +260,107 @@ export class CategoryComponent implements OnInit, OnDestroy {
         this.doneTasks     = page.items.filter(t => t.status === 'DONE');
         this.taskNextCursor = page.nextCursor;
         this.taskHasNext = page.hasNext;
-        this.loadNotes(null);
+        this.loadNotes(true);
       },
       error: () => { this.errorMessage = 'Erro ao carregar tarefas.'; this.isLoading = false; },
     });
   }
 
-  private loadNotes(cursor: string | null): void {
-    this.noteService.getByCategory(this.categoryId, cursor).subscribe({
+  loadNotes(reset = false): void {
+    if (this.noteLoadingMore && !reset) return;
+    if (reset) {
+      this.notes = [];
+      this.noteNextCursor = null;
+      this.noteHasMore = false;
+    }
+    this.noteLoadingMore = true;
+    const cursor = reset ? null : this.noteNextCursor;
+
+    this.noteService.getByCategory(
+      this.categoryId,
+      cursor,
+      this.noteQuery || null,
+      this.noteSort,
+      this.noteTagFilter,
+    ).subscribe({
       next: (page) => {
-        this.notes = page.items;
-        this.noteNextCursor = page.nextCursor;
-        this.noteHasNext = page.hasNext;
-        if (page.totalCount != null) this.totalNoteCount = page.totalCount;
+        this.notes = reset ? page.items : [...this.notes, ...page.items];
+        this.noteNextCursor = page.nextCursor ?? null;
+        this.noteHasMore = page.hasNext;
+        if (page.totalCount != null) this.noteTotalCount = page.totalCount;
+        this.noteLoadingMore = false;
         this.isLoading = false;
+        // Re-observe sentinel after DOM update
+        if (reset) {
+          setTimeout(() => this.setupNoteObserver(), 0);
+        }
       },
-      error: () => { this.errorMessage = 'Erro ao carregar anotações.'; this.isLoading = false; },
+      error: () => { this.errorMessage = 'Erro ao carregar anotações.'; this.noteLoadingMore = false; this.isLoading = false; },
+    });
+  }
+
+  private loadAvailableTags(): void {
+    this.noteService.getTags().subscribe({
+      next: tags => this.availableTags = tags,
+      error: () => {},
+    });
+  }
+
+  // ── Filtros ───────────────────────────────────────────────────────────────
+  onNoteQueryChange(q: string): void {
+    this.noteQuerySubject.next(q);
+  }
+
+  onNoteSortChange(s: string): void {
+    this.noteSort = s;
+    this.loadNotes(true);
+  }
+
+  onNoteTagFilter(tagId: number | null): void {
+    this.noteTagFilter = tagId;
+    this.loadNotes(true);
+  }
+
+  // ── Ações de nota ─────────────────────────────────────────────────────────
+  onNotePinToggle(note: Note): void {
+    this.noteService.togglePin(note.id).subscribe({
+      next: (updated) => {
+        const idx = this.notes.findIndex(n => n.id === updated.id);
+        if (idx !== -1) this.notes[idx] = updated;
+      },
+      error: () => {},
+    });
+  }
+
+  onNoteMoveTop(note: Note): void {
+    this.noteService.moveToTop(note.id).subscribe({
+      next: () => this.loadNotes(true),
+      error: () => {},
+    });
+  }
+
+  onNoteMoveBottom(note: Note): void {
+    this.noteService.moveToBottom(note.id).subscribe({
+      next: () => this.loadNotes(true),
+      error: () => {},
+    });
+  }
+
+  openMovePositionDialog(note: Note): void {
+    this.movingNote = note;
+    this.moveToPositionValue = (note.position ?? 1);
+    this.showMovePositionDialog = true;
+  }
+
+  confirmMovePosition(): void {
+    if (!this.movingNote) return;
+    this.noteService.moveToPosition(this.movingNote.id, this.moveToPositionValue).subscribe({
+      next: () => {
+        this.showMovePositionDialog = false;
+        this.movingNote = null;
+        this.loadNotes(true);
+      },
+      error: () => { this.showMovePositionDialog = false; },
     });
   }
 
@@ -258,22 +378,6 @@ export class CategoryComponent implements OnInit, OnDestroy {
     if (this.taskPageIndex <= 0) return;
     this.taskPageIndex--;
     this.loadTasks(this.taskCursorHistory[this.taskPageIndex]);
-  }
-
-  // ── Paginação — anotações ─────────────────────────────────────────────────
-  noteNextPage(): void {
-    if (!this.noteHasNext || !this.noteNextCursor) return;
-    this.notePageIndex++;
-    if (this.noteCursorHistory.length <= this.notePageIndex) {
-      this.noteCursorHistory.push(this.noteNextCursor);
-    }
-    this.loadNotes(this.noteCursorHistory[this.notePageIndex]);
-  }
-
-  notePrevPage(): void {
-    if (this.notePageIndex <= 0) return;
-    this.notePageIndex--;
-    this.loadNotes(this.noteCursorHistory[this.notePageIndex]);
   }
 
   // ── Formulário de tarefa ───────────────────────────────────────────────────
@@ -371,19 +475,18 @@ export class CategoryComponent implements OnInit, OnDestroy {
 
     this.noteService.create(this.categoryId, payload).subscribe({
       next: () => {
-        this.totalNoteCount++;
-        this.resetNotePagination();
-        this.loadNotes(null);
         this.showNoteForm = false;
         this.isSavingNote = false;
+        this.loadNotes(true);
       },
-      error: (err)  => { this.noteFormError = err.error?.message ?? 'Erro ao criar anotação.'; this.isSavingNote = false; },
+      error: (err) => { this.noteFormError = err.error?.message ?? 'Erro ao criar anotação.'; this.isSavingNote = false; },
     });
   }
 
   onNoteUpdated(updated: Note): void {
     const idx = this.notes.findIndex(n => n.id === updated.id);
     if (idx !== -1) this.notes[idx] = updated;
+    this.loadAvailableTags();
   }
 
   onNoteDeleteRequested(noteId: number): void { this.deletingNoteId = noteId; }
@@ -393,11 +496,8 @@ export class CategoryComponent implements OnInit, OnDestroy {
     this.noteService.delete(this.deletingNoteId!).subscribe({
       next: () => {
         this.notes = this.notes.filter(n => n.id !== this.deletingNoteId);
-        this.totalNoteCount = Math.max(0, this.totalNoteCount - 1);
+        this.noteTotalCount = Math.max(0, this.noteTotalCount - 1);
         this.deletingNoteId = null;
-        if (this.notes.length === 0 && this.notePageIndex > 0) {
-          this.notePrevPage();
-        }
       },
       error: () => { this.errorMessage = 'Erro ao excluir anotação.'; this.deletingNoteId = null; },
     });
@@ -433,90 +533,6 @@ export class CategoryComponent implements OnInit, OnDestroy {
     if (id === 'kanban-progress') return 'IN_PROGRESS';
     if (id === 'kanban-done')     return 'DONE';
     return null;
-  }
-
-  onNoteDragStarted(event: CdkDragStart): void {
-    this.noteDragging = true;
-    this.noteDraggingRef = event.source.data as Note;
-  }
-
-  dropNotes(event: CdkDragDrop<Note[]>): void {
-    this.clearPageChangeTimer();
-    this.noteDragging = false;
-    this.noteDraggingRef = null;
-    moveItemInArray(this.notes, event.previousIndex, event.currentIndex);
-    const offset = this.notePageIndex * 10;
-    this.noteService.reorder(this.categoryId, this.notes.map(n => n.id), offset).subscribe();
-  }
-
-  onNoteDragEnded(): void {
-    this.clearPageChangeTimer();
-    this.noteDragging = false;
-    this.noteDraggingRef = null;
-  }
-
-  onPaginationBtnEnter(direction: 'prev' | 'next'): void {
-    if (!this.noteDragging) return;
-    const canGo = direction === 'next' ? this.noteHasNext : this.noteHasPrev;
-    if (!canGo) return;
-    this.clearPageChangeTimer();
-    this.schedulePageChange(direction);
-  }
-
-  onPaginationBtnLeave(): void {
-    this.clearPageChangeTimer();
-  }
-
-  private schedulePageChange(direction: 'prev' | 'next'): void {
-    this.pageChangeTimer = setTimeout(() => {
-      this.pageChangeTimer = null;
-      const canGo = direction === 'next' ? this.noteHasNext : this.noteHasPrev;
-      if (!this.noteDragging || !canGo) return;
-      const movingNote = this.noteDraggingRef;
-      // Navigate the page
-      if (direction === 'next') {
-        this.notePageIndex++;
-        if (this.noteCursorHistory.length <= this.notePageIndex) {
-          this.noteCursorHistory.push(this.noteNextCursor);
-        }
-        this.loadNotesForDrag(this.noteCursorHistory[this.notePageIndex], movingNote);
-      } else {
-        this.notePageIndex--;
-        this.loadNotesForDrag(this.noteCursorHistory[this.notePageIndex], movingNote);
-      }
-    }, 1000);
-  }
-
-  private loadNotesForDrag(cursor: string | null, movingNote: Note | null): void {
-    this.noteService.getByCategory(this.categoryId, cursor).subscribe({
-      next: (page) => {
-        this.notes = page.items;
-        this.noteNextCursor = page.nextCursor;
-        this.noteHasNext = page.hasNext;
-        if (page.totalCount != null) this.totalNoteCount = page.totalCount;
-        // Insert moving note at top, keep at most 10 items, then save order
-        if (movingNote) {
-          this.notes = this.notes.filter(n => n.id !== movingNote.id);
-          this.notes.unshift(movingNote);
-          this.notes = this.notes.slice(0, 10);
-          const offset = this.notePageIndex * 10;
-          this.noteService.reorder(this.categoryId, this.notes.map(n => n.id), offset).subscribe();
-        }
-        this.noteDragging = false;
-        this.noteDraggingRef = null;
-      },
-      error: () => {
-        this.noteDragging = false;
-        this.noteDraggingRef = null;
-      },
-    });
-  }
-
-  private clearPageChangeTimer(): void {
-    if (this.pageChangeTimer !== null) {
-      clearTimeout(this.pageChangeTimer);
-      this.pageChangeTimer = null;
-    }
   }
 
   replaceTask(updated: Task): void {

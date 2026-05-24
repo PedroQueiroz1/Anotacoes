@@ -9,6 +9,7 @@ import com.tasknotes.categories.model.Category;
 import com.tasknotes.notes.model.Note;
 import com.tasknotes.categories.repository.CategoryRepository;
 import com.tasknotes.notes.repository.NoteRepository;
+import com.tasknotes.notes.repository.NoteTagRepository;
 import com.tasknotes.users.service.SecurityHelper;
 import com.tasknotes.notes.service.NoteService;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -29,6 +32,7 @@ import static org.mockito.Mockito.*;
 class NoteServiceTest {
 
     @Mock NoteRepository     noteRepository;
+    @Mock NoteTagRepository  noteTagRepository;
     @Mock CategoryRepository categoryRepository;
     @Mock SecurityHelper     securityHelper;
 
@@ -53,6 +57,9 @@ class NoteServiceTest {
         lenient().when(n.getCategory()).thenReturn(cat);
         lenient().when(n.getTitle()).thenReturn(title);
         lenient().when(n.getContent()).thenReturn(content);
+        lenient().when(n.isPinned()).thenReturn(false);
+        lenient().when(n.getPinnedAt()).thenReturn(null);
+        lenient().when(n.getTags()).thenReturn(new ArrayList<>());
         lenient().when(n.getCreatedAt()).thenReturn(LocalDateTime.now());
         lenient().when(n.getUpdatedAt()).thenReturn(LocalDateTime.now());
         return n;
@@ -79,8 +86,9 @@ class NoteServiceTest {
         Note     note = stubNote(5L, 1L, "My Note", "Content");
         when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(noteRepository.save(any())).thenReturn(note);
+        when(noteRepository.findByIdWithTags(5L)).thenReturn(Optional.of(note));
 
-        NoteResponse r = service.create(1L, new NoteRequest("My Note", "Content"));
+        NoteResponse r = service.create(1L, new NoteRequest("My Note", "Content", null));
 
         assertThat(r.id()).isEqualTo(5L);
         assertThat(r.title()).isEqualTo("My Note");
@@ -93,7 +101,7 @@ class NoteServiceTest {
         when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         String tooLong = "x".repeat(2001);
 
-        assertThatThrownBy(() -> service.create(1L, new NoteRequest("Title", tooLong)))
+        assertThatThrownBy(() -> service.create(1L, new NoteRequest("Title", tooLong, null)))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("2000");
 
@@ -106,8 +114,9 @@ class NoteServiceTest {
         Note     note = stubNote(1L, 1L, "Title", null);
         when(categoryRepository.findByIdWithOwner(1L)).thenReturn(Optional.of(cat));
         when(noteRepository.save(any())).thenReturn(note);
+        when(noteRepository.findByIdWithTags(1L)).thenReturn(Optional.of(note));
 
-        NoteResponse r = service.create(1L, new NoteRequest("Title", null));
+        NoteResponse r = service.create(1L, new NoteRequest("Title", null, null));
 
         assertThat(r.content()).isNull();
     }
@@ -116,7 +125,7 @@ class NoteServiceTest {
     void create_throwsResourceNotFoundException_whenCategoryMissing() {
         when(categoryRepository.findByIdWithOwner(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(99L, new NoteRequest("X", null)))
+        assertThatThrownBy(() -> service.create(99L, new NoteRequest("X", null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -126,8 +135,9 @@ class NoteServiceTest {
         Note existing = stubNote(1L, 1L, "Old", "Old content");
         when(noteRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(existing));
         when(noteRepository.save(existing)).thenReturn(existing);
+        when(noteRepository.findByIdWithTags(1L)).thenReturn(Optional.of(existing));
 
-        service.update(1L, new NoteRequest("New Title", "New content"));
+        service.update(1L, new NoteRequest("New Title", "New content", null));
 
         verify(existing).setTitle("New Title");
         verify(existing).setContent("New content");
@@ -140,7 +150,7 @@ class NoteServiceTest {
         when(noteRepository.findByIdWithCategoryAndOwner(1L)).thenReturn(Optional.of(note));
         String tooLong = "y".repeat(2001);
 
-        assertThatThrownBy(() -> service.update(1L, new NoteRequest("Title", tooLong)))
+        assertThatThrownBy(() -> service.update(1L, new NoteRequest("Title", tooLong, null)))
                 .isInstanceOf(BusinessException.class);
 
         verify(noteRepository, never()).save(any());
@@ -150,7 +160,7 @@ class NoteServiceTest {
     void update_throwsResourceNotFoundException_whenNotFound() {
         when(noteRepository.findByIdWithCategoryAndOwner(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.update(99L, new NoteRequest("X", null)))
+        assertThatThrownBy(() -> service.update(99L, new NoteRequest("X", null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

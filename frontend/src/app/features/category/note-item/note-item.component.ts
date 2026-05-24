@@ -19,8 +19,12 @@ import { YoutubePreviewComponent } from '../../../shared/components/youtube-prev
 })
 export class NoteItemComponent implements AfterViewInit, OnChanges {
   @Input({ required: true }) note!: Note;
-  @Output() noteUpdated     = new EventEmitter<Note>();
-  @Output() deleteRequested = new EventEmitter<number>();
+  @Output() noteUpdated      = new EventEmitter<Note>();
+  @Output() deleteRequested  = new EventEmitter<number>();
+  @Output() pinToggled       = new EventEmitter<Note>();
+  @Output() noteMoveTop      = new EventEmitter<Note>();
+  @Output() noteMoveBottom   = new EventEmitter<Note>();
+  @Output() noteMovePosition = new EventEmitter<Note>();
 
   @ViewChild('contentEl')   contentEl?: ElementRef<HTMLParagraphElement>;
   @ViewChild('noteKebabBtn') noteKebabBtnRef?: ElementRef<HTMLButtonElement>;
@@ -116,6 +120,30 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     event.stopPropagation();
     this.dropdownService.close();
     this.deleteRequested.emit(this.note.id);
+  }
+
+  onTogglePin(event: Event): void {
+    event.stopPropagation();
+    this.dropdownService.close();
+    this.pinToggled.emit(this.note);
+  }
+
+  onMoveTop(event: Event): void {
+    event.stopPropagation();
+    this.dropdownService.close();
+    this.noteMoveTop.emit(this.note);
+  }
+
+  onMoveBottom(event: Event): void {
+    event.stopPropagation();
+    this.dropdownService.close();
+    this.noteMoveBottom.emit(this.note);
+  }
+
+  onMoveToPosition(event: Event): void {
+    event.stopPropagation();
+    this.dropdownService.close();
+    this.noteMovePosition.emit(this.note);
   }
 
   startEdit(): void {

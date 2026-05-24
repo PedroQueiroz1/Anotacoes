@@ -7,6 +7,7 @@ import com.tasknotes.notes.dto.NoteResponse;
 import com.tasknotes.shared.exception.GlobalExceptionHandler;
 import com.tasknotes.shared.exception.ResourceNotFoundException;
 import com.tasknotes.notes.service.NoteService;
+import com.tasknotes.notes.service.NoteTagService;
 import com.tasknotes.notes.controller.NoteController;
 import com.tasknotes.shared.config.SecurityConfig;
 import com.tasknotes.config.TestSecurityConfig;
@@ -37,37 +38,18 @@ class NoteControllerTest {
     @Autowired MockMvc      mockMvc;
     @Autowired ObjectMapper objectMapper;
     @MockBean  NoteService  service;
+    @MockBean  NoteTagService tagService;
 
     private NoteResponse sample(long id) {
         return new NoteResponse(id, null, 1L, "Meeting notes", "Content here", null,
-                LocalDateTime.now(), LocalDateTime.now());
+                false, null, List.of(), LocalDateTime.now(), LocalDateTime.now());
     }
-
-    // @Test
-    // void getById_returns200_whenExists() throws Exception {
-    //     when(service.findById(1L)).thenReturn(sample(1L));
-
-    //     mockMvc.perform(get("/api/notes/1"))
-    //            .andExpect(status().isOk())
-    //            .andExpect(jsonPath("$.id").value(1))
-    //            .andExpect(jsonPath("$.title").value("Meeting notes"));
-    // }
-
-    // @Test
-    // void getById_returns404_whenNotFound() throws Exception {
-    //     when(service.findById(99L))
-    //             .thenThrow(new ResourceNotFoundException("Anotação não encontrada: 99"));
-
-    //     mockMvc.perform(get("/api/notes/99"))
-    //            .andExpect(status().isNotFound())
-    //            .andExpect(jsonPath("$.status").value(404));
-    // }
 
     @Test
     void listByCategory_returns200WithList() throws Exception {
         CursorPageResponse<NoteResponse> page = new CursorPageResponse<>(
                 List.of(sample(1L), sample(2L)), null, false, 10, null);
-        when(service.findByCategory(eq(1L), isNull())).thenReturn(page);
+        when(service.findByCategory(eq(1L), isNull(), isNull(), anyString(), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/api/categories/1/notes"))
                .andExpect(status().isOk())
@@ -83,7 +65,7 @@ class NoteControllerTest {
         mockMvc.perform(post("/api/categories/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new NoteRequest("Meeting notes", "Content here"))))
+                               new NoteRequest("Meeting notes", "Content here", null))))
                .andExpect(status().isCreated())
                .andExpect(jsonPath("$.id").value(5))
                .andExpect(jsonPath("$.categoryId").value(1));
@@ -93,20 +75,20 @@ class NoteControllerTest {
     void create_returns400_whenTitleIsBlank() throws Exception {
         mockMvc.perform(post("/api/categories/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
-                       .content(objectMapper.writeValueAsString(new NoteRequest("", null))))
+                       .content(objectMapper.writeValueAsString(new NoteRequest("", null, null))))
                .andExpect(status().isBadRequest());
     }
 
     @Test
     void update_returns200WithUpdatedNote() throws Exception {
         NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content", null,
-                LocalDateTime.now(), LocalDateTime.now());
+                false, null, List.of(), LocalDateTime.now(), LocalDateTime.now());
         when(service.update(eq(1L), any())).thenReturn(updated);
 
         mockMvc.perform(put("/api/notes/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new NoteRequest("Updated", "New content"))))
+                               new NoteRequest("Updated", "New content", null))))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.title").value("Updated"))
                .andExpect(jsonPath("$.content").value("New content"));

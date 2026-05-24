@@ -286,56 +286,103 @@
         </div>
       }
 
-      <!-- Lista de anotações -->
-      @if (notes.length === 0 && !showNoteForm) {
-        <div class="empty-state empty-state--sm">
-          <p>Nenhuma anotação nesta categoria.</p>
+      <!-- Controles de busca e ordenação -->
+      @if (!showNoteForm) {
+        <div class="note-controls">
+          <input
+            class="form-input note-search__input"
+            type="search"
+            placeholder="Buscar anotações..."
+            [ngModel]="noteQuery"
+            (ngModelChange)="onNoteQueryChange($event)"
+          />
+          <select
+            class="form-input note-sort__select"
+            [ngModel]="noteSort"
+            (ngModelChange)="onNoteSortChange($event)">
+            <option value="recent">Mais recentes</option>
+            <option value="oldest">Mais antigas</option>
+            <option value="title_asc">A → Z</option>
+            <option value="title_desc">Z → A</option>
+            <option value="pinned">Fixadas primeiro</option>
+            <option value="manual">Ordem manual</option>
+          </select>
         </div>
-      } @else {
-        <ul class="note-list"
-            cdkDropList
-            [cdkDropListData]="notes"
-            (cdkDropListDropped)="dropNotes($event)">
-          @for (note of notes; track note.id) {
-            <li class="note-list__item" cdkDrag [cdkDragData]="note"
-                (cdkDragStarted)="onNoteDragStarted($event)"
-                (cdkDragEnded)="onNoteDragEnded()">
-              <div class="note-drag-handle" cdkDragHandle title="Arrastar">⠿</div>
-              <app-note-item
-                [note]="note"
-                (noteUpdated)="onNoteUpdated($event)"
-                (deleteRequested)="onNoteDeleteRequested($event)"
-              />
-                <ng-template cdkDragPlaceholder>
-                <li class="note-list__placeholder"></li>
-              </ng-template>
-            </li>
-          }
-        </ul>
 
-        @if (noteHasPrev || noteHasNext) {
-          <div class="pagination-bar">
-            <button class="btn btn--ghost btn--sm"
-                    [disabled]="!noteHasPrev"
-                    [class.pagination-bar__btn--drag-hover]="noteDragging && noteHasPrev"
-                    (click)="!noteDragging && notePrevPage()"
-                    (mouseenter)="onPaginationBtnEnter('prev')"
-                    (mouseleave)="onPaginationBtnLeave()">
-              &#8592; Anterior
+        @if (availableTags.length > 0) {
+          <div class="note-tag-filter">
+            <button
+              class="note-tag-chip"
+              [class.note-tag-chip--active]="noteTagFilter === null"
+              (click)="onNoteTagFilter(null)">
+              Todas
             </button>
-            <span class="pagination-bar__page">Página {{ notePageIndex + 1 }}</span>
-            <button class="btn btn--ghost btn--sm"
-                    [disabled]="!noteHasNext"
-                    [class.pagination-bar__btn--drag-hover]="noteDragging && noteHasNext"
-                    (click)="!noteDragging && noteNextPage()"
-                    (mouseenter)="onPaginationBtnEnter('next')"
-                    (mouseleave)="onPaginationBtnLeave()">
-              Próxima &#8594;
-            </button>
+            @for (tag of availableTags; track tag.id) {
+              <button
+                class="note-tag-chip"
+                [class.note-tag-chip--active]="noteTagFilter === tag.id"
+                [style.--chip-color]="tag.color"
+                (click)="onNoteTagFilter(tag.id)">
+                {{ tag.name }}
+              </button>
+            }
           </div>
         }
       }
+
+      <!-- Lista de anotações -->
+      @if (notes.length === 0 && !showNoteForm && !noteLoadingMore) {
+        <div class="empty-state empty-state--sm">
+          @if (noteQuery || noteTagFilter !== null) {
+            <p>Nenhuma anotação encontrada para os filtros aplicados.</p>
+          } @else {
+            <p>Nenhuma anotação nesta categoria.</p>
+          }
+        </div>
+      }
+
+      <ul class="note-list">
+        @for (note of notes; track note.id) {
+          <li class="note-list__item">
+            <app-note-item
+              [note]="note"
+              (noteUpdated)="onNoteUpdated($event)"
+              (deleteRequested)="onNoteDeleteRequested($event)"
+              (pinToggled)="onNotePinToggle($event)"
+              (noteMoveTop)="onNoteMoveTop($event)"
+              (noteMoveBottom)="onNoteMoveBottom($event)"
+              (noteMovePosition)="openMovePositionDialog($event)"
+            />
+          </li>
+        }
+      </ul>
+
+      <!-- Sentinel para infinite scroll -->
+      <div #noteSentinel class="note-sentinel"></div>
+
+      @if (noteLoadingMore) {
+        <div class="note-loading">Carregando...</div>
+      }
+
+      @if (!noteHasMore && notes.length > 0 && !noteLoadingMore) {
+        <div class="note-end">{{ notes.length }} de {{ noteTotalCount }} anotações</div>
+      }
     </section>
+
+    <!-- ── Diálogo mover para posição ─────────────────────────────────────────── -->
+    @if (showMovePositionDialog && movingNote) {
+      <div class="move-position-overlay" (click)="showMovePositionDialog = false">
+        <div class="move-position-dialog" (click)="$event.stopPropagation()">
+          <h4 class="move-position-dialog__title">Mover para posição</h4>
+          <p class="move-position-dialog__note">{{ movingNote.title }}</p>
+          <input class="form-input" type="number" min="1" [(ngModel)]="moveToPositionValue" />
+          <div class="move-position-dialog__actions">
+            <button class="btn btn--ghost btn--sm" (click)="showMovePositionDialog = false">Cancelar</button>
+            <button class="btn btn--primary btn--sm" (click)="confirmMovePosition()">Mover</button>
+          </div>
+        </div>
+      </div>
+    }
 
   }
 

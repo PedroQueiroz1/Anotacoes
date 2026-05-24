@@ -9,6 +9,8 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "note")
@@ -35,6 +37,20 @@ public class Note {
     @Column
     private Integer position;
 
+    @Column(nullable = false)
+    private boolean pinned = false;
+
+    @Column(name = "pinned_at")
+    private LocalDateTime pinnedAt;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "note_note_tag",
+        joinColumns = @JoinColumn(name = "note_id"),
+        inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    private List<NoteTag> tags = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -48,17 +64,23 @@ public class Note {
         if (this.uuid == null) this.uuid = UuidV7Generator.generate();
     }
 
-    public Long getId()                   { return id; }
-    public String getUuid()               { return uuid; }
-    public void setUuid(String uuid)      { this.uuid = uuid; }
-    public Category getCategory()         { return category; }
-    public void setCategory(Category c)   { this.category = c; }
-    public String getTitle()              { return title; }
-    public void setTitle(String t)        { this.title = t; }
-    public String getContent()            { return content; }
-    public void setContent(String c)      { this.content = c; }
-    public Integer getPosition()           { return position; }
-    public void setPosition(Integer p)    { this.position = p; }
-    public LocalDateTime getCreatedAt()   { return createdAt; }
-    public LocalDateTime getUpdatedAt()   { return updatedAt; }
+    public Long getId()                       { return id; }
+    public String getUuid()                   { return uuid; }
+    public void setUuid(String uuid)          { this.uuid = uuid; }
+    public Category getCategory()             { return category; }
+    public void setCategory(Category c)       { this.category = c; }
+    public String getTitle()                  { return title; }
+    public void setTitle(String t)            { this.title = t; }
+    public String getContent()                { return content; }
+    public void setContent(String c)          { this.content = c; }
+    public Integer getPosition()              { return position; }
+    public void setPosition(Integer p)        { this.position = p; }
+    public boolean isPinned()                 { return pinned; }
+    public void setPinned(boolean pinned)     { this.pinned = pinned; }
+    public LocalDateTime getPinnedAt()        { return pinnedAt; }
+    public void setPinnedAt(LocalDateTime t)  { this.pinnedAt = t; }
+    public List<NoteTag> getTags()            { return tags; }
+    public void setTags(List<NoteTag> tags)   { this.tags = tags; }
+    public LocalDateTime getCreatedAt()       { return createdAt; }
+    public LocalDateTime getUpdatedAt()       { return updatedAt; }
 }

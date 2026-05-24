@@ -49,6 +49,105 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
                                                     @Param("lastId") Long lastId,
                                                     Pageable pageable);
 
+    // ── Feature 024: filtered + sorted first page ──────────────────────────────
+    // sort=recent (default): pinned first (pinnedAt DESC), then createdAt DESC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, n.created_at DESC, n.id DESC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredRecent(@Param("categoryId") Long categoryId,
+                                             @Param("query") String query,
+                                             @Param("tagId") Long tagId,
+                                             Pageable pageable);
+
+    // sort=oldest: pinned first, then createdAt ASC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, n.created_at ASC, n.id ASC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredOldest(@Param("categoryId") Long categoryId,
+                                             @Param("query") String query,
+                                             @Param("tagId") Long tagId,
+                                             Pageable pageable);
+
+    // sort=title_asc: pinned first, then title ASC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, n.title ASC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredTitleAsc(@Param("categoryId") Long categoryId,
+                                               @Param("query") String query,
+                                               @Param("tagId") Long tagId,
+                                               Pageable pageable);
+
+    // sort=title_desc: pinned first, then title DESC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, n.title DESC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredTitleDesc(@Param("categoryId") Long categoryId,
+                                                @Param("query") String query,
+                                                @Param("tagId") Long tagId,
+                                                Pageable pageable);
+
+    // sort=pinned: pinned first by pinnedAt DESC, then rest by createdAt DESC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, n.pinned_at DESC, n.created_at DESC, n.id DESC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredPinned(@Param("categoryId") Long categoryId,
+                                             @Param("query") String query,
+                                             @Param("tagId") Long tagId,
+                                             Pageable pageable);
+
+    // sort=manual: pinned first, then by position ASC (nulls last), then createdAt DESC
+    @Query(value = "SELECT DISTINCT n.* FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query))) " +
+                   "ORDER BY n.pinned DESC, CASE WHEN n.position IS NULL THEN 1 ELSE 0 END ASC, n.position ASC, n.created_at DESC, n.id DESC",
+           nativeQuery = true)
+    List<Note> findByCategoryFilteredManual(@Param("categoryId") Long categoryId,
+                                             @Param("query") String query,
+                                             @Param("tagId") Long tagId,
+                                             Pageable pageable);
+
+    // ── Feature 024: count with filters ───────────────────────────────────────
+    @Query(value = "SELECT COUNT(DISTINCT n.id) FROM note n " +
+                   "LEFT JOIN note_note_tag nnt ON nnt.note_id = n.id " +
+                   "WHERE n.category_id = :categoryId " +
+                   "AND (:tagId IS NULL OR nnt.tag_id = :tagId) " +
+                   "AND (:query IS NULL OR LOWER(n.title) LIKE LOWER(:query) OR (n.content IS NOT NULL AND LOWER(n.content) LIKE LOWER(:query)))",
+           nativeQuery = true)
+    long countByCategoryFiltered(@Param("categoryId") Long categoryId,
+                                  @Param("query") String query,
+                                  @Param("tagId") Long tagId);
+
+    // ── Feature 024: position helpers ─────────────────────────────────────────
+    @Query(value = "SELECT MIN(n.position) FROM note n WHERE n.category_id = :categoryId AND n.position IS NOT NULL",
+           nativeQuery = true)
+    Integer findMinPosition(@Param("categoryId") Long categoryId);
+
+    @Query(value = "SELECT MAX(n.position) FROM note n WHERE n.category_id = :categoryId AND n.position IS NOT NULL",
+           nativeQuery = true)
+    Integer findMaxPosition(@Param("categoryId") Long categoryId);
+
     // ── Count ─────────────────────────────────────────────────────────────────
     long countByCategoryId(Long categoryId);
 
@@ -66,4 +165,8 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     // ── Ownership-safe lookup (loads category + owner in one query) ──────────
     @Query("SELECT n FROM Note n JOIN FETCH n.category c JOIN FETCH c.owner WHERE n.id = :id")
     Optional<Note> findByIdWithCategoryAndOwner(@Param("id") Long id);
+
+    // ── Load note with tags eagerly ───────────────────────────────────────────
+    @Query("SELECT n FROM Note n LEFT JOIN FETCH n.tags WHERE n.id = :id")
+    Optional<Note> findByIdWithTags(@Param("id") Long id);
 }
