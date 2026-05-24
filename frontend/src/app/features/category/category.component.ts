@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -131,6 +131,21 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
   noteQuery = '';
   noteSort = 'recent';
   noteTagFilter: number | null = null;
+  noteShowOnlyPinned = false;
+  showNoteFilter = false;
+
+  readonly sortOptions = [
+    { value: 'recent',     label: 'Mais recentes' },
+    { value: 'oldest',     label: 'Mais antigas' },
+    { value: 'title_asc',  label: 'A → Z' },
+    { value: 'title_desc', label: 'Z → A' },
+    { value: 'pinned',     label: 'Fixadas primeiro' },
+    { value: 'manual',     label: 'Ordem manual' },
+  ];
+
+  get hasActiveNoteFilter(): boolean {
+    return this.noteSort !== 'recent' || this.noteShowOnlyPinned || this.noteTagFilter !== null;
+  }
 
   // Tags disponíveis
   availableTags: NoteTag[] = [];
@@ -203,6 +218,8 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
     this.noteQuery = '';
     this.noteSort = 'recent';
     this.noteTagFilter = null;
+    this.noteShowOnlyPinned = false;
+    this.showNoteFilter = false;
     this.availableTags = [];
     this.showMovePositionDialog = false;
     this.movingNote = null;
@@ -282,6 +299,7 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
       this.noteQuery || null,
       this.noteSort,
       this.noteTagFilter,
+      this.noteShowOnlyPinned || null,
     ).subscribe({
       next: (page) => {
         this.notes = reset ? page.items : [...this.notes, ...page.items];
@@ -312,12 +330,32 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onNoteSortChange(s: string): void {
     this.noteSort = s;
+    this.showNoteFilter = false;
     this.loadNotes(true);
   }
 
   onNoteTagFilter(tagId: number | null): void {
     this.noteTagFilter = tagId;
     this.loadNotes(true);
+  }
+
+  toggleNoteFilter(event: Event): void {
+    event.stopPropagation();
+    this.showNoteFilter = !this.showNoteFilter;
+  }
+
+  toggleOnlyPinned(): void {
+    this.noteShowOnlyPinned = !this.noteShowOnlyPinned;
+    this.loadNotes(true);
+  }
+
+  closeNoteFilter(): void {
+    this.showNoteFilter = false;
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showNoteFilter = false;
   }
 
   // ── Ações de nota ─────────────────────────────────────────────────────────

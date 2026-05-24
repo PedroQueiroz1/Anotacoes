@@ -30,16 +30,6 @@
         title="Opções do perfil"
         (click)="toggleProfileKebab($event)"
       >&#8942;</button>
-      @if (profileKebabOpen) {
-        <div class="profile-kebab-dropdown" [style.top.px]="profileKebabFixedTop" [style.left.px]="profileKebabFixedLeft">
-          <button type="button" class="profile-kebab-option" (click)="openProfileEdit()">
-            <span>✏</span> Editar Perfil
-          </button>
-          <button type="button" class="profile-kebab-option profile-kebab-option--danger" (click)="logout()">
-            <span>⎋</span> Sair
-          </button>
-        </div>
-      }
     </div>
 
     <button
@@ -366,6 +356,18 @@
 <!-- ── Overlay de resize (mantém cursor durante drag) ───────────────────── -->
 @if (isResizing) {
   <div class="sidebar-resize-overlay"></div>
+}
+
+<!-- ── Kebab de perfil — fora do <aside> para escapar do transform ─────── -->
+@if (profileKebabOpen) {
+  <div class="profile-kebab-dropdown" [style.top.px]="profileKebabFixedTop" [style.left.px]="profileKebabFixedLeft">
+    <button type="button" class="profile-kebab-option" (click)="openProfileEdit()">
+      <span>✏</span> Editar Perfil
+    </button>
+    <button type="button" class="profile-kebab-option profile-kebab-option--danger" (click)="logout()">
+      <span>⎋</span> Sair
+    </button>
+  </div>
 }
 
 <!-- ── Confirmação de exclusão ──────────────────────────────────────────── -->

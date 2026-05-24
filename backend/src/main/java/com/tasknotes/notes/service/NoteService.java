@@ -51,40 +51,31 @@ public class NoteService {
     // ── findByCategory with filters ───────────────────────────────────────────
     @Transactional(readOnly = true)
     public CursorPageResponse<NoteResponse> findByCategory(Long categoryId, String cursor) {
-        return findByCategory(categoryId, cursor, null, "recent", null);
+        return findByCategory(categoryId, cursor, null, "recent", null, null);
     }
 
     @Transactional(readOnly = true)
     public CursorPageResponse<NoteResponse> findByCategory(Long categoryId, String cursor,
-                                                            String query, String sort, Long tagId) {
+                                                            String query, String sort, Long tagId,
+                                                            Boolean pinnedOnly) {
         findCategoryWithOwnership(categoryId);
-
-        // When filters/sort change, cursor is reset to null by frontend
-        // Cursor encodes the last item's id for simple offset-by-id pagination
-        int fetch = NOTE_LIMIT + 1;
-        var pageable = PageRequest.of(0, fetch);
 
         String likeQuery = (query != null && !query.isBlank()) ? "%" + query.trim() + "%" : null;
         String effectiveSort = (sort != null) ? sort : "recent";
+        // Convert Boolean to Integer for MySQL compatibility (NULL=all, 1=pinned, 0=unpinned)
+        Integer pinnedOnlyInt = pinnedOnly == null ? null : (pinnedOnly ? 1 : 0);
 
-        // If cursor provided, decode offset
         long cursorId = 0;
         if (cursor != null) {
             try {
                 cursorId = Long.parseLong(cursor);
             } catch (NumberFormatException e) {
-                // Try old cursor format for backward compat
                 NoteCursorCodec.Payload p = NoteCursorCodec.decode(cursor);
                 if (p != null) cursorId = p.id() != null ? p.id() : 0;
             }
         }
 
-        // Load one extra page using large offset via pageable — simpler approach:
-        // we always load from beginning and use pageable offset
-        // For cursor-based, we track by last id and filter in query
-        // Since these are filtered queries, we use a simple approach:
-        // page 0 for first load, use last id to skip for next page
-        List<Note> raw = loadPage(categoryId, likeQuery, effectiveSort, tagId, cursorId, pageable);
+        List<Note> raw = loadPage(categoryId, likeQuery, effectiveSort, tagId, pinnedOnlyInt, cursorId);
 
         boolean hasNext = raw.size() > NOTE_LIMIT;
         List<Note> page = hasNext ? raw.subList(0, NOTE_LIMIT) : raw;
@@ -94,9 +85,8 @@ public class NoteService {
             nextCursor = String.valueOf(page.get(page.size() - 1).getId());
         }
 
-        long totalCount = noteRepository.countByCategoryFiltered(categoryId, likeQuery, tagId);
+        long totalCount = noteRepository.countByCategoryFiltered(categoryId, likeQuery, tagId, pinnedOnlyInt);
 
-        // Eagerly load tags for each note to avoid N+1
         List<Note> withTags = loadTagsForNotes(page);
 
         return new CursorPageResponse<>(withTags.stream().map(this::toResponse).toList(),
@@ -104,26 +94,17 @@ public class NoteService {
     }
 
     private List<Note> loadPage(Long categoryId, String likeQuery, String sort,
-                                 Long tagId, long cursorId, PageRequest pageable) {
-        // cursorId=0 means first page; otherwise we need to load enough rows
-        // We use a simple approach: always load with pageable, using offset for cursor
-        // Since MySQL native queries don't easily support "id < cursorId" across all sort modes,
-        // we load all matching rows up to a reasonable limit and do cursor-based slicing in Java
-        // For now: if cursor is 0 (first page), use normal pageable; otherwise increase offset
-        // Actually: we use a "load more by re-fetching with larger limit" approach by tracking count in cursor
-        // Simplest correct approach: cursor = count of items already shown, use LIMIT+OFFSET
-
-        // Reinterpret cursor as offset count
-        int offset = (int) cursorId; // cursorId stores offset
+                                 Long tagId, Integer pinnedOnly, long cursorId) {
+        int offset = (int) cursorId;
         var offsetPageable = PageRequest.of(0, NOTE_LIMIT + 1 + offset);
 
         List<Note> all = switch (sort) {
-            case "oldest"     -> noteRepository.findByCategoryFilteredOldest(categoryId, likeQuery, tagId, offsetPageable);
-            case "title_asc"  -> noteRepository.findByCategoryFilteredTitleAsc(categoryId, likeQuery, tagId, offsetPageable);
-            case "title_desc" -> noteRepository.findByCategoryFilteredTitleDesc(categoryId, likeQuery, tagId, offsetPageable);
-            case "pinned"     -> noteRepository.findByCategoryFilteredPinned(categoryId, likeQuery, tagId, offsetPageable);
-            case "manual"     -> noteRepository.findByCategoryFilteredManual(categoryId, likeQuery, tagId, offsetPageable);
-            default           -> noteRepository.findByCategoryFilteredRecent(categoryId, likeQuery, tagId, offsetPageable);
+            case "oldest"     -> noteRepository.findByCategoryFilteredOldest(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
+            case "title_asc"  -> noteRepository.findByCategoryFilteredTitleAsc(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
+            case "title_desc" -> noteRepository.findByCategoryFilteredTitleDesc(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
+            case "pinned"     -> noteRepository.findByCategoryFilteredPinned(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
+            case "manual"     -> noteRepository.findByCategoryFilteredManual(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
+            default           -> noteRepository.findByCategoryFilteredRecent(categoryId, likeQuery, tagId, pinnedOnly, offsetPageable);
         };
 
         if (offset > 0 && offset < all.size()) {

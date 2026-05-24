@@ -289,24 +289,57 @@
       <!-- Controles de busca e ordenação -->
       @if (!showNoteForm) {
         <div class="note-controls">
-          <input
-            class="form-input note-search__input"
-            type="search"
-            placeholder="Buscar anotações..."
-            [ngModel]="noteQuery"
-            (ngModelChange)="onNoteQueryChange($event)"
-          />
-          <select
-            class="form-input note-sort__select"
-            [ngModel]="noteSort"
-            (ngModelChange)="onNoteSortChange($event)">
-            <option value="recent">Mais recentes</option>
-            <option value="oldest">Mais antigas</option>
-            <option value="title_asc">A → Z</option>
-            <option value="title_desc">Z → A</option>
-            <option value="pinned">Fixadas primeiro</option>
-            <option value="manual">Ordem manual</option>
-          </select>
+          <div class="note-search-wrap">
+            <input
+              class="form-input note-search__input"
+              type="search"
+              placeholder="Buscar anotações..."
+              [ngModel]="noteQuery"
+              (ngModelChange)="onNoteQueryChange($event)"
+            />
+            <!-- Botão funil -->
+            <button
+              class="note-filter-btn"
+              [class.note-filter-btn--active]="hasActiveNoteFilter"
+              (click)="toggleNoteFilter($event)"
+              title="Filtros e ordenação">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 .77 1.64L14 13.23V20a1 1 0 0 1-1.45.89l-4-2A1 1 0 0 1 8 18v-4.77L3.23 5.64A1 1 0 0 1 3 5V4z"/>
+              </svg>
+            </button>
+
+            <!-- Dropdown de filtros -->
+            @if (showNoteFilter) {
+              <div class="note-filter-dropdown" (click)="$event.stopPropagation()">
+                <div class="note-filter-label">Ordenar por</div>
+                @for (opt of sortOptions; track opt.value) {
+                  <button
+                    class="note-filter-opt"
+                    [class.note-filter-opt--active]="noteSort === opt.value"
+                    (click)="onNoteSortChange(opt.value)">
+                    @if (noteSort === opt.value) {
+                      <span class="note-filter-opt__check">✓</span>
+                    } @else {
+                      <span class="note-filter-opt__check"></span>
+                    }
+                    {{ opt.label }}
+                  </button>
+                }
+                <div class="note-filter-sep"></div>
+                <button
+                  class="note-filter-opt"
+                  [class.note-filter-opt--active]="noteShowOnlyPinned"
+                  (click)="toggleOnlyPinned()">
+                  @if (noteShowOnlyPinned) {
+                    <span class="note-filter-opt__check">✓</span>
+                  } @else {
+                    <span class="note-filter-opt__check"></span>
+                  }
+                  Somente fixadas
+                </button>
+              </div>
+            }
+          </div>
         </div>
 
         @if (availableTags.length > 0) {

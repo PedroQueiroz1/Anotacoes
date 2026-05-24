@@ -31,8 +31,9 @@ public class NoteController {
             @RequestParam(required = false) String cursor,
             @RequestParam(required = false) String query,
             @RequestParam(required = false, defaultValue = "recent") String sort,
-            @RequestParam(required = false) Long tagId) {
-        return service.findByCategory(categoryId, cursor, query, sort, tagId);
+            @RequestParam(required = false) Long tagId,
+            @RequestParam(required = false) Boolean pinnedOnly) {
+        return service.findByCategory(categoryId, cursor, query, sort, tagId, pinnedOnly);
     }
 
     @PostMapping("/api/categories/{categoryId}/notes")

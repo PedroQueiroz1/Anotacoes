@@ -367,9 +367,14 @@ $radius: 10px;
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  align-items: start;
+}
+
+@media (max-width: 700px) {
+  .note-list { grid-template-columns: 1fr; }
 }
 
 .form-textarea--tall { min-height: 120px; }
@@ -386,22 +391,106 @@ $radius: 10px;
   to   { opacity: 1; }
 }
 
-// ── Controles de busca e ordenação ─────────────────────────────────────────
+// ── Controles de busca / funil ─────────────────────────────────────────────
 .note-controls {
-  display: flex;
-  gap: 10px;
   margin-bottom: 10px;
-  flex-wrap: wrap;
+}
+
+.note-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .note-search__input {
-  flex: 1;
-  min-width: 160px;
+  width: 100%;
+  padding-right: 42px;
+  box-sizing: border-box;
 }
 
-.note-sort__select {
-  flex: 0 0 auto;
-  min-width: 160px;
+// Funil (dentro do campo de busca)
+.note-filter-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: 5px;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.13s, color 0.13s;
+
+  &:hover {
+    background: var(--color-btn-ghost);
+    color: var(--color-primary);
+  }
+
+  &--active {
+    color: var(--color-primary);
+  }
+}
+
+// Dropdown do funil
+.note-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 300;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
+  min-width: 210px;
+  overflow: hidden;
+  padding: 6px 0;
+}
+
+.note-filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 6px 14px 4px;
+}
+
+.note-filter-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s;
+
+  &:hover { background: var(--color-btn-ghost); }
+
+  &--active { color: var(--color-primary); }
+
+  &__check {
+    width: 14px;
+    font-size: 12px;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+}
+
+.note-filter-sep {
+  height: 1px;
+  background: var(--color-border);
+  margin: 4px 0;
 }
 
 // ── Filtro por tag ─────────────────────────────────────────────────────────

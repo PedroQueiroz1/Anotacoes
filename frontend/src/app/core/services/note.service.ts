@@ -21,12 +21,14 @@ export class NoteService {
     query?: string | null,
     sort?: string | null,
     tagId?: number | null,
+    pinnedOnly?: boolean | null,
   ): Observable<CursorPage<Note>> {
     let params = new HttpParams();
     if (cursor) params = params.set('cursor', cursor);
     if (query)  params = params.set('query', query);
     if (sort)   params = params.set('sort', sort);
     if (tagId != null) params = params.set('tagId', tagId);
+    if (pinnedOnly === true) params = params.set('pinnedOnly', 'true');
     return this.http.get<CursorPage<Note>>(`/api/categories/${categoryId}/notes`, { params });
   }
 
