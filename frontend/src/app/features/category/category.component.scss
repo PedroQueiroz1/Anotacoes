@@ -376,8 +376,14 @@ $radius: 10px;
 
 .note-list__item {
   display: block;
+  animation: note-appear 0.18s ease;
 
   app-note-item { display: block; }
+}
+
+@keyframes note-appear {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
 }
 
 // ── Controles de busca e ordenação ─────────────────────────────────────────

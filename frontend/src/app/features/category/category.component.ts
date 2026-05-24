@@ -268,13 +268,13 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
 
   loadNotes(reset = false): void {
     if (this.noteLoadingMore && !reset) return;
+    const cursor = reset ? null : this.noteNextCursor;
     if (reset) {
-      this.notes = [];
+      // Não limpa a lista: mantém os itens visíveis enquanto novos dados chegam
       this.noteNextCursor = null;
       this.noteHasMore = false;
     }
     this.noteLoadingMore = true;
-    const cursor = reset ? null : this.noteNextCursor;
 
     this.noteService.getByCategory(
       this.categoryId,
@@ -290,7 +290,6 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
         if (page.totalCount != null) this.noteTotalCount = page.totalCount;
         this.noteLoadingMore = false;
         this.isLoading = false;
-        // Re-observe sentinel after DOM update
         if (reset) {
           setTimeout(() => this.setupNoteObserver(), 0);
         }
@@ -322,45 +321,104 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // ── Ações de nota ─────────────────────────────────────────────────────────
+
   onNotePinToggle(note: Note): void {
+    const willPin = !note.pinned;
+    // Atualização otimista: move na lista local imediatamente
+    this.localPin(note.id, willPin);
+
     this.noteService.togglePin(note.id).subscribe({
       next: (updated) => {
+        // Substitui com a resposta do servidor (pinnedAt correto, etc.)
         const idx = this.notes.findIndex(n => n.id === updated.id);
         if (idx !== -1) this.notes[idx] = updated;
       },
-      error: () => {},
+      error: () => this.loadNotes(true), // reverte em caso de erro
     });
   }
 
+  private localPin(noteId: number, willPin: boolean): void {
+    const idx = this.notes.findIndex(n => n.id === noteId);
+    if (idx === -1) return;
+    const note = { ...this.notes[idx], pinned: willPin };
+    this.notes = this.notes.filter(n => n.id !== noteId);
+    if (willPin) {
+      // Fixada vai para o topo
+      this.notes = [note, ...this.notes];
+    } else {
+      // Desfixada vai para logo abaixo do bloco de fixadas
+      const firstUnpinned = this.notes.findIndex(n => !n.pinned);
+      if (firstUnpinned === -1) {
+        this.notes = [...this.notes, note];
+      } else {
+        this.notes = [
+          ...this.notes.slice(0, firstUnpinned),
+          note,
+          ...this.notes.slice(firstUnpinned),
+        ];
+      }
+    }
+  }
+
   onNoteMoveTop(note: Note): void {
+    // Atualização otimista: move para o índice 0
+    this.localMoveToIndex(note.id, 0);
+
     this.noteService.moveToTop(note.id).subscribe({
-      next: () => this.loadNotes(true),
-      error: () => {},
+      next: (updated) => {
+        const i = this.notes.findIndex(n => n.id === updated.id);
+        if (i !== -1) this.notes[i] = updated;
+      },
+      error: () => this.loadNotes(true),
     });
   }
 
   onNoteMoveBottom(note: Note): void {
+    // Atualização otimista: move para o último índice
+    this.localMoveToIndex(note.id, this.notes.length - 1);
+
     this.noteService.moveToBottom(note.id).subscribe({
-      next: () => this.loadNotes(true),
-      error: () => {},
+      next: (updated) => {
+        const i = this.notes.findIndex(n => n.id === updated.id);
+        if (i !== -1) this.notes[i] = updated;
+      },
+      error: () => this.loadNotes(true),
     });
+  }
+
+  private localMoveToIndex(noteId: number, targetIndex: number): void {
+    const idx = this.notes.findIndex(n => n.id === noteId);
+    if (idx === -1) return;
+    const copy = [...this.notes];
+    const [note] = copy.splice(idx, 1);
+    const clamped = Math.max(0, Math.min(targetIndex, copy.length));
+    copy.splice(clamped, 0, note);
+    this.notes = copy;
   }
 
   openMovePositionDialog(note: Note): void {
     this.movingNote = note;
-    this.moveToPositionValue = (note.position ?? 1);
+    this.moveToPositionValue = (note.position != null ? note.position + 1 : this.notes.findIndex(n => n.id === note.id) + 1) || 1;
     this.showMovePositionDialog = true;
   }
 
   confirmMovePosition(): void {
     if (!this.movingNote) return;
-    this.noteService.moveToPosition(this.movingNote.id, this.moveToPositionValue).subscribe({
-      next: () => {
-        this.showMovePositionDialog = false;
-        this.movingNote = null;
-        this.loadNotes(true);
+    const noteId = this.movingNote.id;
+    const targetPos = this.moveToPositionValue;
+
+    // Atualização otimista: move para o índice (1-based → 0-based)
+    this.localMoveToIndex(noteId, targetPos - 1);
+
+    this.showMovePositionDialog = false;
+    this.movingNote = null;
+
+    this.noteService.moveToPosition(noteId, targetPos).subscribe({
+      next: (updated) => {
+        const i = this.notes.findIndex(n => n.id === updated.id);
+        if (i !== -1) this.notes[i] = updated;
       },
-      error: () => { this.showMovePositionDialog = false; },
+      error: () => this.loadNotes(true),
     });
   }
 
