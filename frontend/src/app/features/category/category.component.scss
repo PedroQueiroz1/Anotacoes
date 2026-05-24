@@ -370,7 +370,7 @@ $radius: 10px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 700px) {
@@ -380,10 +380,11 @@ $radius: 10px;
 .form-textarea--tall { min-height: 120px; }
 
 .note-list__item {
-  display: block;
+  display: flex;
+  flex-direction: column;
   animation: note-appear 0.18s ease;
 
-  app-note-item { display: block; }
+  app-note-item { display: flex; flex-direction: column; flex: 1; }
 }
 
 @keyframes note-appear {

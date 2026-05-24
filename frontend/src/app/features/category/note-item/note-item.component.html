@@ -56,6 +56,10 @@
           </button>
         }
         <app-youtube-preview [text]="note.content" />
+      } @else {
+        <button type="button" class="note-content-placeholder" (click)="startEdit()">
+          Clique aqui para adicionar conteúdo
+        </button>
       }
     </div>
   } @else {
