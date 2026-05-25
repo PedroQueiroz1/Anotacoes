@@ -1,60 +1,60 @@
 <div class="note-item" [class.note-item--pinned]="note.pinned">
+  <div class="note-item__read">
 
-  @if (!isEditing) {
-    <!-- Modo leitura -->
-    <div class="note-item__read">
-      <div class="note-item__header">
-        <div class="note-item__title-row">
-          @if (note.pinned) {
-            <span class="note-pin-icon" title="Fixada">📌</span>
-          }
-          <span class="note-item__title">{{ note.title }}</span>
-        </div>
-        <div class="note-kebab-wrap">
-          <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
-          @if (kebabOpen) {
-            <div class="note-kebab-dropdown" [style.top.px]="kebabFixedTop" [style.right.px]="kebabFixedRight">
-              <button type="button" class="note-kebab-option" (click)="onEdit($event)">
-                <span class="note-kebab-option__icon">✏</span> Editar
-              </button>
-              <button type="button" class="note-kebab-option" (click)="onTogglePin($event)">
-                <span class="note-kebab-option__icon">{{ note.pinned ? '📌' : '📍' }}</span>
-                {{ note.pinned ? 'Desafixar' : 'Fixar no topo' }}
-              </button>
-              <button type="button" class="note-kebab-option" (click)="onMoveTop($event)">
-                <span class="note-kebab-option__icon">⬆</span> Mover para o topo
-              </button>
-              <button type="button" class="note-kebab-option" (click)="onMoveBottom($event)">
-                <span class="note-kebab-option__icon">⬇</span> Mover para o final
-              </button>
-              <button type="button" class="note-kebab-option" (click)="onMoveToPosition($event)">
-                <span class="note-kebab-option__icon">↕</span> Mover para posição...
-              </button>
-              <button type="button" class="note-kebab-option note-kebab-option--danger" (click)="onDelete($event)">
-                <span class="note-kebab-option__icon">🗑</span> Excluir
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-
-      @if (note.tags && note.tags.length > 0) {
-        <div class="note-tags">
-          @for (tag of note.tags; track tag.id) {
-            <span class="note-tag-badge" [style.background]="tag.color + '22'" [style.color]="tag.color" [style.border-color]="tag.color + '55'">
-              {{ tag.name }}
-            </span>
-          }
-        </div>
-      }
-
-      @if (note.content) {
-        <p #contentEl class="note-item__content" [class.note-item__content--collapsed]="!isExpanded">{{ note.content }}</p>
-        @if (isLong) {
-          <button class="note-expand-btn" (click)="toggleExpand()">
-            {{ isExpanded ? 'Ver menos' : 'Ver mais' }}
-          </button>
+    <!-- Cabeçalho: título + kebab -->
+    <div class="note-item__header">
+      <div class="note-item__title-row">
+        @if (note.pinned) {
+          <span class="note-pin-icon" title="Fixada">📌</span>
         }
+        <span class="note-item__title">{{ note.title }}</span>
+      </div>
+      <div class="note-kebab-wrap">
+        <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
+        @if (kebabOpen) {
+          <div class="note-kebab-dropdown" [style.top.px]="kebabFixedTop" [style.right.px]="kebabFixedRight">
+            <button type="button" class="note-kebab-option" (click)="onEdit($event)">
+              <span class="note-kebab-option__icon">✏</span> Editar
+            </button>
+            <button type="button" class="note-kebab-option" (click)="onTogglePin($event)">
+              <span class="note-kebab-option__icon">{{ note.pinned ? '📌' : '📍' }}</span>
+              {{ note.pinned ? 'Desafixar' : 'Fixar no topo' }}
+            </button>
+            <button type="button" class="note-kebab-option" (click)="onMoveTop($event)">
+              <span class="note-kebab-option__icon">⬆</span> Mover para o topo
+            </button>
+            <button type="button" class="note-kebab-option" (click)="onMoveBottom($event)">
+              <span class="note-kebab-option__icon">⬇</span> Mover para o final
+            </button>
+            <button type="button" class="note-kebab-option" (click)="onMoveToPosition($event)">
+              <span class="note-kebab-option__icon">↕</span> Mover para posição...
+            </button>
+            <button type="button" class="note-kebab-option note-kebab-option--danger" (click)="onDelete($event)">
+              <span class="note-kebab-option__icon">🗑</span> Excluir
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Tags do card -->
+    @if (note.tags && note.tags.length > 0) {
+      <div class="note-tags">
+        @for (tag of note.tags; track tag.id) {
+          <span class="note-tag-badge"
+            [style.background]="tag.color + '22'"
+            [style.color]="tag.color"
+            [style.border-color]="tag.color + '55'">
+            {{ tag.name }}
+          </span>
+        }
+      </div>
+    }
+
+    <!-- Área de conteúdo -->
+    <div class="note-body">
+      @if (note.content) {
+        <p #contentEl class="note-item__content note-item__content--collapsed">{{ note.content }}</p>
         <app-youtube-preview [text]="note.content" />
       } @else {
         <button type="button" class="note-content-placeholder" (click)="startEdit()">
@@ -62,88 +62,168 @@
         </button>
       }
     </div>
-  } @else {
-    <!-- Modo edição inline -->
-    <div class="note-item__edit">
-      <div class="form-group">
-        <label class="form-label">Título *</label>
-        <input class="form-input" [(ngModel)]="editTitle" maxlength="100" placeholder="Título da anotação" />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Conteúdo</label>
-        <div class="autocomplete-wrap">
-          <textarea class="form-input form-textarea" [(ngModel)]="editContent" maxlength="2000"
-            placeholder="Conteúdo opcional (máx. 2000 caracteres)"
-            (input)="onEditContentInput($event)"
-            (keydown)="onEditContentKeydown($event)"></textarea>
 
-          @if (conceptIsLoading) {
-            <div class="autocomplete-loading">Buscando sugestão...</div>
-          }
+    <!-- Ver mais: abre modal de leitura -->
+    @if (isLong) {
+      <button class="note-expand-btn" (click)="openViewModal()">Ver mais</button>
+    }
 
-          @if (conceptSuggestion) {
-            <div class="autocomplete-box" (mousedown)="$event.preventDefault()">
-              <div class="autocomplete-box__body" (click)="acceptConceptSuggestion()">
-                <span class="autocomplete-box__term">{{ conceptSuggestion.term }}</span>
-                <span class="autocomplete-box__sep"> — </span>
-                <span class="autocomplete-box__desc">{{ conceptSuggestion.summary }}</span>
-              </div>
-              <div class="autocomplete-box__footer">
-                @if (conceptSourceLabel) {
-                  <span class="autocomplete-box__source">{{ conceptSourceLabel }}</span>
-                }
-                <span class="autocomplete-box__hint">↵ aceitar &nbsp;·&nbsp; Esc fechar</span>
-              </div>
-            </div>
-          }
+  </div>
+</div>
 
-          @if (conceptNotFound && !conceptManualMode) {
-            <div class="autocomplete-box autocomplete-box--notfound" (mousedown)="$event.preventDefault()">
-              <div class="autocomplete-box__body">
-                Não encontrei uma explicação para <strong>{{ pendingTerm }}</strong>.
-              </div>
-              <div class="autocomplete-box__footer">
-                <button class="btn btn--ghost btn--sm" (click)="openManualConceptForm()">Salvar nova explicação</button>
-                <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Fechar</button>
-              </div>
-            </div>
-          }
+<!-- ── Modal (position: fixed, cobre o viewport) ───────────────────────── -->
+@if (showModal) {
+  <div class="note-modal-overlay" (click)="closeModal()">
+    <div class="note-modal" (click)="$event.stopPropagation()">
 
-          @if (conceptManualMode) {
-            <div class="autocomplete-manual" (mousedown)="$event.preventDefault()">
-              <h4 class="autocomplete-manual__title">Nova explicação</h4>
-              <div class="autocomplete-manual__field">
-                <label class="form-label">Termo</label>
-                <input class="form-input" [(ngModel)]="conceptManualTerm" maxlength="80" placeholder="Termo técnico" />
-              </div>
-              <div class="autocomplete-manual__field">
-                <label class="form-label">Explicação</label>
-                <textarea class="form-input" [(ngModel)]="conceptManualSummary" maxlength="500"
-                  placeholder="Explicação resumida (10–500 caracteres)" rows="3"></textarea>
-              </div>
-              @if (conceptManualError) {
-                <p class="form-error">{{ conceptManualError }}</p>
-              }
-              <div class="autocomplete-manual__actions">
-                <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Cancelar</button>
-                <button class="btn btn--primary btn--sm" (click)="saveManualConcept()" [disabled]="isSavingConcept">
-                  {{ isSavingConcept ? 'Salvando...' : 'Salvar' }}
-                </button>
-              </div>
-            </div>
+      @if (modalMode === 'view') {
+        <!-- ── Modo visualização ──────────────────────────────────────── -->
+        <div class="note-modal__header">
+          <div class="note-modal__title-wrap">
+            @if (note.pinned) { <span class="note-modal__pin">📌</span> }
+            <h2 class="note-modal__title">{{ note.title }}</h2>
+          </div>
+          <button type="button" class="note-modal__close" (click)="closeModal()" title="Fechar">✕</button>
+        </div>
+
+        @if (note.tags && note.tags.length > 0) {
+          <div class="note-modal__tags">
+            @for (tag of note.tags; track tag.id) {
+              <span class="note-tag-badge"
+                [style.background]="tag.color + '22'"
+                [style.color]="tag.color"
+                [style.border-color]="tag.color + '55'">
+                {{ tag.name }}
+              </span>
+            }
+          </div>
+        }
+
+        <div class="note-modal__body">
+          @if (note.content) {
+            <p class="note-modal__content">{{ note.content }}</p>
+            <app-youtube-preview [text]="note.content" />
           }
         </div>
-      </div>
-      @if (editError) {
-        <p class="form-error">{{ editError }}</p>
-      }
-      <div class="form-actions">
-        <button class="btn btn--ghost" (click)="cancelEdit()">Cancelar</button>
-        <button class="btn btn--primary" (click)="saveEdit()" [disabled]="isSaving">
-          {{ isSaving ? 'Salvando...' : 'Salvar' }}
-        </button>
-      </div>
-    </div>
-  }
 
-</div>
+        <div class="note-modal__footer">
+          <button type="button" class="btn btn--ghost" (click)="closeModal()">Fechar</button>
+          <button type="button" class="btn btn--primary" (click)="startEdit()">Editar</button>
+        </div>
+
+      } @else {
+        <!-- ── Modo edição ────────────────────────────────────────────── -->
+        <div class="note-modal__header">
+          <h2 class="note-modal__title">Editar Anotação</h2>
+          <button type="button" class="note-modal__close" (click)="closeModal()" title="Fechar">✕</button>
+        </div>
+
+        <div class="note-modal__body">
+
+          <div class="form-group">
+            <label class="form-label">Título *</label>
+            <input class="form-input" [(ngModel)]="editTitle" maxlength="100" placeholder="Título da anotação" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Conteúdo</label>
+            <div class="autocomplete-wrap">
+              <textarea class="form-input form-textarea" [(ngModel)]="editContent" maxlength="2000"
+                placeholder="Conteúdo opcional (máx. 2000 caracteres)"
+                (input)="onEditContentInput($event)"
+                (keydown)="onEditContentKeydown($event)"></textarea>
+
+              @if (conceptIsLoading) {
+                <div class="autocomplete-loading">Buscando sugestão...</div>
+              }
+
+              @if (conceptSuggestion) {
+                <div class="autocomplete-box" (mousedown)="$event.preventDefault()">
+                  <div class="autocomplete-box__body" (click)="acceptConceptSuggestion()">
+                    <span class="autocomplete-box__term">{{ conceptSuggestion.term }}</span>
+                    <span class="autocomplete-box__sep"> — </span>
+                    <span class="autocomplete-box__desc">{{ conceptSuggestion.summary }}</span>
+                  </div>
+                  <div class="autocomplete-box__footer">
+                    @if (conceptSourceLabel) {
+                      <span class="autocomplete-box__source">{{ conceptSourceLabel }}</span>
+                    }
+                    <span class="autocomplete-box__hint">↵ aceitar &nbsp;·&nbsp; Esc fechar</span>
+                  </div>
+                </div>
+              }
+
+              @if (conceptNotFound && !conceptManualMode) {
+                <div class="autocomplete-box autocomplete-box--notfound" (mousedown)="$event.preventDefault()">
+                  <div class="autocomplete-box__body">
+                    Não encontrei uma explicação para <strong>{{ pendingTerm }}</strong>.
+                  </div>
+                  <div class="autocomplete-box__footer">
+                    <button class="btn btn--ghost btn--sm" (click)="openManualConceptForm()">Salvar nova explicação</button>
+                    <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Fechar</button>
+                  </div>
+                </div>
+              }
+
+              @if (conceptManualMode) {
+                <div class="autocomplete-manual" (mousedown)="$event.preventDefault()">
+                  <h4 class="autocomplete-manual__title">Nova explicação</h4>
+                  <div class="autocomplete-manual__field">
+                    <label class="form-label">Termo</label>
+                    <input class="form-input" [(ngModel)]="conceptManualTerm" maxlength="80" placeholder="Termo técnico" />
+                  </div>
+                  <div class="autocomplete-manual__field">
+                    <label class="form-label">Explicação</label>
+                    <textarea class="form-input" [(ngModel)]="conceptManualSummary" maxlength="500"
+                      placeholder="Explicação resumida (10–500 caracteres)" rows="3"></textarea>
+                  </div>
+                  @if (conceptManualError) {
+                    <p class="form-error">{{ conceptManualError }}</p>
+                  }
+                  <div class="autocomplete-manual__actions">
+                    <button class="btn btn--ghost btn--sm" (click)="cancelManualConcept()">Cancelar</button>
+                    <button class="btn btn--primary btn--sm" (click)="saveManualConcept()" [disabled]="isSavingConcept">
+                      {{ isSavingConcept ? 'Salvando...' : 'Salvar' }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (availableTags.length > 0) {
+            <div class="form-group">
+              <label class="form-label">Tags</label>
+              <div class="note-tag-selector">
+                @for (tag of availableTags; track tag.id) {
+                  <button type="button" class="note-tag-chip"
+                    [class.note-tag-chip--selected]="isTagSelected(tag.id)"
+                    [style.background]="isTagSelected(tag.id) ? tag.color + '33' : ''"
+                    [style.border-color]="isTagSelected(tag.id) ? tag.color : ''"
+                    [style.color]="isTagSelected(tag.id) ? tag.color : ''"
+                    (click)="toggleEditTag(tag.id)">
+                    {{ tag.name }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          @if (editError) {
+            <p class="form-error">{{ editError }}</p>
+          }
+
+        </div>
+
+        <div class="note-modal__footer">
+          <button type="button" class="btn btn--ghost" (click)="closeModal()">Cancelar</button>
+          <button type="button" class="btn btn--primary" (click)="saveEdit()" [disabled]="isSaving">
+            {{ isSaving ? 'Salvando...' : 'Salvar' }}
+          </button>
+        </div>
+
+      }
+
+    </div>
+  </div>
+}

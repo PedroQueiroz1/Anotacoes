@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Note } from '../../../core/models/note.model';
+import { NoteTag } from '../../../core/models/note-tag.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
 import { ProgrammingConceptService } from '../../../core/services/programming-concept.service';
 import { DropdownService } from '../../../core/services/dropdown.service';
@@ -19,6 +20,7 @@ import { YoutubePreviewComponent } from '../../../shared/components/youtube-prev
 })
 export class NoteItemComponent implements AfterViewInit, OnChanges {
   @Input({ required: true }) note!: Note;
+  @Input() availableTags: NoteTag[] = [];
   @Output() noteUpdated      = new EventEmitter<Note>();
   @Output() deleteRequested  = new EventEmitter<number>();
   @Output() pinToggled       = new EventEmitter<Note>();
@@ -26,7 +28,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   @Output() noteMoveBottom   = new EventEmitter<Note>();
   @Output() noteMovePosition = new EventEmitter<Note>();
 
-  @ViewChild('contentEl')   contentEl?: ElementRef<HTMLParagraphElement>;
+  @ViewChild('contentEl')    contentEl?: ElementRef<HTMLParagraphElement>;
   @ViewChild('noteKebabBtn') noteKebabBtnRef?: ElementRef<HTMLButtonElement>;
 
   private noteService      = inject(NoteService);
@@ -37,15 +39,19 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   kebabFixedRight = 0;
   get kebabOpen(): boolean { return this.dropdownService.isOpen('note-' + this.note?.id); }
 
-  isEditing   = false;
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  showModal  = false;
+  modalMode: 'view' | 'edit' = 'view';
+
+  // ── Edição ────────────────────────────────────────────────────────────────
   isSaving    = false;
   editError   = '';
   editTitle   = '';
   editContent = '';
+  editTagIds  = new Set<number>();
   isLong      = false;
-  isExpanded  = false;
 
-  // ── Autocomplete de conceitos (edição) ────────────────────────────────────
+  // ── Autocomplete de conceitos ─────────────────────────────────────────────
   conceptSuggestion:       ConceptSuggestion | null = null;
   conceptSuggestionSource = '';
   conceptIsLoading         = false;
@@ -73,12 +79,9 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['note'] && !changes['note'].firstChange) {
-      this.isExpanded = false;
       this.scheduleMeasure();
     }
   }
-
-  toggleExpand(): void { this.isExpanded = !this.isExpanded; }
 
   private scheduleMeasure(): void {
     setTimeout(() => this.measureOverflow());
@@ -97,7 +100,10 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   onViewportChange(): void { this.dropdownService.close(); }
 
   @HostListener('document:keydown.escape')
-  onEscape(): void { this.dropdownService.close(); }
+  onEscape(): void {
+    this.dropdownService.close();
+    if (this.showModal) this.closeModal();
+  }
 
   toggleKebab(event: Event): void {
     event.stopPropagation();
@@ -146,18 +152,35 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.noteMovePosition.emit(this.note);
   }
 
+  openViewModal(): void {
+    this.showModal = true;
+    this.modalMode = 'view';
+  }
+
   startEdit(): void {
     this.editTitle   = this.note.title;
     this.editContent = this.note.content ?? '';
     this.editError   = '';
-    this.isEditing   = true;
+    this.editTagIds  = new Set(this.note.tags.map(t => t.id));
+    this.showModal   = true;
+    this.modalMode   = 'edit';
     this.resetConceptSuggestion();
   }
 
-  cancelEdit(): void {
-    this.isEditing = false;
+  closeModal(): void {
+    this.showModal = false;
     this.editError = '';
     this.resetConceptSuggestion();
+  }
+
+  cancelEdit(): void { this.closeModal(); }
+
+  isTagSelected(id: number): boolean { return this.editTagIds.has(id); }
+
+  toggleEditTag(id: number): void {
+    const copy = new Set(this.editTagIds);
+    if (copy.has(id)) { copy.delete(id); } else { copy.add(id); }
+    this.editTagIds = copy;
   }
 
   private resetConceptSuggestion(): void {
@@ -246,8 +269,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   }
 
   cancelManualConcept(): void {
-    this.conceptManualMode = false;
-    this.conceptNotFound   = false;
+    this.conceptManualMode  = false;
+    this.conceptNotFound    = false;
     this.conceptManualError = '';
   }
 
@@ -300,15 +323,19 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     if (title.length > 100) { this.editError = 'Título: máximo 100 caracteres.'; return; }
     if (this.editContent.length > 2000) { this.editError = 'Conteúdo: máximo 2000 caracteres.'; return; }
 
-    const payload: NotePayload = { title, content: this.editContent || null };
+    const payload: NotePayload = {
+      title,
+      content: this.editContent || null,
+      tagIds: [...this.editTagIds],
+    };
     this.isSaving  = true;
     this.editError = '';
 
     this.noteService.update(this.note.id, payload).subscribe({
       next: (updated) => {
         this.noteUpdated.emit(updated);
-        this.isEditing = false;
-        this.isSaving  = false;
+        this.closeModal();
+        this.isSaving = false;
       },
       error: (err) => {
         this.editError = err.error?.message ?? 'Erro ao salvar anotação.';

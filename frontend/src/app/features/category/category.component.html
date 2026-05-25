@@ -379,6 +379,7 @@
           <li class="note-list__item">
             <app-note-item
               [note]="note"
+              [availableTags]="availableTags"
               (noteUpdated)="onNoteUpdated($event)"
               (deleteRequested)="onNoteDeleteRequested($event)"
               (pinToggled)="onNotePinToggle($event)"
