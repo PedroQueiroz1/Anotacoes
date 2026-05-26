@@ -6,7 +6,7 @@ import { Category } from '../models/category.model';
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private http = inject(HttpClient);
-  private readonly api = '/api/categories';
+  private readonly api = '/api/categorias';
 
   getAll(): Observable<Category[]> {
     return this.http.get<Category[]>(this.api);

@@ -25,7 +25,7 @@ public class NoteController {
         this.tagService = tagService;
     }
 
-    @GetMapping("/api/categories/{categoryId}/notes")
+    @GetMapping("/api/categorias/{categoryId}/anotacoes")
     public CursorPageResponse<NoteResponse> listByCategory(
             @PathVariable Long categoryId,
             @RequestParam(required = false) String cursor,
@@ -36,20 +36,20 @@ public class NoteController {
         return service.findByCategory(categoryId, cursor, query, sort, tagId, pinnedOnly);
     }
 
-    @PostMapping("/api/categories/{categoryId}/notes")
+    @PostMapping("/api/categorias/{categoryId}/anotacoes")
     @ResponseStatus(HttpStatus.CREATED)
     public NoteResponse create(@PathVariable Long categoryId,
                                @Valid @RequestBody NoteRequest request) {
         return service.create(categoryId, request);
     }
 
-    @PutMapping("/api/notes/{id}")
+    @PutMapping("/api/anotacoes/{id}")
     public NoteResponse update(@PathVariable Long id,
                                @Valid @RequestBody NoteRequest request) {
         return service.update(id, request);
     }
 
-    @PutMapping("/api/categories/{categoryId}/notes/reorder")
+    @PutMapping("/api/categorias/{categoryId}/anotacoes/reorder")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reorder(@PathVariable Long categoryId,
                         @RequestParam(defaultValue = "0") int offset,
@@ -57,30 +57,30 @@ public class NoteController {
         service.reorder(categoryId, ids, offset);
     }
 
-    @DeleteMapping("/api/notes/{id}")
+    @DeleteMapping("/api/anotacoes/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         service.delete(id);
     }
 
     // ── Pin ───────────────────────────────────────────────────────────────────
-    @PatchMapping("/api/notes/{id}/pin")
+    @PatchMapping("/api/anotacoes/{id}/pin")
     public NoteResponse togglePin(@PathVariable Long id) {
         return service.togglePin(id);
     }
 
     // ── Move ──────────────────────────────────────────────────────────────────
-    @PatchMapping("/api/notes/{id}/move-to-top")
+    @PatchMapping("/api/anotacoes/{id}/move-to-top")
     public NoteResponse moveToTop(@PathVariable Long id) {
         return service.moveToTop(id);
     }
 
-    @PatchMapping("/api/notes/{id}/move-to-bottom")
+    @PatchMapping("/api/anotacoes/{id}/move-to-bottom")
     public NoteResponse moveToBottom(@PathVariable Long id) {
         return service.moveToBottom(id);
     }
 
-    @PatchMapping("/api/notes/{id}/move-to-position")
+    @PatchMapping("/api/anotacoes/{id}/move-to-position")
     public NoteResponse moveToPosition(@PathVariable Long id,
                                        @RequestBody Map<String, Integer> body) {
         int position = body.getOrDefault("position", 1);
@@ -88,18 +88,18 @@ public class NoteController {
     }
 
     // ── Tags ──────────────────────────────────────────────────────────────────
-    @GetMapping("/api/notes/tags")
+    @GetMapping("/api/anotacoes/tags")
     public List<NoteTagResponse> listTags() {
         return tagService.listTags();
     }
 
-    @PostMapping("/api/notes/tags")
+    @PostMapping("/api/anotacoes/tags")
     @ResponseStatus(HttpStatus.CREATED)
     public NoteTagResponse createTag(@Valid @RequestBody NoteTagRequest request) {
         return tagService.createTag(request);
     }
 
-    @DeleteMapping("/api/notes/tags/{id}")
+    @DeleteMapping("/api/anotacoes/tags/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteTag(@PathVariable Long id) {
         tagService.deleteTag(id);

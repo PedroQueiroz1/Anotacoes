@@ -7,6 +7,6 @@ export class CategoryExportService {
   private http = inject(HttpClient);
 
   downloadTxt(slug: string): Observable<Blob> {
-    return this.http.get(`/api/categories/${slug}/export/txt`, { responseType: 'blob' });
+    return this.http.get(`/api/categorias/${slug}/export/txt`, { responseType: 'blob' });
   }
 }

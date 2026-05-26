@@ -8,6 +8,6 @@ export class SearchService {
   private http = inject(HttpClient);
 
   search(query: string): Observable<SearchResult[]> {
-    return this.http.get<SearchResult[]>('/api/search', { params: { query } });
+    return this.http.get<SearchResult[]>('/api/busca', { params: { query } });
   }
 }

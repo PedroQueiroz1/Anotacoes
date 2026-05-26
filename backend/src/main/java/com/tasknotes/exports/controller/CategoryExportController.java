@@ -16,7 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/categories")
+@RequestMapping("/api/categorias")
 @Tag(name = "Exportação de Categoria", description = "Exportar categoria como arquivo TXT")
 public class CategoryExportController {
 

@@ -48,7 +48,7 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         var task = TestDataFactory.createTask(mockMvc, objectMapper, token, TestDataFactory.idOf(cat), "Task Status IP");
         long taskId = TestDataFactory.idOf(task);
 
-        mockMvc.perform(patch("/api/tasks/" + taskId + "/status")
+        mockMvc.perform(patch("/api/tarefas/" + taskId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(Map.of("status", "IN_PROGRESS"))))
@@ -56,7 +56,7 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"));
 
         // Refetch via list and verify persistence
-        var listResult = mockMvc.perform(get("/api/categories/" + TestDataFactory.idOf(cat) + "/tasks")
+        var listResult = mockMvc.perform(get("/api/categorias/" + TestDataFactory.idOf(cat) + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -74,14 +74,14 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         var task = TestDataFactory.createTask(mockMvc, objectMapper, token, TestDataFactory.idOf(cat), "Task Status Done");
         long taskId = TestDataFactory.idOf(task);
 
-        mockMvc.perform(patch("/api/tasks/" + taskId + "/status")
+        mockMvc.perform(patch("/api/tarefas/" + taskId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(Map.of("status", "DONE"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("DONE"));
 
-        var listResult = mockMvc.perform(get("/api/categories/" + TestDataFactory.idOf(cat) + "/tasks")
+        var listResult = mockMvc.perform(get("/api/categorias/" + TestDataFactory.idOf(cat) + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -100,19 +100,19 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         long taskId = TestDataFactory.idOf(task);
 
         // Mark as DONE
-        mockMvc.perform(patch("/api/tasks/" + taskId + "/status")
+        mockMvc.perform(patch("/api/tarefas/" + taskId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(Map.of("status", "DONE"))))
                 .andExpect(status().isOk());
 
-        // Update description only (PUT /api/tasks/{id})
+        // Update description only (PUT /api/tarefas/{id})
         Map<String, Object> updateBody = new HashMap<>();
         updateBody.put("title", "Task Reset Check");
         updateBody.put("description", "Descrição atualizada");
         updateBody.put("priority", "HIGH");
 
-        var updateResult = mockMvc.perform(put("/api/tasks/" + taskId)
+        var updateResult = mockMvc.perform(put("/api/tarefas/" + taskId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(updateBody)))
@@ -130,7 +130,7 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         var task = TestDataFactory.createTask(mockMvc, objectMapper, token, TestDataFactory.idOf(cat), "Task Priority");
         long taskId = TestDataFactory.idOf(task);
 
-        mockMvc.perform(patch("/api/tasks/" + taskId + "/priority")
+        mockMvc.perform(patch("/api/tarefas/" + taskId + "/priority")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(Map.of("priority", "HIGH"))))
@@ -147,7 +147,7 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
 
         TestDataFactory.createSubtask(mockMvc, objectMapper, token, taskId, "Subtarefa de teste");
 
-        mockMvc.perform(get("/api/tasks/" + taskId + "/subtasks")
+        mockMvc.perform(get("/api/tarefas/" + taskId + "/subtasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].text").value("Subtarefa de teste"))
@@ -163,12 +163,12 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         var sub = TestDataFactory.createSubtask(mockMvc, objectMapper, token, taskId, "Subtarefa toggle");
         long subId = TestDataFactory.idOf(sub);
 
-        mockMvc.perform(patch("/api/subtasks/" + subId + "/toggle")
+        mockMvc.perform(patch("/api/subtarefas/" + subId + "/toggle")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.done").value(true));
 
-        mockMvc.perform(get("/api/tasks/" + taskId + "/subtasks")
+        mockMvc.perform(get("/api/tarefas/" + taskId + "/subtasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].done").value(true));
@@ -183,13 +183,13 @@ class TaskIntegrationTest extends AbstractIntegrationTest {
         var task = TestDataFactory.createTask(mockMvc, objectMapper, userAToken, TestDataFactory.idOf(cat), "Task de A");
         long taskId = TestDataFactory.idOf(task);
 
-        mockMvc.perform(patch("/api/tasks/" + taskId + "/status")
+        mockMvc.perform(patch("/api/tarefas/" + taskId + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userBToken))
                         .content(objectMapper.writeValueAsString(Map.of("status", "DONE"))))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(delete("/api/tasks/" + taskId)
+        mockMvc.perform(delete("/api/tarefas/" + taskId)
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
     }

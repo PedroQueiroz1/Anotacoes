@@ -41,7 +41,7 @@ class CategoryIntegrationTest extends AbstractIntegrationTest {
         String uniqueName = "ExclusiveForA_" + TestDataFactory.uniquePrefix();
         TestDataFactory.createCategory(mockMvc, objectMapper, userAToken, uniqueName);
 
-        var result = mockMvc.perform(get("/api/categories")
+        var result = mockMvc.perform(get("/api/categorias")
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -60,7 +60,7 @@ class CategoryIntegrationTest extends AbstractIntegrationTest {
 
         var sixthName = "Sexta categoria";
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .post("/api/categories")
+                        .post("/api/categorias")
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userToken))
                         .content(objectMapper.writeValueAsString(java.util.Map.of("name", sixthName))))
@@ -73,7 +73,7 @@ class CategoryIntegrationTest extends AbstractIntegrationTest {
         var cat = TestDataFactory.createCategory(mockMvc, objectMapper, userToken, "SlugTest " + TestDataFactory.uniquePrefix());
         String slug = TestDataFactory.slugOf(cat);
 
-        mockMvc.perform(get("/api/categories/slug/" + slug)
+        mockMvc.perform(get("/api/categorias/slug/" + slug)
                         .header("Authorization", AuthTestHelper.bearer(userToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slug").value(slug));

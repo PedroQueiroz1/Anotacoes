@@ -41,7 +41,7 @@ class ExportIntegrationTest extends AbstractIntegrationTest {
         String noteContent = "Conteúdo exportado " + uid;
         TestDataFactory.createNote(mockMvc, objectMapper, token, catId, noteTitle, noteContent);
 
-        var result = mockMvc.perform(get("/api/categories/" + slug + "/export/txt")
+        var result = mockMvc.perform(get("/api/categorias/" + slug + "/export/txt")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -65,7 +65,7 @@ class ExportIntegrationTest extends AbstractIntegrationTest {
                 "Cat Privada " + TestDataFactory.uniquePrefix());
         String slug = TestDataFactory.slugOf(cat);
 
-        mockMvc.perform(get("/api/categories/" + slug + "/export/txt")
+        mockMvc.perform(get("/api/categorias/" + slug + "/export/txt")
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
     }

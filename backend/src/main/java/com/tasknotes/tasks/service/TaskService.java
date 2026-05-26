@@ -29,7 +29,7 @@ import java.util.Map;
 @Service
 public class TaskService {
 
-    private static final int TASK_LIMIT = 10;
+    private static final int TASK_LIMIT = 500;
 
     private final TaskRepository taskRepository;
     private final CategoryRepository categoryRepository;

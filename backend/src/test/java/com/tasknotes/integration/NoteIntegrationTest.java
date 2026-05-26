@@ -49,7 +49,7 @@ class NoteIntegrationTest extends AbstractIntegrationTest {
         String multiline = "Linha 1\nLinha 2\nLinha 3";
         TestDataFactory.createNote(mockMvc, objectMapper, token, catId, "Anotação Multiline", multiline);
 
-        var listResult = mockMvc.perform(get("/api/categories/" + catId + "/notes")
+        var listResult = mockMvc.perform(get("/api/categorias/" + catId + "/notes")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -66,7 +66,7 @@ class NoteIntegrationTest extends AbstractIntegrationTest {
         var note = TestDataFactory.createNote(mockMvc, objectMapper, token, catId, "Original", "Conteúdo original");
         long noteId = TestDataFactory.idOf(note);
 
-        mockMvc.perform(put("/api/notes/" + noteId)
+        mockMvc.perform(put("/api/anotacoes/" + noteId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(
@@ -85,7 +85,7 @@ class NoteIntegrationTest extends AbstractIntegrationTest {
         var note = TestDataFactory.createNote(mockMvc, objectMapper, token, catId, "Para Deletar", "x");
         long noteId = TestDataFactory.idOf(note);
 
-        mockMvc.perform(delete("/api/notes/" + noteId)
+        mockMvc.perform(delete("/api/anotacoes/" + noteId)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isNoContent());
     }
@@ -101,7 +101,7 @@ class NoteIntegrationTest extends AbstractIntegrationTest {
             TestDataFactory.createNote(mockMvc, objectMapper, token, catId, "Nota " + i, "Conteúdo " + i);
         }
 
-        var result = mockMvc.perform(get("/api/categories/" + catId + "/notes")
+        var result = mockMvc.perform(get("/api/categorias/" + catId + "/notes")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -125,7 +125,7 @@ class NoteIntegrationTest extends AbstractIntegrationTest {
                 "Nota de A", "privada");
         long noteId = TestDataFactory.idOf(note);
 
-        mockMvc.perform(delete("/api/notes/" + noteId)
+        mockMvc.perform(delete("/api/anotacoes/" + noteId)
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
     }

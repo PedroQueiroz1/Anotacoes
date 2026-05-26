@@ -38,7 +38,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
             TestDataFactory.createTask(mockMvc, objectMapper, token, catId, "Tarefa " + i + " " + TestDataFactory.uniquePrefix());
         }
 
-        var result = mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        var result = mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -63,7 +63,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         }
 
         // Get first page
-        var page1Result = mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        var page1Result = mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -73,7 +73,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         assertThat(cursor).isNotBlank();
 
         // Get second page
-        var page2Result = mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        var page2Result = mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .param("cursor", cursor)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -98,13 +98,13 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         }
 
         // Collect IDs from both pages
-        var page1Result = mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        var page1Result = mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andReturn();
         Map<?, ?> page1 = objectMapper.readValue(page1Result.getResponse().getContentAsString(), Map.class);
         String cursor = (String) page1.get("nextCursor");
 
-        var page2Result = mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        var page2Result = mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .param("cursor", cursor)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andReturn();
@@ -132,7 +132,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
             TestDataFactory.createNote(mockMvc, objectMapper, token, catId, "Nota " + i, "Conteúdo " + i);
         }
 
-        var result = mockMvc.perform(get("/api/categories/" + catId + "/notes")
+        var result = mockMvc.perform(get("/api/categorias/" + catId + "/notes")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -158,7 +158,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
             TestDataFactory.createSubtask(mockMvc, objectMapper, token, taskId, "Sub " + i);
         }
 
-        var result = mockMvc.perform(get("/api/tasks/" + taskId + "/subtasks")
+        var result = mockMvc.perform(get("/api/tarefas/" + taskId + "/subtasks")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
@@ -180,12 +180,12 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         long catId = TestDataFactory.idOf(cat);
 
         // User B cannot list tasks in user A's category
-        mockMvc.perform(get("/api/categories/" + catId + "/tasks")
+        mockMvc.perform(get("/api/categorias/" + catId + "/tasks")
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
 
         // User B cannot list notes in user A's category
-        mockMvc.perform(get("/api/categories/" + catId + "/notes")
+        mockMvc.perform(get("/api/categorias/" + catId + "/notes")
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
     }
@@ -199,7 +199,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         long catId = TestDataFactory.idOf(cat);
 
         // User B cannot create a task in user A's category
-        mockMvc.perform(post("/api/categories/" + catId + "/tasks")
+        mockMvc.perform(post("/api/categorias/" + catId + "/tasks")
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userBToken))
                         .content(objectMapper.writeValueAsString(java.util.Map.of(
@@ -216,7 +216,7 @@ class PaginationIntegrationTest extends AbstractIntegrationTest {
         var task = TestDataFactory.createTask(mockMvc, objectMapper, userAToken, TestDataFactory.idOf(cat), "Tarefa de A");
         long taskId = TestDataFactory.idOf(task);
 
-        mockMvc.perform(delete("/api/tasks/" + taskId)
+        mockMvc.perform(delete("/api/tarefas/" + taskId)
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isNotFound());
     }

@@ -51,7 +51,7 @@ class NoteControllerTest {
                 List.of(sample(1L), sample(2L)), null, false, 10, null);
         when(service.findByCategory(eq(1L), isNull(), isNull(), anyString(), isNull(), isNull())).thenReturn(page);
 
-        mockMvc.perform(get("/api/categories/1/notes"))
+        mockMvc.perform(get("/api/categorias/1/notes"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.items.length()").value(2))
                .andExpect(jsonPath("$.items[0].title").value("Meeting notes"))
@@ -62,7 +62,7 @@ class NoteControllerTest {
     void create_returns201WithNote() throws Exception {
         when(service.create(eq(1L), any())).thenReturn(sample(5L));
 
-        mockMvc.perform(post("/api/categories/1/notes")
+        mockMvc.perform(post("/api/categorias/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
                                new NoteRequest("Meeting notes", "Content here", null))))
@@ -73,7 +73,7 @@ class NoteControllerTest {
 
     @Test
     void create_returns400_whenTitleIsBlank() throws Exception {
-        mockMvc.perform(post("/api/categories/1/notes")
+        mockMvc.perform(post("/api/categorias/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new NoteRequest("", null, null))))
                .andExpect(status().isBadRequest());
@@ -85,7 +85,7 @@ class NoteControllerTest {
                 false, null, List.of(), LocalDateTime.now(), LocalDateTime.now());
         when(service.update(eq(1L), any())).thenReturn(updated);
 
-        mockMvc.perform(put("/api/notes/1")
+        mockMvc.perform(put("/api/anotacoes/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
                                new NoteRequest("Updated", "New content", null))))
@@ -98,7 +98,7 @@ class NoteControllerTest {
     void delete_returns204_whenExists() throws Exception {
         doNothing().when(service).delete(1L);
 
-        mockMvc.perform(delete("/api/notes/1"))
+        mockMvc.perform(delete("/api/anotacoes/1"))
                .andExpect(status().isNoContent());
     }
 
@@ -107,7 +107,7 @@ class NoteControllerTest {
         doThrow(new ResourceNotFoundException("Anotação não encontrada: 99"))
                 .when(service).delete(99L);
 
-        mockMvc.perform(delete("/api/notes/99"))
+        mockMvc.perform(delete("/api/anotacoes/99"))
                .andExpect(status().isNotFound());
     }
 }

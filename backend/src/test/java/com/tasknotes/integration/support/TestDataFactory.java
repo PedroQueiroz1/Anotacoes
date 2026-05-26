@@ -52,7 +52,7 @@ public final class TestDataFactory {
 
     public static Map<?, ?> createCategory(MockMvc mockMvc, ObjectMapper mapper,
                                            String userToken, String name) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/categories")
+        MvcResult result = mockMvc.perform(post("/api/categorias")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userToken))
                         .content(mapper.writeValueAsString(Map.of("name", name))))
@@ -69,7 +69,7 @@ public final class TestDataFactory {
         body.put("description", "");
         body.put("priority", "LOW");
 
-        MvcResult result = mockMvc.perform(post("/api/categories/" + categoryId + "/tasks")
+        MvcResult result = mockMvc.perform(post("/api/categorias/" + categoryId + "/tasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userToken))
                         .content(mapper.writeValueAsString(body)))
@@ -80,7 +80,7 @@ public final class TestDataFactory {
 
     public static Map<?, ?> createSubtask(MockMvc mockMvc, ObjectMapper mapper,
                                           String userToken, long taskId, String text) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/tasks/" + taskId + "/subtasks")
+        MvcResult result = mockMvc.perform(post("/api/tarefas/" + taskId + "/subtasks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userToken))
                         .content(mapper.writeValueAsString(Map.of("text", text))))
@@ -92,7 +92,7 @@ public final class TestDataFactory {
     public static Map<?, ?> createNote(MockMvc mockMvc, ObjectMapper mapper,
                                        String userToken, long categoryId,
                                        String title, String content) throws Exception {
-        MvcResult result = mockMvc.perform(post("/api/categories/" + categoryId + "/notes")
+        MvcResult result = mockMvc.perform(post("/api/categorias/" + categoryId + "/notes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(userToken))
                         .content(mapper.writeValueAsString(Map.of("title", title, "content", content))))

@@ -3,115 +3,64 @@ package com.tasknotes.concepts.service;
 import com.tasknotes.concepts.dto.AcceptConceptRequest;
 import com.tasknotes.concepts.dto.ConceptSuggestionResponse;
 import com.tasknotes.concepts.model.ProgrammingConcept;
+import com.tasknotes.concepts.provider.ConceptLookupContext;
+import com.tasknotes.concepts.provider.ProgrammingConceptProvider;
 import com.tasknotes.concepts.repository.ProgrammingConceptRepository;
 import com.tasknotes.users.service.SecurityHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ProgrammingConceptService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingConceptService.class);
 
-    private static final int MAX_TERM_LENGTH = 80;
+    private static final int MAX_TERM_LENGTH = 120;
     private static final int MIN_TERM_LENGTH = 2;
-    private static final int CACHE_MAX_SIZE  = 300;
 
-    // Cache covers only GLOBAL concepts (scope-independent for seeds)
-    private final ConcurrentHashMap<String, Optional<ConceptSuggestionResponse>> globalCache =
-            new ConcurrentHashMap<>();
-
+    private final List<ProgrammingConceptProvider> providers;
     private final ProgrammingConceptRepository repository;
     private final SecurityHelper securityHelper;
 
-    public ProgrammingConceptService(ProgrammingConceptRepository repository,
+    public ProgrammingConceptService(List<ProgrammingConceptProvider> providers,
+                                     ProgrammingConceptRepository repository,
                                      SecurityHelper securityHelper) {
-        this.repository = repository;
+        this.providers      = providers;
+        this.repository     = repository;
         this.securityHelper = securityHelper;
     }
 
     // ── Public API ────────────────────────────────────────────────────────────
 
-    public ConceptSuggestionResponse suggest(String rawTerm, boolean semicolonTrigger) {
+    public ConceptSuggestionResponse suggest(String rawTerm) {
         if (rawTerm == null || rawTerm.isBlank()) return ConceptSuggestionResponse.notFound();
 
-        String term       = rawTerm.trim();
-        String normalized = normalize(term);
-
+        String normalized = normalize(rawTerm);
         if (normalized.length() < MIN_TERM_LENGTH || normalized.length() > MAX_TERM_LENGTH) {
             return ConceptSuggestionResponse.notFound();
         }
 
-        long start = System.currentTimeMillis();
-
-        // ── 1. Global cache hit (covers GLOBAL scope only) ───────────────────
-        boolean globalAlreadyChecked = false;
-        if (globalCache.containsKey(normalized)) {
-            Optional<ConceptSuggestionResponse> cached = globalCache.get(normalized);
-            if (cached.isPresent()) {
-                // Positive hit: found in GLOBAL scope
-                return cached.get();
-            }
-            // Negative hit: not in GLOBAL scope — skip DB queries for GLOBAL,
-            // but still fall through to check USER scope for the current user
-            globalAlreadyChecked = true;
-        }
-
-        if (!globalAlreadyChecked) {
-            // ── 2. Exact match — GLOBAL scope ─────────────────────────────────
-            Optional<ProgrammingConcept> exact = repository.findByNormalizedTermAndScope(normalized, "GLOBAL");
-            if (exact.isPresent()) {
-                var resp = ConceptSuggestionResponse.of(exact.get(), "LOCAL");
-                putGlobalCache(normalized, Optional.of(resp));
-                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
-                        normalized, System.currentTimeMillis() - start);
-                return resp;
-            }
-
-            // ── 3. Prefix match — GLOBAL scope ────────────────────────────────
-            var prefixMatches = repository.findByNormalizedTermStartingWithAndScope(normalized, "GLOBAL", PageRequest.of(0, 1));
-            if (!prefixMatches.isEmpty()) {
-                var resp = ConceptSuggestionResponse.of(prefixMatches.get(0), "LOCAL");
-                putGlobalCache(normalized, Optional.of(resp));
-                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=GLOBAL found=true durationMs={}",
-                        normalized, System.currentTimeMillis() - start);
-                return resp;
-            }
-
-            // Not in GLOBAL scope — record in cache so next request skips GLOBAL DB queries
-            putGlobalCache(normalized, Optional.empty());
-        }
-
-        // ── 4. Exact match — current user's USER scope ────────────────────────
+        Long userId = null;
         try {
-            Long ownerId = securityHelper.currentUserId();
-            Optional<ProgrammingConcept> userExact = repository.findByNormalizedTermAndOwnerUserId(normalized, ownerId);
-            if (userExact.isPresent()) {
-                log.info("concept_semicolon_lookup_completed termNormalized={} source=LOCAL scope=USER found=true durationMs={}",
-                        normalized, System.currentTimeMillis() - start);
-                return ConceptSuggestionResponse.of(userExact.get(), "LOCAL");
-            }
-        } catch (IllegalStateException ignored) {
-            // unauthenticated context (shouldn't happen with secured endpoints)
+            userId = securityHelper.currentUserId();
+        } catch (IllegalStateException ignored) {}
+
+        ConceptLookupContext context = new ConceptLookupContext(userId);
+
+        for (ProgrammingConceptProvider provider : providers) {
+            if (!provider.isEnabled()) continue;
+            Optional<ConceptSuggestionResponse> result = provider.explain(normalized, context);
+            if (result.isPresent()) return result.get();
         }
 
-        // ── 5. Heuristic: reject non-technical terms ──────────────────────────
-        if (!semicolonTrigger && !isTechnicalTerm(term)) {
-            log.info("concept_suggestion_rejected termNormalized={} reason=not_technical_term", normalized);
-            return ConceptSuggestionResponse.notFound();
-        }
-
-        log.info("concept_semicolon_lookup_not_found termNormalized={} durationMs={}",
-                normalized, System.currentTimeMillis() - start);
         return ConceptSuggestionResponse.notFound();
     }
 
@@ -133,13 +82,10 @@ public class ProgrammingConceptService {
             return;
         }
 
-        // Create or update USER-scoped concept
         Long ownerId = null;
         try {
             ownerId = securityHelper.currentUserId();
-        } catch (IllegalStateException ignored) {
-            // system context — treat as GLOBAL
-        }
+        } catch (IllegalStateException ignored) {}
 
         final Long finalOwnerId = ownerId;
         Optional<ProgrammingConcept> existing = finalOwnerId != null
@@ -172,13 +118,11 @@ public class ProgrammingConceptService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void seedIfEmpty() {
-        // Only seed if no GLOBAL concepts exist; USER-scope records must not prevent seeding
         if (repository.existsByScope("GLOBAL")) return;
         log.info("concept_seed_started count={}", SEED_DATA.length);
         int inserted = 0;
         for (String[] entry : SEED_DATA) {
             String normalized = normalize(entry[0]);
-            // Skip if any concept with this normalizedTerm already exists (avoid unique constraint violation)
             if (repository.findByNormalizedTerm(normalized).isPresent()) {
                 log.debug("concept_seed_skipped term={} reason=already_exists", entry[0]);
                 continue;
@@ -202,75 +146,9 @@ public class ProgrammingConceptService {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    static String normalize(String term) {
+    public static String normalize(String term) {
         if (term == null) return "";
         return term.toLowerCase(java.util.Locale.ROOT).trim().replaceAll("\\s+", " ");
-    }
-
-    private void putGlobalCache(String key, Optional<ConceptSuggestionResponse> value) {
-        if (globalCache.size() >= CACHE_MAX_SIZE) globalCache.clear();
-        globalCache.put(key, value);
-    }
-
-    // ── Technical term heuristic ──────────────────────────────────────────────
-
-    private static final Set<String> STOPWORDS = Set.copyOf(List.of(
-        "de","da","do","dos","das","um","uma","uns","umas","o","a","os","as",
-        "e","em","no","na","nos","nas","se","que","para","com","por","mas",
-        "ou","nem","sim","não","já","só","também","mais","menos","muito",
-        "pouco","bem","mal","todo","toda","todos","todas","este","esta",
-        "esse","essa","isso","aqui","ali","lá","é","foi","ser","ter",
-        "the","be","is","are","was","were","been","being","have","has","had",
-        "do","does","did","will","would","can","could","may","might","shall",
-        "should","and","or","but","nor","for","yet","so","in","on","at","to",
-        "of","by","as","from","with","about","this","that","these","those",
-        "it","its","he","she","they","we","you","i","me","him","her",
-        "not","no","yes","if","then","when","where","how","what","who","which"
-    ));
-
-    private static final Set<String> TECH_KEYWORDS = Set.copyOf(List.of(
-        "java","python","javascript","typescript","golang","go","rust","kotlin",
-        "swift","scala","ruby","php","perl","bash","shell","powershell",
-        "spring","angular","react","vue","node","express","django","flask",
-        "docker","kubernetes","aws","azure","gcp","terraform","ansible",
-        "sql","nosql","mysql","postgres","postgresql","mongodb","redis",
-        "kafka","rabbitmq","elasticsearch","cassandra","sqlite","h2",
-        "git","github","gitlab","jenkins","ci","cd","devops","agile","scrum",
-        "api","rest","graphql","grpc","http","https","websocket","tcp","udp",
-        "json","xml","yaml","yml","csv","html","css","scss","sass",
-        "array","hash","map","stack","queue","tree","graph","heap","list",
-        "sort","search","algorithm","recursion","iteration","loop",
-        "class","object","interface","abstract","enum","generic",
-        "inheritance","polymorphism","encapsulation","abstraction",
-        "singleton","factory","observer","decorator","builder","proxy",
-        "pattern","mvc","mvvm","mvp","ddd","tdd","bdd","solid","kiss","dry",
-        "orm","jpa","jdbc","hibernate","entity","repository","service",
-        "jwt","oauth","ssl","tls","cors","csrf","xss","auth","token",
-        "lambda","closure","functional","reactive","async","await",
-        "thread","concurrent","mutex","semaphore","deadlock","race",
-        "microservice","monolith","serverless","container","pod","cluster",
-        "cache","queue","broker","message","event","stream","batch",
-        "pojo","dto","dao","bean","component","controller","model",
-        "uuid","guid","hash","base64","encode","decode","encrypt","decrypt",
-        "cqrs","event","sourcing","saga","circuit","breaker","retry",
-        "regex","parser","lexer","compiler","interpreter","runtime",
-        "deploy","pipeline","artifact","build","test","lint","coverage",
-        "proxy","gateway","balancer","cdn","dns","vpc","subnet","firewall",
-        "n8n","webhook","integration","automation","workflow","pipeline"
-    ));
-
-    boolean isTechnicalTerm(String rawTerm) {
-        String term = rawTerm.trim();
-        if (term.length() < MIN_TERM_LENGTH) return false;
-        String lower = term.toLowerCase(java.util.Locale.ROOT);
-        if (STOPWORDS.contains(lower)) return false;
-        if (term.matches("[A-Z]{2,}")) return true;
-        if (!term.contains(" ") && term.matches("[A-Za-z0-9]+") && term.matches(".*\\d.*")) return true;
-        if (term.matches("[A-Z]+(/[A-Z]+)+")) return true;
-        for (String word : lower.split("[\\s/\\-]+")) {
-            if (!word.isEmpty() && TECH_KEYWORDS.contains(word)) return true;
-        }
-        return TECH_KEYWORDS.contains(lower);
     }
 
     // ── Seed data ─────────────────────────────────────────────────────────────

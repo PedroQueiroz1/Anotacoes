@@ -16,6 +16,7 @@ specs/
 *.p12
 *.jks
 *.keystore
+*.ps1
 
 # Local config files
 application-local.properties

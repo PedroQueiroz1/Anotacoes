@@ -23,9 +23,8 @@ public class ProgrammingConceptController {
 
     @GetMapping("/suggest")
     public ConceptSuggestionResponse suggest(
-            @RequestParam @NotBlank @Size(max = 80) String term,
-            @RequestParam(required = false, defaultValue = "false") boolean semicolonTrigger) {
-        return service.suggest(term, semicolonTrigger);
+            @RequestParam @NotBlank @Size(max = 120) String term) {
+        return service.suggest(term);
     }
 
     @PostMapping("/accept")

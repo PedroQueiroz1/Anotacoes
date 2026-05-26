@@ -46,7 +46,7 @@ class CategoryControllerTest {
     void findAll_returns200WithList() throws Exception {
         when(service.findAll()).thenReturn(List.of(sample()));
 
-        mockMvc.perform(get("/api/categories"))
+        mockMvc.perform(get("/api/categorias"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$[0].id").value(1))
                .andExpect(jsonPath("$[0].name").value("Work"))
@@ -57,7 +57,7 @@ class CategoryControllerTest {
     void findById_returns200_whenExists() throws Exception {
         when(service.findById(1L)).thenReturn(sample());
 
-        mockMvc.perform(get("/api/categories/1"))
+        mockMvc.perform(get("/api/categorias/1"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.name").value("Work"));
     }
@@ -66,7 +66,7 @@ class CategoryControllerTest {
     void findById_returns404_whenNotFound() throws Exception {
         when(service.findById(99L)).thenThrow(new ResourceNotFoundException("Categoria não encontrada: 99"));
 
-        mockMvc.perform(get("/api/categories/99"))
+        mockMvc.perform(get("/api/categorias/99"))
                .andExpect(status().isNotFound())
                .andExpect(jsonPath("$.status").value(404));
     }
@@ -75,7 +75,7 @@ class CategoryControllerTest {
     void create_returns201WithCreatedCategory() throws Exception {
         when(service.create(any())).thenReturn(sample());
 
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/categorias")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new CategoryRequest("Work"))))
                .andExpect(status().isCreated())
@@ -84,7 +84,7 @@ class CategoryControllerTest {
 
     @Test
     void create_returns400_whenNameIsBlank() throws Exception {
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/categorias")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new CategoryRequest(""))))
                .andExpect(status().isBadRequest());
@@ -95,7 +95,7 @@ class CategoryControllerTest {
         when(service.create(any()))
                 .thenThrow(new BusinessException("Limite máximo de 5 categorias atingido."));
 
-        mockMvc.perform(post("/api/categories")
+        mockMvc.perform(post("/api/categorias")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new CategoryRequest("Extra"))))
                .andExpect(status().isUnprocessableEntity())
@@ -107,7 +107,7 @@ class CategoryControllerTest {
         CategoryResponse updated = new CategoryResponse(1L, null, "Personal", "personal", LocalDateTime.now(), LocalDateTime.now(), 0);
         when(service.update(eq(1L), any())).thenReturn(updated);
 
-        mockMvc.perform(put("/api/categories/1")
+        mockMvc.perform(put("/api/categorias/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new CategoryRequest("Personal"))))
                .andExpect(status().isOk())
@@ -118,7 +118,7 @@ class CategoryControllerTest {
     void delete_returns204_whenExists() throws Exception {
         doNothing().when(service).delete(1L);
 
-        mockMvc.perform(delete("/api/categories/1"))
+        mockMvc.perform(delete("/api/categorias/1"))
                .andExpect(status().isNoContent());
     }
 
@@ -127,7 +127,7 @@ class CategoryControllerTest {
         doThrow(new ResourceNotFoundException("Categoria não encontrada: 99"))
                 .when(service).delete(99L);
 
-        mockMvc.perform(delete("/api/categories/99"))
+        mockMvc.perform(delete("/api/categorias/99"))
                .andExpect(status().isNotFound());
     }
 }

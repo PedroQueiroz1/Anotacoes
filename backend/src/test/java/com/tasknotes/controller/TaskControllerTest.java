@@ -55,7 +55,7 @@ class TaskControllerTest {
                 List.of(sample(1L), sample(2L)), null, false, 10, null);
         when(service.findByCategory(eq(1L), isNull(), isNull())).thenReturn(page);
 
-        mockMvc.perform(get("/api/categories/1/tasks"))
+        mockMvc.perform(get("/api/categorias/1/tasks"))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.items.length()").value(2))
                .andExpect(jsonPath("$.items[0].title").value("Buy milk"))
@@ -67,7 +67,7 @@ class TaskControllerTest {
         when(service.findByCategory(eq(99L), isNull(), isNull()))
                 .thenThrow(new ResourceNotFoundException("Categoria não encontrada: 99"));
 
-        mockMvc.perform(get("/api/categories/99/tasks"))
+        mockMvc.perform(get("/api/categorias/99/tasks"))
                .andExpect(status().isNotFound());
     }
 
@@ -75,7 +75,7 @@ class TaskControllerTest {
     void create_returns201WithTask() throws Exception {
         when(service.create(eq(1L), any())).thenReturn(sample(10L));
 
-        mockMvc.perform(post("/api/categories/1/tasks")
+        mockMvc.perform(post("/api/categorias/1/tasks")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
                                new TaskRequest("Buy milk", null, null, Priority.MEDIUM, null, null))))
@@ -86,7 +86,7 @@ class TaskControllerTest {
 
     @Test
     void create_returns400_whenTitleIsBlank() throws Exception {
-        mockMvc.perform(post("/api/categories/1/tasks")
+        mockMvc.perform(post("/api/categorias/1/tasks")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
                                new TaskRequest("", null, null, Priority.LOW, null, null))))
@@ -103,7 +103,7 @@ class TaskControllerTest {
         );
         when(service.update(eq(1L), any())).thenReturn(updated);
 
-        mockMvc.perform(put("/api/tasks/1")
+        mockMvc.perform(put("/api/tarefas/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
                                new TaskRequest("Updated", "desc", null, Priority.HIGH, null, null))))
@@ -122,7 +122,7 @@ class TaskControllerTest {
         );
         when(service.updateStatus(eq(1L), any())).thenReturn(done);
 
-        mockMvc.perform(patch("/api/tasks/1/status")
+        mockMvc.perform(patch("/api/tarefas/1/status")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(new StatusUpdateRequest(TaskStatus.DONE))))
                .andExpect(status().isOk())
@@ -133,7 +133,7 @@ class TaskControllerTest {
     void delete_returns204_whenExists() throws Exception {
         doNothing().when(service).delete(1L);
 
-        mockMvc.perform(delete("/api/tasks/1"))
+        mockMvc.perform(delete("/api/tarefas/1"))
                .andExpect(status().isNoContent());
     }
 
@@ -142,7 +142,7 @@ class TaskControllerTest {
         doThrow(new ResourceNotFoundException("Tarefa não encontrada: 99"))
                 .when(service).delete(99L);
 
-        mockMvc.perform(delete("/api/tasks/99"))
+        mockMvc.perform(delete("/api/tarefas/99"))
                .andExpect(status().isNotFound());
     }
 }

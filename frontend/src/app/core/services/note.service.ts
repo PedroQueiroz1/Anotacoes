@@ -29,48 +29,48 @@ export class NoteService {
     if (sort)   params = params.set('sort', sort);
     if (tagId != null) params = params.set('tagId', tagId);
     if (pinnedOnly === true) params = params.set('pinnedOnly', 'true');
-    return this.http.get<CursorPage<Note>>(`/api/categories/${categoryId}/notes`, { params });
+    return this.http.get<CursorPage<Note>>(`/api/categorias/${categoryId}/anotacoes`, { params });
   }
 
   create(categoryId: number, payload: NotePayload): Observable<Note> {
-    return this.http.post<Note>(`/api/categories/${categoryId}/notes`, payload);
+    return this.http.post<Note>(`/api/categorias/${categoryId}/anotacoes`, payload);
   }
 
   update(id: number, payload: NotePayload): Observable<Note> {
-    return this.http.put<Note>(`/api/notes/${id}`, payload);
+    return this.http.put<Note>(`/api/anotacoes/${id}`, payload);
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/notes/${id}`);
+    return this.http.delete<void>(`/api/anotacoes/${id}`);
   }
 
   reorder(categoryId: number, ids: number[], offset = 0): Observable<void> {
     const params = new HttpParams().set('offset', offset);
-    return this.http.put<void>(`/api/categories/${categoryId}/notes/reorder`, ids, { params });
+    return this.http.put<void>(`/api/categorias/${categoryId}/anotacoes/reorder`, ids, { params });
   }
 
   togglePin(id: number): Observable<Note> {
-    return this.http.patch<Note>(`/api/notes/${id}/pin`, {});
+    return this.http.patch<Note>(`/api/anotacoes/${id}/pin`, {});
   }
 
   moveToTop(id: number): Observable<Note> {
-    return this.http.patch<Note>(`/api/notes/${id}/move-to-top`, {});
+    return this.http.patch<Note>(`/api/anotacoes/${id}/move-to-top`, {});
   }
 
   moveToBottom(id: number): Observable<Note> {
-    return this.http.patch<Note>(`/api/notes/${id}/move-to-bottom`, {});
+    return this.http.patch<Note>(`/api/anotacoes/${id}/move-to-bottom`, {});
   }
 
   moveToPosition(id: number, position: number): Observable<Note> {
-    return this.http.patch<Note>(`/api/notes/${id}/move-to-position`, { position });
+    return this.http.patch<Note>(`/api/anotacoes/${id}/move-to-position`, { position });
   }
 
   getTags(): Observable<NoteTag[]> {
-    return this.http.get<NoteTag[]>('/api/notes/tags');
+    return this.http.get<NoteTag[]>('/api/anotacoes/tags');
   }
 
   createTag(name: string, color: string): Observable<NoteTag> {
-    return this.http.post<NoteTag>('/api/notes/tags', { name, color });
+    return this.http.post<NoteTag>('/api/anotacoes/tags', { name, color });
   }
 
   deleteTag(id: number): Observable<void> {

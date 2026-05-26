@@ -20,7 +20,7 @@ public class SubtaskController {
         this.service = service;
     }
 
-    @GetMapping("/api/tasks/{taskId}/subtasks")
+    @GetMapping("/api/tarefas/{taskId}/subtarefas")
     @Operation(summary = "Listar subtarefas de uma tarefa (paginado por cursor)")
     public SubtaskPageResponse findByTask(
             @PathVariable Long taskId,
@@ -28,7 +28,7 @@ public class SubtaskController {
         return service.findByTask(taskId, cursor);
     }
 
-    @PostMapping("/api/tasks/{taskId}/subtasks")
+    @PostMapping("/api/tarefas/{taskId}/subtarefas")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Adicionar subtarefa a uma tarefa (máx. 20)")
     public SubtaskResponse create(
@@ -37,7 +37,7 @@ public class SubtaskController {
         return service.create(taskId, request);
     }
 
-    @PutMapping("/api/subtasks/{id}")
+    @PutMapping("/api/subtarefas/{id}")
     @Operation(summary = "Editar texto de uma subtarefa")
     public SubtaskResponse update(
             @PathVariable Long id,
@@ -45,13 +45,13 @@ public class SubtaskController {
         return service.update(id, request);
     }
 
-    @PatchMapping("/api/subtasks/{id}/toggle")
+    @PatchMapping("/api/subtarefas/{id}/toggle")
     @Operation(summary = "Marcar/desmarcar subtarefa como concluída")
     public SubtaskResponse toggle(@PathVariable Long id) {
         return service.toggle(id);
     }
 
-    @DeleteMapping("/api/subtasks/{id}")
+    @DeleteMapping("/api/subtarefas/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Remover uma subtarefa")
     public void delete(@PathVariable Long id) {

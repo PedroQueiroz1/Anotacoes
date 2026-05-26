@@ -98,14 +98,7 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
   get progressCount(): number  { return this.progressTasks.length; }
   get doneCount():     number  { return this.doneTasks.length; }
 
-  // ── Paginação de tarefas ──────────────────────────────────────────────────
-  taskCursorHistory: (string | null)[] = [null];
-  taskPageIndex = 0;
-  taskNextCursor: string | null = null;
-  taskHasNext = false;
-
-  get taskHasPrev():     boolean { return this.taskPageIndex > 0; }
-  get taskDragDisabled(): boolean { return this.taskHasNext || this.taskPageIndex > 0; }
+  get taskDragDisabled(): boolean { return false; }
 
   // ── Estatísticas ──────────────────────────────────────────────────────────
   get statNotes(): number { return this.noteTotalCount; }
@@ -229,7 +222,6 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
     this.errorMessage = '';
     this.deletingTaskId = null;
     this.deletingNoteId = null;
-    this.resetTaskPagination();
     this.resetConceptSuggestion();
   }
 
@@ -247,13 +239,6 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
     this.lastNoteTextarea        = null;
   }
 
-  private resetTaskPagination(): void {
-    this.taskCursorHistory = [null];
-    this.taskPageIndex = 0;
-    this.taskNextCursor = null;
-    this.taskHasNext = false;
-  }
-
   load(slug: string): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -262,21 +247,19 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
         this.category   = cat;
         this.categoryId = cat.id;
         this.titleService.setTitle(`TaskNotes — ${cat.name}`);
-        this.loadTasks(null);
+        this.loadTasks();
         this.loadAvailableTags();
       },
       error: () => { this.errorMessage = 'Categoria não encontrada.'; this.isLoading = false; },
     });
   }
 
-  private loadTasks(cursor: string | null): void {
-    this.taskService.getByCategory(this.categoryId, cursor, null).subscribe({
+  private loadTasks(): void {
+    this.taskService.getByCategory(this.categoryId, null, null).subscribe({
       next: (page) => {
         this.todoTasks     = page.items.filter(t => t.status === 'TODO');
         this.progressTasks = page.items.filter(t => t.status === 'IN_PROGRESS');
         this.doneTasks     = page.items.filter(t => t.status === 'DONE');
-        this.taskNextCursor = page.nextCursor;
-        this.taskHasNext = page.hasNext;
         this.loadNotes(true);
       },
       error: () => { this.errorMessage = 'Erro ao carregar tarefas.'; this.isLoading = false; },
@@ -460,22 +443,6 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  // ── Paginação — tarefas ───────────────────────────────────────────────────
-  taskNextPage(): void {
-    if (!this.taskHasNext || !this.taskNextCursor) return;
-    this.taskPageIndex++;
-    if (this.taskCursorHistory.length <= this.taskPageIndex) {
-      this.taskCursorHistory.push(this.taskNextCursor);
-    }
-    this.loadTasks(this.taskCursorHistory[this.taskPageIndex]);
-  }
-
-  taskPrevPage(): void {
-    if (this.taskPageIndex <= 0) return;
-    this.taskPageIndex--;
-    this.loadTasks(this.taskCursorHistory[this.taskPageIndex]);
-  }
-
   // ── Formulário de tarefa ───────────────────────────────────────────────────
   openCreate(): void {
     this.form = emptyTaskForm();
@@ -517,8 +484,7 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.taskService.create(this.categoryId, payload).subscribe({
       next: () => {
-        this.resetTaskPagination();
-        this.loadTasks(null);
+        this.loadTasks();
         this.showForm = false;
         this.isSaving = false;
       },
@@ -540,9 +506,6 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
         this.progressTasks = this.progressTasks.filter(t => t.id !== id);
         this.doneTasks     = this.doneTasks.filter(t => t.id !== id);
         this.deletingTaskId = null;
-        if (this.allTasks.length === 0 && this.taskPageIndex > 0) {
-          this.taskPrevPage();
-        }
       },
       error: () => { this.errorMessage = 'Erro ao excluir tarefa.'; this.deletingTaskId = null; },
     });

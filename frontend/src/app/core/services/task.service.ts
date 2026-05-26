@@ -21,34 +21,34 @@ export class TaskService {
     let params = new HttpParams();
     if (cursor) params = params.set('cursor', cursor);
     if (status) params = params.set('status', status);
-    return this.http.get<CursorPage<Task>>(`/api/categories/${categoryId}/tasks`, { params });
+    return this.http.get<CursorPage<Task>>(`/api/categorias/${categoryId}/tarefas`, { params });
   }
 
   create(categoryId: number, payload: TaskPayload): Observable<Task> {
-    return this.http.post<Task>(`/api/categories/${categoryId}/tasks`, payload);
+    return this.http.post<Task>(`/api/categorias/${categoryId}/tarefas`, payload);
   }
 
   update(id: number, payload: TaskPayload): Observable<Task> {
-    return this.http.put<Task>(`/api/tasks/${id}`, payload);
+    return this.http.put<Task>(`/api/tarefas/${id}`, payload);
   }
 
   updateStatus(id: number, status: TaskStatus): Observable<Task> {
-    return this.http.patch<Task>(`/api/tasks/${id}/status`, { status });
+    return this.http.patch<Task>(`/api/tarefas/${id}/status`, { status });
   }
 
   updatePriority(id: number, priority: Priority): Observable<Task> {
-    return this.http.patch<Task>(`/api/tasks/${id}/priority`, { priority });
+    return this.http.patch<Task>(`/api/tarefas/${id}/priority`, { priority });
   }
 
   delete(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/tasks/${id}`);
+    return this.http.delete<void>(`/api/tarefas/${id}`);
   }
 
   reorder(categoryId: number, ids: number[]): Observable<void> {
-    return this.http.put<void>(`/api/categories/${categoryId}/tasks/reorder`, ids);
+    return this.http.put<void>(`/api/categorias/${categoryId}/tarefas/reorder`, ids);
   }
 
   getDistinctTags(): Observable<{ name: string; color: string }[]> {
-    return this.http.get<{ name: string; color: string }[]>('/api/tasks/tags');
+    return this.http.get<{ name: string; color: string }[]>('/api/tarefas/tags');
   }
 }

@@ -28,7 +28,7 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         String uniqueTitle = "ProgramacaoJava_" + TestDataFactory.uniquePrefix();
         TestDataFactory.createTask(mockMvc, objectMapper, token, TestDataFactory.idOf(cat), uniqueTitle);
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", uniqueTitle)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -55,13 +55,13 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         body.put("description", uniqueDesc);
         body.put("priority", "LOW");
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .put("/api/tasks/" + taskId)
+                        .put("/api/tarefas/" + taskId)
                         .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                         .header("Authorization", AuthTestHelper.bearer(token))
                         .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isOk());
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", uniqueDesc)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -78,7 +78,7 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         TestDataFactory.createNote(mockMvc, objectMapper, token, TestDataFactory.idOf(cat),
                 "Anotação Arch", uniqueTerm);
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", uniqueTerm)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -97,7 +97,7 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         String uniqueSubText = "GraphQLvsREST_" + TestDataFactory.uniquePrefix();
         TestDataFactory.createSubtask(mockMvc, objectMapper, token, TestDataFactory.idOf(task), uniqueSubText);
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", uniqueSubText)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -118,7 +118,7 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         String resolvedTitle = "Curso de Programacao Java para Iniciantes " + TestDataFactory.uniquePrefix();
         TestDataFactory.createSubtask(mockMvc, objectMapper, token, TestDataFactory.idOf(task), resolvedTitle);
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", "Programacao Java")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -136,13 +136,13 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         TestDataFactory.createTask(mockMvc, objectMapper, token, TestDataFactory.idOf(cat),
                 "Arquitetura Modular " + uid);
 
-        var resultLower = mockMvc.perform(get("/api/search")
+        var resultLower = mockMvc.perform(get("/api/busca")
                         .param("query", "arquitetura modular " + uid)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
                 .andReturn();
 
-        var resultUpper = mockMvc.perform(get("/api/search")
+        var resultUpper = mockMvc.perform(get("/api/busca")
                         .param("query", "ARQUITETURA MODULAR " + uid)
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk())
@@ -161,7 +161,7 @@ class SearchIntegrationTest extends AbstractIntegrationTest {
         String uniqueTitle = "SegredoDoUserA_" + TestDataFactory.uniquePrefix();
         TestDataFactory.createTask(mockMvc, objectMapper, userAToken, TestDataFactory.idOf(cat), uniqueTitle);
 
-        var result = mockMvc.perform(get("/api/search")
+        var result = mockMvc.perform(get("/api/busca")
                         .param("query", uniqueTitle)
                         .header("Authorization", AuthTestHelper.bearer(userBToken)))
                 .andExpect(status().isOk())

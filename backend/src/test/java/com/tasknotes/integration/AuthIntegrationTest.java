@@ -46,7 +46,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void protectedEndpointWithoutToken_returns401() throws Exception {
-        mockMvc.perform(get("/api/categories"))
+        mockMvc.perform(get("/api/categorias"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -55,7 +55,7 @@ class AuthIntegrationTest extends AbstractIntegrationTest {
         String token = AuthTestHelper.login(mockMvc, objectMapper, ADMIN_USERNAME, ADMIN_PASSWORD);
         assertThat(token).isNotBlank();
 
-        mockMvc.perform(get("/api/categories")
+        mockMvc.perform(get("/api/categorias")
                         .header("Authorization", AuthTestHelper.bearer(token)))
                 .andExpect(status().isOk());
     }

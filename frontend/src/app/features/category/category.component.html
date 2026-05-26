@@ -169,13 +169,6 @@
 
         </div>
 
-        @if (taskHasPrev || taskHasNext) {
-          <div class="pagination-bar">
-            <button class="btn btn--ghost btn--sm" [disabled]="!taskHasPrev" (click)="taskPrevPage()">&#8592; Anterior</button>
-            <span class="pagination-bar__page">Página {{ taskPageIndex + 1 }}</span>
-            <button class="btn btn--ghost btn--sm" [disabled]="!taskHasNext" (click)="taskNextPage()">Próxima &#8594;</button>
-          </div>
-        }
       }
     </section>
 

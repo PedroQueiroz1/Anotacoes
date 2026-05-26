@@ -61,7 +61,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   conceptManualSummary     = '';
   conceptManualError       = '';
   isSavingConcept          = false;
-  private pendingReplacement: { semicolonPos: number; term: string } | null = null;
+  private pendingReplacement: { matchStart: number; matchEnd: number; term: string } | null = null;
   private lastEditTextarea: HTMLTextAreaElement | null = null;
 
   get pendingTerm(): string { return this.pendingReplacement?.term ?? ''; }
@@ -201,12 +201,14 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     const textarea = event.target as HTMLTextAreaElement;
     this.lastEditTextarea = textarea;
     const cursor = textarea.selectionStart;
-    const value  = textarea.value;
-    if (cursor === 0 || value[cursor - 1] !== ';') return;
-    const semicolonPos = cursor - 1;
-    const term = this.extractTermFromSemicolon(value, semicolonPos);
+    const textBeforeCursor = textarea.value.substring(0, cursor);
+    const match = textBeforeCursor.match(/"([^"\r\n]+)";$/);
+    if (!match) return;
+    const term = match[1].trim();
     if (!term) return;
-    this.pendingReplacement      = { semicolonPos, term };
+    const matchStart = cursor - match[0].length;
+    const matchEnd   = cursor;
+    this.pendingReplacement      = { matchStart, matchEnd, term };
     this.conceptSuggestion       = null;
     this.conceptNotFound         = false;
     this.conceptManualMode       = false;
@@ -248,13 +250,13 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     if (!suggestion || !this.pendingReplacement) return;
     const textarea = textareaEl ?? this.lastEditTextarea;
     if (!textarea) return;
-    const { semicolonPos } = this.pendingReplacement;
+    const { matchStart, matchEnd, term } = this.pendingReplacement;
     const source    = this.conceptSuggestionSource;
-    const insertion = ` - ${suggestion.summary}`;
-    this.editContent = textarea.value.substring(0, semicolonPos)
+    const insertion = `${term} - ${suggestion.summary}`;
+    this.editContent = textarea.value.substring(0, matchStart)
                      + insertion
-                     + textarea.value.substring(semicolonPos + 1);
-    const newCursor = semicolonPos + insertion.length;
+                     + textarea.value.substring(matchEnd);
+    const newCursor = matchStart + insertion.length;
     this.conceptSuggestion  = null;
     this.pendingReplacement = null;
     setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
@@ -286,12 +288,12 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
       next: () => {
         const textarea = this.lastEditTextarea;
         if (textarea && this.pendingReplacement) {
-          const { semicolonPos } = this.pendingReplacement;
-          const insertion = ` - ${summary}`;
-          this.editContent = textarea.value.substring(0, semicolonPos)
+          const { matchStart, matchEnd, term: pendingTerm } = this.pendingReplacement;
+          const insertion = `${pendingTerm} - ${summary}`;
+          this.editContent = textarea.value.substring(0, matchStart)
                            + insertion
-                           + textarea.value.substring(semicolonPos + 1);
-          const newCursor = semicolonPos + insertion.length;
+                           + textarea.value.substring(matchEnd);
+          const newCursor = matchStart + insertion.length;
           setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
         }
         this.isSavingConcept    = false;
@@ -301,20 +303,6 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
       },
       error: () => { this.isSavingConcept = false; this.conceptManualError = 'Erro ao salvar. Tente novamente.'; },
     });
-  }
-
-  private extractTermFromSemicolon(value: string, semicolonPos: number): string {
-    const textBefore = value.substring(0, semicolonPos);
-    let lastSepIdx = -1;
-    for (let i = textBefore.length - 1; i >= 0; i--) {
-      const ch = textBefore[i];
-      if (ch === '\n' || ch === '.' || ch === ':' || ch === ';') { lastSepIdx = i; break; }
-    }
-    const segment = textBefore.substring(lastSepIdx + 1);
-    const term = segment.replace(/^[\s\-\*•–]+/, '').trim();
-    if (!term || term.length < 2) return '';
-    if (/^\d+$/.test(term)) return '';
-    return term;
   }
 
   saveEdit(): void {

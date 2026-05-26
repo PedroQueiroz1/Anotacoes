@@ -20,7 +20,7 @@ public class SearchController {
         this.service = service;
     }
 
-    @GetMapping("/api/search")
+    @GetMapping("/api/busca")
     @Operation(summary = "Busca em categorias, tarefas (título/descrição/subtarefas) e anotações")
     public List<SearchResultDTO> search(@RequestParam String query) {
         return service.search(query);
