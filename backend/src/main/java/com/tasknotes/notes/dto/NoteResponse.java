@@ -9,6 +9,7 @@ public record NoteResponse(
         Long categoryId,
         String title,
         String content,
+        String contentHtml,
         Integer position,
         boolean pinned,
         LocalDateTime pinnedAt,

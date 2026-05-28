@@ -1,8 +1,9 @@
 import {
   AfterViewInit, Component, ElementRef, EventEmitter,
-  HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject,
+  HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Editor, NgxEditorModule, Toolbar, toDoc, toHTML } from 'ngx-editor';
 import { Note } from '../../../core/models/note.model';
 import { NoteTag } from '../../../core/models/note-tag.model';
 import { NoteService, NotePayload } from '../../../core/services/note.service';
@@ -10,15 +11,16 @@ import { ProgrammingConceptService } from '../../../core/services/programming-co
 import { DropdownService } from '../../../core/services/dropdown.service';
 import { ConceptSuggestion } from '../../../core/models/programming-concept.model';
 import { YoutubePreviewComponent } from '../../../shared/components/youtube-preview/youtube-preview.component';
+import { SafeHtmlPipe } from '../../../shared/pipes/safe-html.pipe';
 
 @Component({
   selector: 'app-note-item',
   standalone: true,
-  imports: [FormsModule, YoutubePreviewComponent],
+  imports: [FormsModule, NgxEditorModule, YoutubePreviewComponent, SafeHtmlPipe],
   templateUrl: './note-item.component.html',
   styleUrl: './note-item.component.scss',
 })
-export class NoteItemComponent implements AfterViewInit, OnChanges {
+export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input({ required: true }) note!: Note;
   @Input() availableTags: NoteTag[] = [];
   @Output() noteUpdated      = new EventEmitter<Note>();
@@ -28,7 +30,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   @Output() noteMoveBottom   = new EventEmitter<Note>();
   @Output() noteMovePosition = new EventEmitter<Note>();
 
-  @ViewChild('contentEl')    contentEl?: ElementRef<HTMLParagraphElement>;
+  @ViewChild('contentEl') contentEl?: ElementRef<HTMLElement>;
   @ViewChild('noteKebabBtn') noteKebabBtnRef?: ElementRef<HTMLButtonElement>;
 
   private noteService      = inject(NoteService);
@@ -44,12 +46,23 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   modalMode: 'view' | 'edit' = 'view';
 
   // ── Edição ────────────────────────────────────────────────────────────────
-  isSaving    = false;
-  editError   = '';
-  editTitle   = '';
-  editContent = '';
-  editTagIds  = new Set<number>();
-  isLong      = false;
+  isSaving      = false;
+  editError     = '';
+  editTitle     = '';
+  editTagIds    = new Set<number>();
+  isLong        = false;
+
+  // ── ngx-editor ────────────────────────────────────────────────────────────
+  editor: Editor | null = null;
+  editContentHtml       = '';
+  readonly toolbar: Toolbar = [
+    ['bold', 'italic', 'underline', 'strike'],
+    ['bullet_list', 'ordered_list'],
+    ['link'],
+    ['text_color', 'background_color'],
+    ['align_left', 'align_center', 'align_right'],
+    ['format_clear'],
+  ];
 
   // ── Autocomplete de conceitos ─────────────────────────────────────────────
   conceptSuggestion:       ConceptSuggestion | null = null;
@@ -61,8 +74,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
   conceptManualSummary     = '';
   conceptManualError       = '';
   isSavingConcept          = false;
-  private pendingReplacement: { matchStart: number; matchEnd: number; term: string } | null = null;
-  private lastEditTextarea: HTMLTextAreaElement | null = null;
+  private pendingReplacement: { term: string } | null = null;
 
   get pendingTerm(): string { return this.pendingReplacement?.term ?? ''; }
 
@@ -73,19 +85,32 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     return '';
   }
 
-  ngAfterViewInit(): void {
-    this.scheduleMeasure();
+  // ── Preview HTML (card + modal view) ─────────────────────────────────────
+  get previewHtml(): string {
+    if (this.note.contentHtml) return this.note.contentHtml;
+    if (this.note.content) return this.plainToHtml(this.note.content);
+    return '';
   }
+
+  private plainToHtml(text: string): string {
+    return text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .map(line => `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`)
+      .join('') || '';
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+  ngAfterViewInit(): void { this.scheduleMeasure(); }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['note'] && !changes['note'].firstChange) {
-      this.scheduleMeasure();
-    }
+    if (changes['note'] && !changes['note'].firstChange) this.scheduleMeasure();
   }
 
-  private scheduleMeasure(): void {
-    setTimeout(() => this.measureOverflow());
-  }
+  ngOnDestroy(): void { this.editor?.destroy(); }
+
+  private scheduleMeasure(): void { setTimeout(() => this.measureOverflow()); }
 
   private measureOverflow(): void {
     const el = this.contentEl?.nativeElement;
@@ -93,6 +118,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.isLong = el.scrollHeight > el.clientHeight;
   }
 
+  // ── Listeners ─────────────────────────────────────────────────────────────
   @HostListener('document:click')
   onDocumentClick(): void { this.dropdownService.close(); }
 
@@ -105,6 +131,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     if (this.showModal) this.closeModal();
   }
 
+  // ── Kebab ─────────────────────────────────────────────────────────────────
   toggleKebab(event: Event): void {
     event.stopPropagation();
     const key = 'note-' + this.note.id;
@@ -152,25 +179,35 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.noteMovePosition.emit(this.note);
   }
 
+  // ── Modal ─────────────────────────────────────────────────────────────────
   openViewModal(): void {
     this.showModal = true;
     this.modalMode = 'view';
   }
 
   startEdit(): void {
-    this.editTitle   = this.note.title;
-    this.editContent = this.note.content ?? '';
-    this.editError   = '';
-    this.editTagIds  = new Set(this.note.tags.map(t => t.id));
-    this.showModal   = true;
-    this.modalMode   = 'edit';
+    this.editTitle  = this.note.title;
+    this.editError  = '';
+    this.editTagIds = new Set(this.note.tags.map(t => t.id));
     this.resetConceptSuggestion();
+
+    // Destroy previous editor instance before creating a new one
+    this.editor?.destroy();
+    this.editor = new Editor();
+
+    // Load content: prefer saved HTML, fallback to plain text
+    this.editContentHtml = this.note.contentHtml ?? this.plainToHtml(this.note.content ?? '');
+
+    this.showModal = true;
+    this.modalMode = 'edit';
   }
 
   closeModal(): void {
     this.showModal = false;
     this.editError = '';
     this.resetConceptSuggestion();
+    this.editor?.destroy();
+    this.editor = null;
   }
 
   cancelEdit(): void { this.closeModal(); }
@@ -183,38 +220,55 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.editTagIds = copy;
   }
 
-  private resetConceptSuggestion(): void {
-    this.conceptSuggestion       = null;
-    this.conceptSuggestionSource = '';
-    this.conceptIsLoading        = false;
-    this.conceptNotFound         = false;
-    this.conceptManualMode       = false;
-    this.conceptManualTerm       = '';
-    this.conceptManualSummary    = '';
-    this.conceptManualError      = '';
-    this.isSavingConcept         = false;
-    this.pendingReplacement      = null;
-    this.lastEditTextarea        = null;
+  // ── ngx-editor events ─────────────────────────────────────────────────────
+  onEditorChange(html: string): void {
+    this.editContentHtml = html;
+    this.detectConceptTrigger();
   }
 
-  onEditContentInput(event: Event): void {
-    const textarea = event.target as HTMLTextAreaElement;
-    this.lastEditTextarea = textarea;
-    const cursor = textarea.selectionStart;
-    const textBeforeCursor = textarea.value.substring(0, cursor);
-    const match = textBeforeCursor.match(/"([^"\r\n]+)";$/);
-    if (!match) return;
+  onEditorKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && (this.conceptSuggestion || this.conceptNotFound || this.conceptManualMode)) {
+      event.stopPropagation();
+      this.resetConceptSuggestion();
+      return;
+    }
+    if (event.key === 'Enter' && !event.shiftKey && this.conceptSuggestion) {
+      event.preventDefault();
+      this.acceptConceptSuggestion();
+    }
+  }
+
+  // ── Concept autocomplete ───────────────────────────────────────────────────
+  private detectConceptTrigger(): void {
+    if (!this.editor?.view) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const editorDom = this.editor.view.dom;
+    if (!editorDom.contains(range.startContainer)) return;
+
+    const preRange = range.cloneRange();
+    preRange.selectNodeContents(editorDom);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    const textBefore = preRange.toString();
+
+    const match = textBefore.match(/"([^"\r\n]+)";$/);
+    if (!match) {
+      if (this.pendingReplacement) this.resetConceptSuggestion();
+      return;
+    }
     const term = match[1].trim();
     if (!term) return;
-    const matchStart = cursor - match[0].length;
-    const matchEnd   = cursor;
-    this.pendingReplacement      = { matchStart, matchEnd, term };
+    if (this.pendingReplacement?.term === term && (this.conceptIsLoading || this.conceptSuggestion)) return;
+
+    this.pendingReplacement      = { term };
     this.conceptSuggestion       = null;
     this.conceptNotFound         = false;
     this.conceptManualMode       = false;
     this.conceptManualError      = '';
     this.conceptIsLoading        = true;
     this.conceptSuggestionSource = '';
+
     this.conceptService.suggest(term).subscribe({
       next: (resp) => {
         if (this.pendingReplacement?.term !== term) return;
@@ -234,32 +288,29 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     });
   }
 
-  onEditContentKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      this.resetConceptSuggestion();
-      return;
-    }
-    if (event.key === 'Enter' && !event.shiftKey && this.conceptSuggestion) {
-      event.preventDefault();
-      this.acceptConceptSuggestion(event.target as HTMLTextAreaElement);
-    }
+  private resetConceptSuggestion(): void {
+    this.conceptSuggestion       = null;
+    this.conceptSuggestionSource = '';
+    this.conceptIsLoading        = false;
+    this.conceptNotFound         = false;
+    this.conceptManualMode       = false;
+    this.conceptManualTerm       = '';
+    this.conceptManualSummary    = '';
+    this.conceptManualError      = '';
+    this.isSavingConcept         = false;
+    this.pendingReplacement      = null;
   }
 
-  acceptConceptSuggestion(textareaEl?: HTMLTextAreaElement): void {
+  acceptConceptSuggestion(): void {
     const suggestion = this.conceptSuggestion;
     if (!suggestion || !this.pendingReplacement) return;
-    const textarea = textareaEl ?? this.lastEditTextarea;
-    if (!textarea) return;
-    const { matchStart, matchEnd, term } = this.pendingReplacement;
-    const source    = this.conceptSuggestionSource;
-    const insertion = `${term} - ${suggestion.summary}`;
-    this.editContent = textarea.value.substring(0, matchStart)
-                     + insertion
-                     + textarea.value.substring(matchEnd);
-    const newCursor = matchStart + insertion.length;
+    const { term } = this.pendingReplacement;
+    const source      = this.conceptSuggestionSource;
+    const pattern     = `"${term}";`;
+    const replacement = `${term} - ${suggestion.summary}`;
+    this.replacePatternInEditor(pattern, replacement);
     this.conceptSuggestion  = null;
     this.pendingReplacement = null;
-    setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
     this.conceptService.accept({ term: suggestion.term, summary: suggestion.summary, source, sourceUrl: null }).subscribe();
   }
 
@@ -286,16 +337,8 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     this.conceptManualError = '';
     this.conceptService.accept({ term, summary, source: 'USER', sourceUrl: null }).subscribe({
       next: () => {
-        const textarea = this.lastEditTextarea;
-        if (textarea && this.pendingReplacement) {
-          const { matchStart, matchEnd, term: pendingTerm } = this.pendingReplacement;
-          const insertion = `${pendingTerm} - ${summary}`;
-          this.editContent = textarea.value.substring(0, matchStart)
-                           + insertion
-                           + textarea.value.substring(matchEnd);
-          const newCursor = matchStart + insertion.length;
-          setTimeout(() => { textarea.setSelectionRange(newCursor, newCursor); textarea.focus(); }, 0);
-        }
+        const pendingTerm = this.pendingReplacement?.term ?? term;
+        this.replacePatternInEditor(`"${pendingTerm}";`, `${pendingTerm} - ${summary}`);
         this.isSavingConcept    = false;
         this.conceptManualMode  = false;
         this.conceptNotFound    = false;
@@ -305,16 +348,25 @@ export class NoteItemComponent implements AfterViewInit, OnChanges {
     });
   }
 
+  private replacePatternInEditor(pattern: string, replacement: string): void {
+    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    this.editContentHtml = this.editContentHtml.replace(new RegExp(escaped), replacement);
+  }
+
+  // ── Save ──────────────────────────────────────────────────────────────────
   saveEdit(): void {
     const title = this.editTitle.trim();
     if (!title) { this.editError = 'O título é obrigatório.'; return; }
     if (title.length > 100) { this.editError = 'Título: máximo 100 caracteres.'; return; }
-    if (this.editContent.length > 2000) { this.editError = 'Conteúdo: máximo 2000 caracteres.'; return; }
+
+    const rawHtml   = this.editContentHtml;
+    const isEmptyHtml = !rawHtml || rawHtml === '<p></p>' || rawHtml.trim() === '';
 
     const payload: NotePayload = {
       title,
-      content: this.editContent || null,
-      tagIds: [...this.editTagIds],
+      content:     null,
+      contentHtml: isEmptyHtml ? null : rawHtml,
+      tagIds:      [...this.editTagIds],
     };
     this.isSaving  = true;
     this.editError = '';

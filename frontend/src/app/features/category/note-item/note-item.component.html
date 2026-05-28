@@ -53,9 +53,10 @@
 
     <!-- Área de conteúdo -->
     <div class="note-body">
-      @if (note.content) {
-        <p #contentEl class="note-item__content note-item__content--collapsed">{{ note.content }}</p>
-        <app-youtube-preview [text]="note.content" />
+      @if (note.contentHtml || note.content) {
+        <div #contentEl class="note-rich-preview note-rich-preview--card"
+             [innerHTML]="previewHtml | safeHtml"></div>
+        <app-youtube-preview [text]="note.content ?? ''" />
       } @else {
         <button type="button" class="note-content-placeholder" (click)="startEdit()">
           Clique aqui para adicionar conteúdo
@@ -100,9 +101,10 @@
         }
 
         <div class="note-modal__body">
-          @if (note.content) {
-            <p class="note-modal__content">{{ note.content }}</p>
-            <app-youtube-preview [text]="note.content" />
+          @if (note.contentHtml || note.content) {
+            <div class="note-rich-preview note-rich-preview--full"
+                 [innerHTML]="previewHtml | safeHtml"></div>
+            <app-youtube-preview [text]="note.content ?? ''" />
           }
         </div>
 
@@ -127,11 +129,17 @@
 
           <div class="form-group">
             <label class="form-label">Conteúdo</label>
-            <div class="autocomplete-wrap">
-              <textarea class="form-input form-textarea" [(ngModel)]="editContent" maxlength="2000"
-                placeholder="Conteúdo opcional (máx. 2000 caracteres)"
-                (input)="onEditContentInput($event)"
-                (keydown)="onEditContentKeydown($event)"></textarea>
+            <div class="rich-editor-wrap" (keydown)="onEditorKeydown($event)">
+              @if (editor) {
+                <ngx-editor-menu [editor]="editor" [toolbar]="toolbar"></ngx-editor-menu>
+                <ngx-editor
+                  [editor]="editor"
+                  outputFormat="html"
+                  [ngModel]="editContentHtml"
+                  (ngModelChange)="onEditorChange($event)"
+                  placeholder="Conteúdo opcional...">
+                </ngx-editor>
+              }
 
               @if (conceptIsLoading) {
                 <div class="autocomplete-loading">Buscando sugestão...</div>

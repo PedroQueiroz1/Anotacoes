@@ -6,6 +6,7 @@ export interface Note {
   categoryId: number;
   title: string;
   content: string | null;
+  contentHtml: string | null;
   position: number | null;
   pinned: boolean;
   pinnedAt: string | null;

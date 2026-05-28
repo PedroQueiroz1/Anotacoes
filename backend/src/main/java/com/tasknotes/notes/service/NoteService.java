@@ -14,14 +14,13 @@ import com.tasknotes.notes.repository.NoteRepository;
 import com.tasknotes.notes.repository.NoteTagRepository;
 import com.tasknotes.shared.util.NoteCursorCodec;
 import com.tasknotes.users.service.SecurityHelper;
+import com.tasknotes.shared.util.HtmlSanitizer;
 import com.tasknotes.shared.util.UuidV7Generator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -129,12 +128,11 @@ public class NoteService {
     @Transactional
     public NoteResponse create(Long categoryId, NoteRequest request) {
         Category category = findCategoryWithOwnership(categoryId);
-        validateContent(request.content());
 
         Note note = new Note();
         note.setCategory(category);
         note.setTitle(request.title().trim());
-        note.setContent(request.content());
+        applyContent(note, request);
 
         if (request.tagIds() != null && !request.tagIds().isEmpty()) {
             Long ownerId = securityHelper.currentUserId();
@@ -149,10 +147,9 @@ public class NoteService {
     @Transactional
     public NoteResponse update(Long id, NoteRequest request) {
         Note note = findOrThrow(id);
-        validateContent(request.content());
 
         note.setTitle(request.title().trim());
-        note.setContent(request.content());
+        applyContent(note, request);
 
         if (request.tagIds() != null) {
             Long ownerId = securityHelper.currentUserId();
@@ -246,9 +243,18 @@ public class NoteService {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    private void validateContent(String content) {
-        if (content != null && content.length() > MAX_CONTENT_LENGTH) {
-            throw new BusinessException("Conteúdo excede o limite de " + MAX_CONTENT_LENGTH + " caracteres.");
+    private void applyContent(Note note, NoteRequest request) {
+        if (request.contentHtml() != null && !request.contentHtml().isBlank()) {
+            String sanitized = HtmlSanitizer.sanitize(request.contentHtml());
+            note.setContentHtml(sanitized);
+            note.setContent(HtmlSanitizer.toPlainText(sanitized, MAX_CONTENT_LENGTH));
+        } else {
+            note.setContentHtml(null);
+            String content = request.content();
+            if (content != null && content.length() > MAX_CONTENT_LENGTH) {
+                throw new BusinessException("Conteúdo excede o limite de " + MAX_CONTENT_LENGTH + " caracteres.");
+            }
+            note.setContent(content);
         }
     }
 
@@ -295,6 +301,7 @@ public class NoteService {
                 n.getCategory().getId(),
                 n.getTitle(),
                 n.getContent(),
+                n.getContentHtml(),
                 n.getPosition(),
                 n.isPinned(),
                 n.getPinnedAt(),

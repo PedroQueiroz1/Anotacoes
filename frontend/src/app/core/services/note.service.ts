@@ -8,6 +8,7 @@ import { CursorPage } from '../models/pagination.model';
 export interface NotePayload {
   title: string;
   content?: string | null;
+  contentHtml?: string | null;
   tagIds?: number[] | null;
 }
 

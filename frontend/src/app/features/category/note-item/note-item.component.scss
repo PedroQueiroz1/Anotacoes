@@ -153,19 +153,36 @@
   flex-direction: column;
 }
 
-.note-item__content {
-  margin: 0;
+// ── Rich text preview (card + modal) ──────────────────────────────────────
+.note-rich-preview {
   font-size: 14px;
   color: var(--color-muted);
   line-height: 1.55;
-  white-space: pre-line;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 
-  &--collapsed {
-    display: -webkit-box;
-    -webkit-line-clamp: 6;
-    line-clamp: 6;
-    -webkit-box-orient: vertical;
+  // Constrain children
+  * { max-width: 100%; box-sizing: border-box; }
+
+  p { margin: 0 0 0.4em; &:last-child { margin-bottom: 0; } }
+  ul, ol { padding-left: 1.4em; margin: 0 0 0.4em; &:last-child { margin-bottom: 0; } }
+  li { margin-bottom: 2px; }
+  strong, b { font-weight: 600; }
+  em, i { font-style: italic; }
+  u { text-decoration: underline; }
+  s { text-decoration: line-through; }
+  a { color: var(--color-primary); word-break: break-all; text-decoration: underline; }
+  blockquote { border-left: 3px solid var(--color-border); padding-left: 10px; margin: 0 0 0.4em; color: var(--color-muted); }
+
+  &--card {
+    max-height: 130px;
     overflow: hidden;
+    position: relative;
+  }
+
+  &--full {
+    color: var(--color-text);
+    line-height: 1.65;
   }
 }
 
@@ -407,6 +424,78 @@
 .btn--primary { background: var(--color-primary); color: #fff; }
 .btn--ghost   { background: var(--color-btn-ghost); color: var(--color-btn-ghost-text); }
 .btn--sm      { padding: 6px 12px; font-size: 13px; }
+
+// ── Editor Rich Text (ngx-editor wrapper) ─────────────────────────────────
+.rich-editor-wrap {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--color-bg-card);
+
+  &:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-focus);
+  }
+
+  // Toolbar override para combinar com o tema
+  .NgxEditor__MenuBar {
+    background: var(--color-btn-ghost);
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    padding: 4px 6px;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+
+  .NgxEditor__MenuItem {
+    border-radius: 5px;
+    color: var(--color-text);
+    &:hover, &.NgxEditor__MenuItem--Active {
+      background: var(--color-primary-focus);
+      color: var(--color-primary);
+    }
+  }
+
+  .NgxEditor__Separator {
+    border-color: var(--color-border);
+  }
+
+  // Editor content area
+  .NgxEditor {
+    border: none !important;
+    border-radius: 0 !important;
+    min-height: 140px;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+
+  .NgxEditor__Content {
+    padding: 9px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--color-text);
+    line-height: 1.55;
+
+    p { margin: 0 0 0.4em; &:last-child { margin-bottom: 0; } }
+    ul, ol { padding-left: 1.4em; margin: 0 0 0.4em; }
+    a { color: var(--color-primary); }
+  }
+
+  // Link popup
+  .NgxEditor__Popup {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+
+    input {
+      background: var(--color-bg-card);
+      color: var(--color-text);
+      border-color: var(--color-border);
+    }
+  }
+}
 
 // ── Autocomplete de conceitos (no modal de edição) ─────────────────────────
 .autocomplete-wrap { position: relative; }

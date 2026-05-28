@@ -41,7 +41,7 @@ class NoteControllerTest {
     @MockBean  NoteTagService tagService;
 
     private NoteResponse sample(long id) {
-        return new NoteResponse(id, null, 1L, "Meeting notes", "Content here", null,
+        return new NoteResponse(id, null, 1L, "Meeting notes", "Content here", null, null,
                 false, null, List.of(), LocalDateTime.now(), LocalDateTime.now());
     }
 
@@ -65,7 +65,7 @@ class NoteControllerTest {
         mockMvc.perform(post("/api/categorias/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new NoteRequest("Meeting notes", "Content here", null))))
+                               new NoteRequest("Meeting notes", "Content here", null, null))))
                .andExpect(status().isCreated())
                .andExpect(jsonPath("$.id").value(5))
                .andExpect(jsonPath("$.categoryId").value(1));
@@ -75,20 +75,20 @@ class NoteControllerTest {
     void create_returns400_whenTitleIsBlank() throws Exception {
         mockMvc.perform(post("/api/categorias/1/notes")
                        .contentType(MediaType.APPLICATION_JSON)
-                       .content(objectMapper.writeValueAsString(new NoteRequest("", null, null))))
+                       .content(objectMapper.writeValueAsString(new NoteRequest("", null, null, null))))
                .andExpect(status().isBadRequest());
     }
 
     @Test
     void update_returns200WithUpdatedNote() throws Exception {
-        NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content", null,
+        NoteResponse updated = new NoteResponse(1L, null, 1L, "Updated", "New content", null, null,
                 false, null, List.of(), LocalDateTime.now(), LocalDateTime.now());
         when(service.update(eq(1L), any())).thenReturn(updated);
 
         mockMvc.perform(put("/api/anotacoes/1")
                        .contentType(MediaType.APPLICATION_JSON)
                        .content(objectMapper.writeValueAsString(
-                               new NoteRequest("Updated", "New content", null))))
+                               new NoteRequest("Updated", "New content", null, null))))
                .andExpect(status().isOk())
                .andExpect(jsonPath("$.title").value("Updated"))
                .andExpect(jsonPath("$.content").value("New content"));

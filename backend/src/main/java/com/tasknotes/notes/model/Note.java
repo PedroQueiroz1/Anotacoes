@@ -34,6 +34,9 @@ public class Note {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    @Column(name = "content_html", columnDefinition = "TEXT")
+    private String contentHtml;
+
     @Column
     private Integer position;
 
@@ -73,6 +76,8 @@ public class Note {
     public void setTitle(String t)            { this.title = t; }
     public String getContent()                { return content; }
     public void setContent(String c)          { this.content = c; }
+    public String getContentHtml()            { return contentHtml; }
+    public void setContentHtml(String h)      { this.contentHtml = h; }
     public Integer getPosition()              { return position; }
     public void setPosition(Integer p)        { this.position = p; }
     public boolean isPinned()                 { return pinned; }
