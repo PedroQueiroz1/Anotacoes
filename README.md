@@ -1,8 +1,9 @@
 ## PRÓXIMAS ATUALIZAÇÕES
 
-Foco atual: Correções de bugs, refinamentos de usabilidade, ampliação de testes de integração.
+Foco atual: ADICIONAR MCP. Entender o que é RAG para ver se é possível adicionar nesse projeto! </br>
+Foco demorado: Corrigir uns bugs chatos, é complicado.
 
-Importante: Correções na versão android.
+Importante mas prioridade 0: Correções na versão android.
 
 ---
 
