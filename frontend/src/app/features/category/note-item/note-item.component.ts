@@ -6,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { Editor, NgxEditorModule, Toolbar, toDoc, toHTML } from 'ngx-editor';
 import { Note } from '../../../core/models/note.model';
 import { NoteTag } from '../../../core/models/note-tag.model';
-import { NoteService, NotePayload } from '../../../core/services/note.service';
+import { NoteService, NotePayload, SmartFormatPreview } from '../../../core/services/note.service';
 import { ProgrammingConceptService } from '../../../core/services/programming-concept.service';
 import { DropdownService } from '../../../core/services/dropdown.service';
 import { ConceptSuggestion } from '../../../core/models/programming-concept.model';
@@ -44,6 +44,13 @@ export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   // ── Modal ─────────────────────────────────────────────────────────────────
   showModal  = false;
   modalMode: 'view' | 'edit' = 'view';
+
+  // ── Smart formatting ──────────────────────────────────────────────────────
+  showFormatModal  = false;
+  isFormatLoading  = false;
+  isApplyingFormat = false;
+  formatPreview: SmartFormatPreview | null = null;
+  formatError: string | null = null;
 
   // ── Edição ────────────────────────────────────────────────────────────────
   isSaving      = false;
@@ -128,6 +135,7 @@ export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   @HostListener('document:keydown.escape')
   onEscape(): void {
     this.dropdownService.close();
+    if (this.showFormatModal) { this.closeFormatModal(); return; }
     if (this.showModal) this.closeModal();
   }
 
@@ -351,6 +359,56 @@ export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   private replacePatternInEditor(pattern: string, replacement: string): void {
     const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     this.editContentHtml = this.editContentHtml.replace(new RegExp(escaped), replacement);
+  }
+
+  // ── Smart formatting ──────────────────────────────────────────────────────
+  openFormatModal(event: Event): void {
+    event.stopPropagation();
+    this.dropdownService.close();
+    this.showFormatModal  = true;
+    this.isFormatLoading  = true;
+    this.formatPreview    = null;
+    this.formatError      = null;
+
+    this.noteService.smartFormatPreview(this.note.id).subscribe({
+      next: (preview) => {
+        this.isFormatLoading = false;
+        this.formatPreview   = preview;
+      },
+      error: (err) => {
+        this.isFormatLoading = false;
+        this.formatError     = err.error?.message ?? 'Erro ao gerar formatação. Tente novamente.';
+      },
+    });
+  }
+
+  applyFormat(): void {
+    if (!this.formatPreview || this.isApplyingFormat) return;
+    this.isApplyingFormat = true;
+    this.formatError      = null;
+
+    this.noteService.smartFormatApply(this.note.id, {
+      formattedTitleHtml:   this.formatPreview.formattedTitleHtml,
+      formattedContentHtml: this.formatPreview.formattedContentHtml,
+    }).subscribe({
+      next: (updated) => {
+        this.noteUpdated.emit(updated);
+        this.closeFormatModal();
+        this.isApplyingFormat = false;
+      },
+      error: (err) => {
+        this.formatError      = err.error?.message ?? 'Erro ao aplicar formatação.';
+        this.isApplyingFormat = false;
+      },
+    });
+  }
+
+  closeFormatModal(): void {
+    this.showFormatModal  = false;
+    this.formatPreview    = null;
+    this.formatError      = null;
+    this.isFormatLoading  = false;
+    this.isApplyingFormat = false;
   }
 
   // ── Save ──────────────────────────────────────────────────────────────────

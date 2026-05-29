@@ -5,6 +5,7 @@ import com.tasknotes.concepts.model.ProgrammingConcept;
 import com.tasknotes.concepts.repository.ProgrammingConceptRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.annotation.Order;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +13,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
+@Order(1)
 public class LocalDatabaseConceptProvider implements ProgrammingConceptProvider {
 
     private static final Logger log = LoggerFactory.getLogger(LocalDatabaseConceptProvider.class);

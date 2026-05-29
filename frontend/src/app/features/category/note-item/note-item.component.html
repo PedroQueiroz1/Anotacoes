@@ -9,6 +9,11 @@
         }
         <span class="note-item__title">{{ note.title }}</span>
       </div>
+      <div class="note-actions">
+        <button type="button" class="note-ai-btn"
+                (click)="openFormatModal($event)"
+                title="Formatação de texto inteligente"
+                aria-label="Formatação de texto inteligente">IA</button>
       <div class="note-kebab-wrap">
         <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
         @if (kebabOpen) {
@@ -34,6 +39,7 @@
             </button>
           </div>
         }
+      </div>
       </div>
     </div>
 
@@ -71,6 +77,78 @@
 
   </div>
 </div>
+
+<!-- ── Modal de Formatação Inteligente ──────────────────────────────────── -->
+@if (showFormatModal) {
+  <div class="note-modal-overlay" (click)="closeFormatModal()">
+    <div class="note-modal note-format-modal" (click)="$event.stopPropagation()">
+
+      <div class="note-modal__header">
+        <h2 class="note-modal__title">Formatação de texto inteligente</h2>
+        <button type="button" class="note-modal__close" (click)="closeFormatModal()" title="Fechar">✕</button>
+      </div>
+
+      <div class="note-modal__body">
+
+        @if (isFormatLoading) {
+          <div class="note-format-loading">
+            <span class="note-format-loading__spinner"></span>
+            <span>Gerando formatação...</span>
+          </div>
+        }
+
+        @if (formatError && !isFormatLoading) {
+          <p class="form-error">{{ formatError }}</p>
+        }
+
+        @if (formatPreview && !isFormatLoading) {
+
+          @if (formatPreview.operationsSummary.length > 0) {
+            <div class="note-format-ops">
+              @for (op of formatPreview.operationsSummary; track op) {
+                <span class="note-format-ops__item">{{ op }}</span>
+              }
+            </div>
+          }
+
+          @if (formatPreview.warnings.length > 0) {
+            <div class="note-format-warning">
+              @for (w of formatPreview.warnings; track w) {
+                <p>⚠ {{ w }}</p>
+              }
+            </div>
+          }
+
+          <div class="note-format-diff">
+            <div class="note-format-diff__col">
+              <p class="note-format-diff__label">Antes</p>
+              <div class="note-format-diff__content note-rich-preview"
+                   [innerHTML]="previewHtml | safeHtml"></div>
+            </div>
+            <div class="note-format-diff__col">
+              <p class="note-format-diff__label">Depois</p>
+              <div class="note-format-diff__content note-rich-preview"
+                   [innerHTML]="formatPreview.formattedContentHtml | safeHtml"></div>
+            </div>
+          </div>
+
+        }
+      </div>
+
+      <div class="note-modal__footer">
+        <button type="button" class="btn btn--ghost" (click)="closeFormatModal()">Cancelar</button>
+        @if (formatPreview && !isFormatLoading) {
+          <button type="button" class="btn btn--primary"
+                  (click)="applyFormat()"
+                  [disabled]="isApplyingFormat || (formatPreview.warnings.length > 0 && !formatPreview.plainTextPreserved)">
+            {{ isApplyingFormat ? 'Aplicando...' : 'Aplicar formatação' }}
+          </button>
+        }
+      </div>
+
+    </div>
+  </div>
+}
 
 <!-- ── Modal (position: fixed, cobre o viewport) ───────────────────────── -->
 @if (showModal) {

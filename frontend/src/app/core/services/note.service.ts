@@ -12,6 +12,20 @@ export interface NotePayload {
   tagIds?: number[] | null;
 }
 
+export interface SmartFormatPreview {
+  noteId: number;
+  formattedTitleHtml: string;
+  formattedContentHtml: string;
+  plainTextPreserved: boolean;
+  operationsSummary: string[];
+  warnings: string[];
+}
+
+export interface SmartFormatApplyPayload {
+  formattedTitleHtml: string;
+  formattedContentHtml: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class NoteService {
   private http = inject(HttpClient);
@@ -64,6 +78,14 @@ export class NoteService {
 
   moveToPosition(id: number, position: number): Observable<Note> {
     return this.http.patch<Note>(`/api/anotacoes/${id}/move-to-position`, { position });
+  }
+
+  smartFormatPreview(noteId: number): Observable<SmartFormatPreview> {
+    return this.http.post<SmartFormatPreview>(`/api/anotacoes/${noteId}/smart-format/preview`, {});
+  }
+
+  smartFormatApply(noteId: number, payload: SmartFormatApplyPayload): Observable<Note> {
+    return this.http.post<Note>(`/api/anotacoes/${noteId}/smart-format/apply`, payload);
   }
 
   getTags(): Observable<NoteTag[]> {
