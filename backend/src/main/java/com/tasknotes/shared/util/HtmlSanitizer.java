@@ -7,11 +7,12 @@ import org.jsoup.safety.Safelist;
 public class HtmlSanitizer {
 
     private static final Safelist SAFELIST = Safelist.relaxed()
-            .addTags("u", "s", "span", "mark")
+            .addTags("u", "s", "span", "mark", "h3", "div")
             .addAttributes("span", "style")
             .addAttributes("mark", "style")
-            .addAttributes("p", "style")
-            .addAttributes("li", "style")
+            .addAttributes("p",    "style")
+            .addAttributes("li",   "style")
+            .addAttributes("div",  "class")
             .addProtocols("a", "href", "http", "https", "mailto")
             .addAttributes("a", "rel", "target");
 

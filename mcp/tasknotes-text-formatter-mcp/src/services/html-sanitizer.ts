@@ -1,14 +1,21 @@
 const ALLOWED_TAGS = new Set([
   'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'mark', 'span',
-  'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'blockquote',
+  'h1', 'h2', 'h3', 'ul', 'ol', 'li', 'a', 'blockquote', 'div',
+]);
+
+// Class values allowed on <div> elements
+const ALLOWED_DIV_CLASSES = new Set([
+  'smart-definition-block',
+  'smart-note-observation',
 ]);
 
 const ALLOWED_ATTR: Record<string, Set<string>> = {
-  a: new Set(['href', 'target', 'rel']),
+  a:    new Set(['href', 'target', 'rel']),
   span: new Set(['style']),
-  p: new Set(['style']),
-  li: new Set(['style']),
+  p:    new Set(['style']),
+  li:   new Set(['style']),
   mark: new Set(['style']),
+  div:  new Set(['class']),
 };
 
 const SAFE_STYLE_PROPS = /^(color|background-color|text-align|font-weight|text-decoration|margin-bottom|font-size):/i;
@@ -68,6 +75,10 @@ export function sanitizeHtml(html: string): string {
         if (name === 'style') {
           const safe = stripDangerousStyle(val);
           return safe ? ` style="${safe}"` : '';
+        }
+        if (name === 'class') {
+          const cls = val.trim();
+          return ALLOWED_DIV_CLASSES.has(cls) ? ` class="${cls}"` : '';
         }
         if (name === 'target') return ` target="_blank"`;
         if (name === 'rel') return ` rel="noopener noreferrer"`;

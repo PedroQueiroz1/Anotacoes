@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,10 @@ public class SmartTextFormattingService {
 
     public SmartFormatPreviewResponse preview(Long noteId) {
         if (!enabled) {
-            return unavailable(noteId);
+            throw new ResponseStatusException(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Formatação inteligente indisponível no momento."
+            );
         }
 
         Note note = findOrThrow(noteId);
@@ -133,15 +137,6 @@ public class SmartTextFormattingService {
             throw new RuntimeException("MCP respondeu com status " + response.getStatusCode());
         }
         return objectMapper.readTree(response.getBody());
-    }
-
-    private SmartFormatPreviewResponse unavailable(Long noteId) {
-        return new SmartFormatPreviewResponse(
-            noteId, "", "",
-            true,
-            List.of("Formatação inteligente indisponível no momento."),
-            List.of()
-        );
     }
 
     private List<String> toStringList(JsonNode node) {

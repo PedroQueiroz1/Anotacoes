@@ -48,6 +48,7 @@ export async function formatNoteTextTool(raw: FormatNoteTextInput): Promise<Form
         changedMeaning: false,
         operationsSummary: llmResult.operationsSummary,
         warnings: [],
+        detectedTerms: [],
       };
     }
   }
