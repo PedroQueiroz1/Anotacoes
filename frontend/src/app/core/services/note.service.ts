@@ -97,6 +97,6 @@ export class NoteService {
   }
 
   deleteTag(id: number): Observable<void> {
-    return this.http.delete<void>(`/api/notes/tags/${id}`);
+    return this.http.delete<void>(`/api/anotacoes/tags/${id}`);
   }
 }

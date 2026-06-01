@@ -27,24 +27,6 @@ public final class NoteCursorCodec {
             @JsonProperty("i") Long id
     ) {}
 
-    public static String encodePositioned(int position, Long id) {
-        try {
-            byte[] json = MAPPER.writeValueAsBytes(new Payload(0, position, null, id));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(json);
-        } catch (Exception e) {
-            throw new IllegalStateException("note_cursor_encode_failed", e);
-        }
-    }
-
-    public static String encodeUnpositioned(LocalDateTime createdAt, Long id) {
-        try {
-            byte[] json = MAPPER.writeValueAsBytes(new Payload(1, null, createdAt, id));
-            return Base64.getUrlEncoder().withoutPadding().encodeToString(json);
-        } catch (Exception e) {
-            throw new IllegalStateException("note_cursor_encode_failed", e);
-        }
-    }
-
     public static Payload decode(String cursor) {
         if (cursor == null || cursor.isBlank()) return null;
         try {
