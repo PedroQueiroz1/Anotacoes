@@ -391,7 +391,7 @@
         <div class="note-loading">Carregando...</div>
       }
 
-      @if (!noteHasMore && notes.length > 0 && !noteLoadingMore) {
+      @if (notes.length > 0 && noteTotalCount > 0 && !noteLoadingMore) {
         <div class="note-end">{{ notes.length }} de {{ noteTotalCount }} anotações</div>
       }
     </section>

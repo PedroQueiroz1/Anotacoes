@@ -136,14 +136,21 @@
       </div>
 
       <div class="note-modal__footer">
-        <button type="button" class="btn btn--ghost" (click)="closeFormatModal()">Cancelar</button>
-        @if (formatPreview && !isFormatLoading) {
-          <button type="button" class="btn btn--primary"
-                  (click)="applyFormat()"
-                  [disabled]="isApplyingFormat || (formatPreview.warnings.length > 0 && !formatPreview.plainTextPreserved)">
-            {{ isApplyingFormat ? 'Aplicando...' : 'Aplicar formatação' }}
-          </button>
+        @if (formatPreview && !isFormatLoading && formatLimitExceeded) {
+          <p class="form-error note-format-limit-msg">
+            Não será possível realizar a formatação: Limite de linhas atingido
+          </p>
         }
+        <div class="note-modal__footer-actions">
+          <button type="button" class="btn btn--ghost" (click)="closeFormatModal()">Cancelar</button>
+          @if (formatPreview && !isFormatLoading) {
+            <button type="button" class="btn btn--primary"
+                    (click)="applyFormat()"
+                    [disabled]="isApplyingFormat || formatLimitExceeded || (formatPreview.warnings.length > 0 && !formatPreview.plainTextPreserved)">
+              {{ isApplyingFormat ? 'Aplicando...' : 'Aplicar formatação' }}
+            </button>
+          }
+        </div>
       </div>
 
     </div>

@@ -52,6 +52,15 @@ export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
   formatPreview: SmartFormatPreview | null = null;
   formatError: string | null = null;
 
+  private static readonly NOTE_CONTENT_LIMIT = 2000;
+
+  get formatLimitExceeded(): boolean {
+    const html = this.formatPreview?.formattedContentHtml;
+    if (!html) return false;
+    const plain = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return plain.length > NoteItemComponent.NOTE_CONTENT_LIMIT;
+  }
+
   // ── Edição ────────────────────────────────────────────────────────────────
   isSaving      = false;
   editError     = '';

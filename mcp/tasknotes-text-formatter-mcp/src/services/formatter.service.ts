@@ -148,6 +148,26 @@ function formatInline(rawText: string): { html: string; termCount: number } {
   return { html, termCount: count };
 }
 
+// ── Sentence splitter (LinkedIn-style paragraph breaks) ───────────────────────
+// Splits text into individual sentences at ". " before an uppercase letter.
+// Only activates when there are ≥ 2 sentences each with ≥ 10 chars.
+
+const MIN_SENTENCE_LEN = 10;
+
+function splitBySentences(text: string): string[] {
+  // Split at period+whitespace before uppercase letter or digit
+  const raw = text.split(/\.\s+(?=[A-ZÁÉÍÓÚÀÃÕA-Z\d])/);
+  if (raw.length < 2) return [text];
+
+  // Re-add periods to all parts except the last (which keeps its own period)
+  const parts = raw.map((s, i) => (i < raw.length - 1 ? s.trimEnd() + '.' : s.trimEnd()));
+
+  // Reject split if any resulting sentence is too short (likely an abbreviation)
+  if (!parts.every(s => s.length >= MIN_SENTENCE_LEN)) return [text];
+
+  return parts;
+}
+
 // ── Block formatter ───────────────────────────────────────────────────────────
 
 type BlockType = 'paragraph' | 'list' | 'observation' | 'section';
@@ -156,11 +176,12 @@ interface BlockResult {
   html: string;
   termCount: number;
   type: BlockType;
+  paragraphCount: number;
 }
 
 function formatBlock(rawBlock: string): BlockResult {
   const trimmed = rawBlock.trim();
-  if (!trimmed) return { html: '', termCount: 0, type: 'paragraph' };
+  if (!trimmed) return { html: '', termCount: 0, type: 'paragraph', paragraphCount: 0 };
 
   const lines = trimmed.split('\n').map(l => l.trim()).filter(Boolean);
 
@@ -171,6 +192,7 @@ function formatBlock(rawBlock: string): BlockResult {
       html: `<blockquote class="smart-note-observation"><p>${html}</p></blockquote>`,
       termCount,
       type: 'observation',
+      paragraphCount: 0,
     };
   }
 
@@ -183,7 +205,7 @@ function formatBlock(rawBlock: string): BlockResult {
       termCount += tc;
       return `<li>${html}</li>`;
     }).join('');
-    return { html: `<ul>${items}</ul>`, termCount, type: 'list' };
+    return { html: `<ul>${items}</ul>`, termCount, type: 'list', paragraphCount: 0 };
   }
 
   // Ordered list (every line is a numbered item)
@@ -195,7 +217,7 @@ function formatBlock(rawBlock: string): BlockResult {
       termCount += tc;
       return `<li>${html}</li>`;
     }).join('');
-    return { html: `<ol>${items}</ol>`, termCount, type: 'list' };
+    return { html: `<ol>${items}</ol>`, termCount, type: 'list', paragraphCount: 0 };
   }
 
   // Section label (Resumo:, Exemplo:, etc.) — bold the label inline
@@ -206,13 +228,25 @@ function formatBlock(rawBlock: string): BlockResult {
     const { html: restHtml, termCount } = rest ? formatInline(rest) : { html: '', termCount: 0 };
     const escapedLabel = escapeHtml(label);
     const inner        = restHtml ? `<strong>${escapedLabel}</strong> ${restHtml}` : `<strong>${escapedLabel}</strong>`;
-    return { html: `<p>${inner}</p>`, termCount, type: 'section' };
+    return { html: `<p>${inner}</p>`, termCount, type: 'section', paragraphCount: 1 };
   }
 
-  // Regular paragraph — join lines and highlight terms
+  // Regular paragraph — split by sentences for LinkedIn-style readability
   const text = lines.join(' ');
+  const sentences = splitBySentences(text);
+
+  if (sentences.length > 1) {
+    let termCount = 0;
+    const parts = sentences.map(s => {
+      const { html, termCount: tc } = formatInline(s);
+      termCount += tc;
+      return `<p>${html}</p>`;
+    });
+    return { html: parts.join(''), termCount, type: 'paragraph', paragraphCount: sentences.length };
+  }
+
   const { html, termCount } = formatInline(text);
-  return { html: `<p>${html}</p>`, termCount, type: 'paragraph' };
+  return { html: `<p>${html}</p>`, termCount, type: 'paragraph', paragraphCount: 1 };
 }
 
 // ── Content formatter ─────────────────────────────────────────────────────────
@@ -242,8 +276,8 @@ function formatContent(contentText: string): ContentResult {
     const result = formatBlock(block);
     if (!result.html) continue;
     htmlParts.push(result.html);
-    termCount += result.termCount;
-    if (result.type === 'paragraph' || result.type === 'section') paragraphCount++;
+    termCount      += result.termCount;
+    paragraphCount += result.paragraphCount;
     if (result.type === 'list')        listCount++;
     if (result.type === 'observation') observationCount++;
   }
