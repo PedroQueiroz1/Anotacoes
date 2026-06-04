@@ -13,7 +13,11 @@
         <button type="button" class="note-ai-btn"
                 (click)="openFormatModal($event)"
                 title="Formatação de texto inteligente"
-                aria-label="Formatação de texto inteligente">IA</button>
+                aria-label="Formatação de texto inteligente">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M5 4v3h5.5v12h3V7H19V4H5z"/>
+          </svg>
+        </button>
       <div class="note-kebab-wrap">
         <button #noteKebabBtn type="button" class="note-kebab-btn" (click)="toggleKebab($event)" title="Ações" aria-label="Ações da anotação">&#8942;</button>
         @if (kebabOpen) {

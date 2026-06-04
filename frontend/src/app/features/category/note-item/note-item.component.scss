@@ -97,13 +97,12 @@
   border: 1px solid var(--color-primary);
   color: var(--color-primary);
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  padding: 2px 5px;
+  line-height: 0;
+  padding: 3px 4px;
   border-radius: 5px;
-  letter-spacing: 0.03em;
-  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background 0.13s, color 0.13s;
 
   &:hover {

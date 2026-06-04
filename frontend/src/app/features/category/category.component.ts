@@ -190,11 +190,12 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
   private setupNoteObserver(): void {
     if (!this.noteSentinelRef) return;
     this.noteObserver?.disconnect();
+    const scrollRoot = document.querySelector('.app-main') as Element | null;
     this.noteObserver = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && !this.noteLoadingMore && this.noteHasMore) {
         this.loadNotes();
       }
-    }, { threshold: 0.1 });
+    }, { root: scrollRoot, threshold: 0.1 });
     this.noteObserver.observe(this.noteSentinelRef.nativeElement);
   }
 
