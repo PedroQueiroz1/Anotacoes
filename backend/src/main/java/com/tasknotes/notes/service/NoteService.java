@@ -81,7 +81,7 @@ public class NoteService {
 
         String nextCursor = null;
         if (hasNext && !page.isEmpty()) {
-            nextCursor = String.valueOf(page.get(page.size() - 1).getId());
+            nextCursor = String.valueOf(cursorId + NOTE_LIMIT);
         }
 
         long totalCount = noteRepository.countByCategoryFiltered(categoryId, likeQuery, tagId, pinnedOnlyInt);

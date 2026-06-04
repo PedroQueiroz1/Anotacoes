@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, ElementRef, HostListener, ViewChild, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -41,8 +41,7 @@ function emptyTaskForm(): TaskForm {
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
-export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('noteSentinel') noteSentinelRef?: ElementRef<HTMLDivElement>;
+export class CategoryComponent implements OnInit, OnDestroy {
 
   // paramMap subscription ensures data reloads when navigating between categories
   private route           = inject(ActivatedRoute);
@@ -54,7 +53,7 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
   private exportService   = inject(CategoryExportService);
 
   private routeSub?: Subscription;
-  private noteObserver?: IntersectionObserver;
+  private noteScrollListener?: () => void;
   private noteQuerySubject = new Subject<string>();
   private noteQuerySub?: Subscription;
 
@@ -177,26 +176,35 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    this.setupNoteObserver();
-  }
-
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
     this.noteQuerySub?.unsubscribe();
-    this.noteObserver?.disconnect();
+    this.teardownNoteScrollListener();
   }
 
-  private setupNoteObserver(): void {
-    if (!this.noteSentinelRef) return;
-    this.noteObserver?.disconnect();
-    const scrollRoot = document.querySelector('.app-main') as Element | null;
-    this.noteObserver = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && !this.noteLoadingMore && this.noteHasMore) {
+  private setupNoteScrollListener(): void {
+    this.teardownNoteScrollListener();
+    const container = document.querySelector('.app-main') as HTMLElement | null;
+    if (!container) return;
+
+    this.noteScrollListener = () => {
+      if (this.noteLoadingMore || !this.noteHasMore) return;
+      const distanceFromBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight;
+      if (distanceFromBottom < 200) {
         this.loadNotes();
       }
-    }, { root: scrollRoot, threshold: 0.1 });
-    this.noteObserver.observe(this.noteSentinelRef.nativeElement);
+    };
+
+    container.addEventListener('scroll', this.noteScrollListener, { passive: true });
+  }
+
+  private teardownNoteScrollListener(): void {
+    if (this.noteScrollListener) {
+      document.querySelector('.app-main')
+        ?.removeEventListener('scroll', this.noteScrollListener);
+      this.noteScrollListener = undefined;
+    }
   }
 
   private resetState(): void {
@@ -293,7 +301,7 @@ export class CategoryComponent implements OnInit, OnDestroy, AfterViewInit {
         this.noteLoadingMore = false;
         this.isLoading = false;
         if (reset) {
-          setTimeout(() => this.setupNoteObserver(), 0);
+          this.setupNoteScrollListener();
         }
       },
       error: () => { this.errorMessage = 'Erro ao carregar anotações.'; this.noteLoadingMore = false; this.isLoading = false; },
