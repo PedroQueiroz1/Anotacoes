@@ -1,0 +1,76 @@
+<div class="overlay" (click)="close()">
+  <div class="dict" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Dicionário">
+    <header class="dict__header">
+      <h2 class="dict__title">Dicionário</h2>
+      <button class="dict__close" type="button" aria-label="Fechar" (click)="close()">✕</button>
+    </header>
+
+    <!-- ── Lista ───────────────────────────────────────────────────────────── -->
+    @if (mode === 'list') {
+      <div class="dict__body">
+        @if (loading) {
+          <p class="dict__state">Carregando...</p>
+        } @else if (loadError) {
+          <div class="dict__state">
+            <p>Não foi possível carregar o dicionário.</p>
+            <button class="btn btn--ghost btn--sm" type="button" (click)="load()">Tentar novamente</button>
+          </div>
+        } @else if (entries.length === 0) {
+          <p class="dict__state">Nenhuma palavra cadastrada ainda.</p>
+        } @else {
+          <ul class="dict__list">
+            @for (entry of entries; track entry.uuid) {
+              <li class="dict__item">
+                <span class="dict__term">{{ entry.term }}</span>
+                <p class="dict__definition">{{ entry.definition }}</p>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <footer class="dict__footer">
+        <button class="btn btn--primary" type="button" (click)="openAddForm()">Adicionar nova palavra</button>
+      </footer>
+    }
+
+    <!-- ── Formulário ──────────────────────────────────────────────────────── -->
+    @if (mode === 'add') {
+      <div class="dict__body">
+        <div class="form-group">
+          <label class="form-label" for="dict-term">Palavra ou termo *</label>
+          <input
+            id="dict-term"
+            #termInput
+            class="form-input"
+            [(ngModel)]="term"
+            maxlength="100"
+            placeholder="Ex.: Feign"
+            (keydown.enter)="$event.preventDefault()" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="dict-definition">Descrição *</label>
+          <textarea
+            id="dict-definition"
+            class="form-input dict__textarea"
+            [(ngModel)]="definition"
+            maxlength="2000"
+            rows="4"
+            placeholder="Significado / explicação do termo"></textarea>
+        </div>
+
+        @if (formError) {
+          <p class="form-error">{{ formError }}</p>
+        }
+      </div>
+
+      <footer class="dict__footer">
+        <button class="btn btn--ghost" type="button" (click)="backToList()" [disabled]="saving">Voltar</button>
+        <button class="btn btn--primary" type="button" (click)="save()" [disabled]="saving">
+          {{ saving ? 'Salvando...' : 'Salvar' }}
+        </button>
+      </footer>
+    }
+  </div>
+</div>

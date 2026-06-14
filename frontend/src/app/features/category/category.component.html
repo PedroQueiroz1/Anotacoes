@@ -182,9 +182,16 @@
           }
         </h2>
         @if (!showNoteForm) {
-          <button class="btn btn--primary" (click)="openNoteCreate()">+ Nova Anotação</button>
+          <div class="section-header__actions">
+            <button class="btn btn--outline" (click)="openDictionary()">Dicionário</button>
+            <button class="btn btn--primary" (click)="openNoteCreate()">+ Nova Anotação</button>
+          </div>
         }
       </div>
+
+      @if (showDictionary) {
+        <app-dictionary-modal (closed)="closeDictionary()"></app-dictionary-modal>
+      }
 
       <!-- Formulário de criação de anotação -->
       @if (showNoteForm) {

@@ -68,6 +68,12 @@ $radius: 10px;
   margin-bottom: 14px;
 }
 
+.section-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .section-header__title {
   font-size: 22px;
   font-weight: 700;

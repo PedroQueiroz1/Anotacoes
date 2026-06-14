@@ -19,6 +19,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { TaskItemComponent } from './task-item/task-item.component';
 import { TaskEditModalComponent } from './task-edit-modal/task-edit-modal.component';
 import { NoteItemComponent } from './note-item/note-item.component';
+import { DictionaryModalComponent } from '../../shared/components/dictionary-modal/dictionary-modal.component';
 
 interface TaskForm {
   title: string;
@@ -37,7 +38,7 @@ function emptyTaskForm(): TaskForm {
 @Component({
   selector: 'app-category',
   standalone: true,
-  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, TaskEditModalComponent, NoteItemComponent, DragDropModule],
+  imports: [RouterLink, FormsModule, ConfirmDialogComponent, TaskItemComponent, TaskEditModalComponent, NoteItemComponent, DictionaryModalComponent, DragDropModule],
   templateUrl: './category.component.html',
   styleUrl: './category.component.scss',
 })
@@ -146,6 +147,9 @@ export class CategoryComponent implements OnInit, OnDestroy {
   movingNote: Note | null = null;
   moveToPositionValue = 1;
   showMovePositionDialog = false;
+
+  // Dicionário
+  showDictionary = false;
 
   // Formulário de nova anotação
   showNoteForm   = false;
@@ -521,6 +525,14 @@ export class CategoryComponent implements OnInit, OnDestroy {
   }
 
   // ── Formulário de anotação ────────────────────────────────────────────────
+  openDictionary(): void {
+    this.showDictionary = true;
+  }
+
+  closeDictionary(): void {
+    this.showDictionary = false;
+  }
+
   openNoteCreate(): void {
     this.noteTitle = ''; this.noteContent = ''; this.noteFormError = '';
     this.resetConceptSuggestion();
