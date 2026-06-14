@@ -5,6 +5,7 @@ import com.tasknotes.dictionary.dto.DictionaryEntryResponse;
 import com.tasknotes.dictionary.model.DictionaryEntry;
 import com.tasknotes.dictionary.repository.DictionaryEntryRepository;
 import com.tasknotes.shared.exception.BusinessException;
+import com.tasknotes.shared.exception.ResourceNotFoundException;
 import com.tasknotes.users.model.AppUser;
 import com.tasknotes.users.service.SecurityHelper;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -66,6 +67,47 @@ public class DictionaryService {
             // Safety net for concurrent inserts of the same term (unique constraint)
             throw new BusinessException(DUPLICATE_MESSAGE);
         }
+    }
+
+    @Transactional
+    public DictionaryEntryResponse update(String uuid, DictionaryEntryRequest request) {
+        Long userId = securityHelper.currentUserId();
+        DictionaryEntry entry = repository.findByUuidAndUserId(uuid, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Palavra não encontrada: " + uuid));
+
+        String term = request.term().trim();
+        String definition = request.definition().trim();
+        String normalizedTerm = normalize(term);
+
+        if (term.isEmpty()) {
+            throw new BusinessException("A palavra/termo é obrigatória.");
+        }
+        if (definition.isEmpty()) {
+            throw new BusinessException("A descrição é obrigatória.");
+        }
+        if (repository.existsByUserIdAndNormalizedTermAndUuidNot(userId, normalizedTerm, uuid)) {
+            throw new BusinessException(DUPLICATE_MESSAGE);
+        }
+
+        entry.setTerm(term);
+        entry.setNormalizedTerm(normalizedTerm);
+        entry.setDefinition(definition);
+
+        try {
+            DictionaryEntry saved = repository.save(entry);
+            return toResponse(saved);
+        } catch (DataIntegrityViolationException e) {
+            // Safety net for concurrent edits colliding on the same term (unique constraint)
+            throw new BusinessException(DUPLICATE_MESSAGE);
+        }
+    }
+
+    @Transactional
+    public void delete(String uuid) {
+        Long userId = securityHelper.currentUserId();
+        DictionaryEntry entry = repository.findByUuidAndUserId(uuid, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Palavra não encontrada: " + uuid));
+        repository.delete(entry);
     }
 
     private String normalize(String term) {

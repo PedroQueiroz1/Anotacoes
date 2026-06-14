@@ -29,4 +29,16 @@ public class DictionaryController {
     public DictionaryEntryResponse create(@Valid @RequestBody DictionaryEntryRequest request) {
         return service.create(request);
     }
+
+    @PutMapping("/{uuid}")
+    public DictionaryEntryResponse update(@PathVariable String uuid,
+                                          @Valid @RequestBody DictionaryEntryRequest request) {
+        return service.update(uuid, request);
+    }
+
+    @DeleteMapping("/{uuid}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String uuid) {
+        service.delete(uuid);
+    }
 }

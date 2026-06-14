@@ -229,6 +229,12 @@ export class NoteItemComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   cancelEdit(): void { this.closeModal(); }
 
+  // No modo edição, não fechar ao clicar fora (evita perder a edição ao soltar
+  // o mouse fora do modal durante a seleção de texto). Só fecha em visualização.
+  onOverlayClick(): void {
+    if (this.modalMode === 'view') this.closeModal();
+  }
+
   isTagSelected(id: number): boolean { return this.editTagIds.has(id); }
 
   toggleEditTag(id: number): void {

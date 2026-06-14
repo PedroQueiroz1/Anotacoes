@@ -163,7 +163,7 @@
 
 <!-- ── Modal (position: fixed, cobre o viewport) ───────────────────────── -->
 @if (showModal) {
-  <div class="note-modal-overlay" (click)="closeModal()">
+  <div class="note-modal-overlay" (click)="onOverlayClick()">
     <div class="note-modal" (click)="$event.stopPropagation()">
 
       @if (modalMode === 'view') {

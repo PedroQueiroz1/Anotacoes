@@ -14,4 +14,12 @@ export class DictionaryService {
   create(payload: DictionaryEntryPayload): Observable<DictionaryEntry> {
     return this.http.post<DictionaryEntry>('/api/dictionary', payload);
   }
+
+  update(uuid: string, payload: DictionaryEntryPayload): Observable<DictionaryEntry> {
+    return this.http.put<DictionaryEntry>(`/api/dictionary/${uuid}`, payload);
+  }
+
+  delete(uuid: string): Observable<void> {
+    return this.http.delete<void>(`/api/dictionary/${uuid}`);
+  }
 }

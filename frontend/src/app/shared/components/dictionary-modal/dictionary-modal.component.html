@@ -1,5 +1,5 @@
-<div class="overlay" (click)="close()">
-  <div class="dict" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-label="Dicionário">
+<div class="overlay">
+  <div class="dict" role="dialog" aria-modal="true" aria-label="Dicionário">
     <header class="dict__header">
       <h2 class="dict__title">Dicionário</h2>
       <button class="dict__close" type="button" aria-label="Fechar" (click)="close()">✕</button>
@@ -21,8 +21,24 @@
           <ul class="dict__list">
             @for (entry of entries; track entry.uuid) {
               <li class="dict__item">
-                <span class="dict__term">{{ entry.term }}</span>
-                <p class="dict__definition">{{ entry.definition }}</p>
+                <div class="dict__item-text">
+                  <span class="dict__term">{{ entry.term }}</span>
+                  <p class="dict__definition">{{ entry.definition }}</p>
+                </div>
+                <div class="dict__item-actions">
+                  <button
+                    type="button"
+                    class="dict__icon-btn"
+                    title="Editar"
+                    aria-label="Editar palavra"
+                    (click)="openEditForm(entry)">✎</button>
+                  <button
+                    type="button"
+                    class="dict__icon-btn dict__icon-btn--danger"
+                    title="Excluir"
+                    aria-label="Excluir palavra"
+                    (click)="requestDelete(entry)">🗑</button>
+                </div>
               </li>
             }
           </ul>
@@ -34,9 +50,11 @@
       </footer>
     }
 
-    <!-- ── Formulário ──────────────────────────────────────────────────────── -->
-    @if (mode === 'add') {
+    <!-- ── Formulário (adicionar / editar) ───────────────────────────────────── -->
+    @if (mode === 'form') {
       <div class="dict__body">
+        <h3 class="dict__form-title">{{ editingUuid ? 'Editar palavra' : 'Adicionar nova palavra' }}</h3>
+
         <div class="form-group">
           <label class="form-label" for="dict-term">Palavra ou termo *</label>
           <input
@@ -74,3 +92,12 @@
     }
   </div>
 </div>
+
+@if (deletingEntry) {
+  <app-confirm-dialog
+    [message]="deleteMessage"
+    confirmLabel="Excluir"
+    cancelLabel="Cancelar"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()"></app-confirm-dialog>
+}

@@ -80,10 +80,52 @@
 }
 
 .dict__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
   background: var(--color-bg-card-hover);
+}
+
+.dict__item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dict__item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dict__icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 6px;
+  color: var(--color-muted);
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: var(--color-bg-card);
+    color: var(--color-text);
+  }
+
+  &--danger:hover {
+    color: var(--color-danger);
+  }
+}
+
+.dict__form-title {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 .dict__term {
